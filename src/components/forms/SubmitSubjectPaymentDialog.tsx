@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { subjectPaymentsApi, SubjectPayment } from '@/api/subjectPayments.api';
 import { Upload, Calendar, CreditCard, FileText, DollarSign } from 'lucide-react';
 import { uploadWithSignedUrl } from '@/utils/signedUploadHelper';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface SubmitSubjectPaymentDialogProps {
   open: boolean;
@@ -124,13 +125,14 @@ const SubmitSubjectPaymentDialog: React.FC<SubmitSubjectPaymentDialogProps> = ({
 
       // Show success with receipt file link
       const receiptUrl = response.data?.receiptFile;
+      const displayUrl = receiptUrl ? getImageUrl(receiptUrl) : null;
       toast({
         title: "Success",
-        description: receiptUrl ? (
+        description: displayUrl ? (
           <div className="space-y-2">
             <p>{response.message || "Payment submitted successfully!"}</p>
             <a 
-              href={receiptUrl} 
+              href={displayUrl} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-primary hover:underline flex items-center gap-1 text-sm"

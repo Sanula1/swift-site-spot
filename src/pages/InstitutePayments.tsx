@@ -159,7 +159,31 @@ const InstitutePayments = () => {
     format: (value: string) => <Badge variant={value === 'ACTIVE' ? 'default' : 'secondary'} className={value === 'ACTIVE' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-700'}>
           {value}
         </Badge>
-  }, ...(isInstituteAdmin ? [{
+  }, 
+  // Submission status column for students
+  ...(isStudent ? [{
+    id: 'mySubmissionStatus',
+    label: 'My Submission',
+    minWidth: 120,
+    align: 'center' as const,
+    format: (value: string | null | undefined, row: InstitutePayment) => {
+      const hasSubmitted = row.hasSubmitted || value;
+      if (!hasSubmitted) {
+        return <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400">Not Submitted</Badge>;
+      }
+      switch (value) {
+        case 'VERIFIED':
+          return <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400">Verified</Badge>;
+        case 'PENDING':
+          return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400">Pending</Badge>;
+        case 'REJECTED':
+          return <Badge className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400">Rejected</Badge>;
+        default:
+          return <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400">Submitted</Badge>;
+      }
+    }
+  }] : []),
+  ...(isInstituteAdmin ? [{
     id: 'totalSubmissions',
     label: 'Submissions',
     minWidth: 100,
@@ -170,7 +194,7 @@ const InstitutePayments = () => {
               {row.verifiedSubmissions || 0} verified
             </div>
           </div>
-  }] : [])], [isInstituteAdmin]);
+  }] : [])], [isInstituteAdmin, isStudent]);
   const renderComponent = () => {
     // Debug logging for table data
     console.log('InstitutePayments Debug - Table data:', {

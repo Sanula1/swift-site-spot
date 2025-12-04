@@ -22,6 +22,9 @@ export interface SubjectPayment {
   submissionsCount: number;
   verifiedSubmissionsCount: number;
   pendingSubmissionsCount: number;
+  // Student-specific fields for submission status
+  mySubmissionStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED' | null;
+  hasSubmitted?: boolean;
 }
 
 export interface SubjectPaymentsResponse {

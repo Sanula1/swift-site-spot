@@ -223,7 +223,14 @@ const SubjectPayments = () => {
     id: 'dueDate',
     label: 'Due Date',
     minWidth: 120
-  }, ...(instituteRole !== 'Student' ? [{
+  }, 
+  // Submission status column for students
+  ...(instituteRole === 'Student' ? [{
+    id: 'mySubmissionStatus',
+    label: 'My Submission',
+    minWidth: 120
+  }] : []),
+  ...(instituteRole !== 'Student' ? [{
     id: 'submissions',
     label: 'Submissions',
     minWidth: 150
@@ -407,6 +414,27 @@ const SubjectPayments = () => {
                               <TableCell>
                                 {new Date(payment.lastDate).toLocaleDateString()}
                               </TableCell>
+                              {/* Submission status for students */}
+                              {instituteRole === 'Student' && (
+                                <TableCell>
+                                  {(() => {
+                                    const hasSubmitted = payment.hasSubmitted || payment.mySubmissionStatus;
+                                    if (!hasSubmitted) {
+                                      return <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400">Not Submitted</Badge>;
+                                    }
+                                    switch (payment.mySubmissionStatus) {
+                                      case 'VERIFIED':
+                                        return <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400">Verified</Badge>;
+                                      case 'PENDING':
+                                        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400">Pending</Badge>;
+                                      case 'REJECTED':
+                                        return <Badge className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400">Rejected</Badge>;
+                                      default:
+                                        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400">Submitted</Badge>;
+                                    }
+                                  })()}
+                                </TableCell>
+                              )}
                               {instituteRole !== 'Student' && (
                                 <TableCell>
                                   {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <div className="text-xs space-y-1">

@@ -30,6 +30,9 @@ export interface InstitutePayment {
   verifiedSubmissions: number;
   pendingSubmissions: number;
   rejectedSubmissions: number;
+  // Student-specific fields for submission status
+  mySubmissionStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED' | null;
+  hasSubmitted?: boolean;
 }
 
 export interface PaymentSubmission {

@@ -59,7 +59,7 @@ const SubmitPaymentDialog = ({ open, onOpenChange, payment, instituteId, onSucce
       setUploadMessage('Uploading receipt...');
       const relativePath = await uploadWithSignedUrl(
         receiptFile,
-        'payment-receipts',
+        'institute-payment-receipts',
         (message, progress) => {
           setUploadMessage(message);
           setUploadProgress(progress);

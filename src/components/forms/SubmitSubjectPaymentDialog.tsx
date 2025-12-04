@@ -95,7 +95,7 @@ const SubmitSubjectPaymentDialog: React.FC<SubmitSubjectPaymentDialogProps> = ({
       // Step 1: Upload receipt file using signed URL
       const relativePath = await uploadWithSignedUrl(
         receiptFile,
-        'payment-receipts',
+        'subject-payment-receipts',
         (message, progress) => {
           setUploadMessage(message);
           setUploadProgress(progress);

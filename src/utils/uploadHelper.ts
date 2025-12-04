@@ -42,8 +42,11 @@ export type UploadFolder =
   | 'subject-images'
   | 'homework-files'
   | 'correction-files'
-  | 'payment-receipts'
-  | 'id-documents';
+  | 'institute-payment-receipts'
+  | 'subject-payment-receipts'
+  | 'id-documents'
+  | 'bookhire-vehicle-images'
+  | 'bookhire-owner-images';
 
 const MAX_FILE_SIZES: Record<UploadFolder, number> = {
   'profile-images': 5 * 1024 * 1024,        // 5MB
@@ -53,8 +56,11 @@ const MAX_FILE_SIZES: Record<UploadFolder, number> = {
   'subject-images': 5 * 1024 * 1024,        // 5MB
   'homework-files': 20 * 1024 * 1024,       // 20MB
   'correction-files': 20 * 1024 * 1024,     // 20MB
-  'payment-receipts': 10 * 1024 * 1024,     // 10MB
-  'id-documents': 10 * 1024 * 1024          // 10MB
+  'institute-payment-receipts': 10 * 1024 * 1024,     // 10MB
+  'subject-payment-receipts': 10 * 1024 * 1024,       // 10MB
+  'id-documents': 10 * 1024 * 1024,          // 10MB
+  'bookhire-vehicle-images': 10 * 1024 * 1024,        // 10MB
+  'bookhire-owner-images': 10 * 1024 * 1024           // 10MB
 };
 
 export class FileUploader {

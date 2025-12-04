@@ -162,7 +162,7 @@ export const detectFolder = (file: File, context?: 'homework' | 'payment' | 'cor
   
   if (context === 'homework') return 'homework-files';
   if (context === 'correction') return 'correction-files';
-  if (context === 'payment') return 'payment-receipts';
+  if (context === 'payment') return 'institute-payment-receipts';
   if (context === 'id-document') return 'id-documents';
   if (context === 'profile') return 'profile-images';
   if (context === 'institute') return 'institute-images';

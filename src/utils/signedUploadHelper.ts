@@ -8,8 +8,11 @@ export type UploadFolder =
   | 'subject-images'
   | 'homework-files'
   | 'correction-files'
-  | 'payment-receipts'
-  | 'id-documents';
+  | 'institute-payment-receipts'
+  | 'subject-payment-receipts'
+  | 'id-documents'
+  | 'bookhire-vehicle-images'
+  | 'bookhire-owner-images';
 
 const UPLOAD_MAX_FILE_SIZES: Record<UploadFolder, number> = {
   'profile-images': 5 * 1024 * 1024,        // 5MB
@@ -19,8 +22,11 @@ const UPLOAD_MAX_FILE_SIZES: Record<UploadFolder, number> = {
   'subject-images': 5 * 1024 * 1024,        // 5MB
   'homework-files': 20 * 1024 * 1024,       // 20MB
   'correction-files': 20 * 1024 * 1024,     // 20MB
-  'payment-receipts': 10 * 1024 * 1024,     // 10MB
-  'id-documents': 10 * 1024 * 1024          // 10MB
+  'institute-payment-receipts': 10 * 1024 * 1024,     // 10MB
+  'subject-payment-receipts': 10 * 1024 * 1024,       // 10MB
+  'id-documents': 10 * 1024 * 1024,          // 10MB
+  'bookhire-vehicle-images': 10 * 1024 * 1024,        // 10MB
+  'bookhire-owner-images': 10 * 1024 * 1024           // 10MB
 };
 
 interface SignedUrlResponse {
@@ -58,7 +64,7 @@ export function detectFolder(file: File): UploadFolder {
   if (type === 'application/pdf' || type.includes('document')) {
     if (name.includes('homework') || name.includes('assignment')) return 'homework-files';
     if (name.includes('correction') || name.includes('corrected')) return 'correction-files';
-    if (name.includes('payment') || name.includes('receipt') || name.includes('slip')) return 'payment-receipts';
+    if (name.includes('payment') || name.includes('receipt') || name.includes('slip')) return 'institute-payment-receipts';
     if (name.includes('id') || name.includes('identity') || name.includes('card')) return 'id-documents';
     return 'homework-files'; // default for documents
   }
@@ -92,8 +98,11 @@ function validateFile(file: File, folder: UploadFolder): void {
     'subject-images': ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
     'homework-files': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
     'correction-files': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
-    'payment-receipts': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
-    'id-documents': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+    'institute-payment-receipts': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
+    'subject-payment-receipts': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
+    'id-documents': ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
+    'bookhire-vehicle-images': ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+    'bookhire-owner-images': ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
   };
 
   const allowed = allowedTypes[folder];

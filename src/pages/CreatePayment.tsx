@@ -177,7 +177,7 @@ const CreatePayment = () => {
       setUploadMessage('Uploading payment slip...');
       const paymentSlipUrl = await uploadWithSignedUrl(
         formData.paymentSlip!,
-        'payment-receipts',
+        'institute-payment-receipts',
         (message, progress) => {
           setUploadMessage(message);
           setUploadProgress(progress);

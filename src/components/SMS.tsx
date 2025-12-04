@@ -229,7 +229,7 @@ const SMS = () => {
       const { uploadWithSignedUrl } = await import('@/utils/signedUploadHelper');
       const paymentSlipPath = await uploadWithSignedUrl(
         paymentForm.paymentSlip,
-        'payment-receipts'
+        'institute-payment-receipts'
       );
       
       // Step 2: Submit payment with relativePath

@@ -32,6 +32,9 @@ interface MUITableProps {
     icon?: React.ReactNode;
     variant?: 'default' | 'destructive' | 'outline';
     className?: string;
+    condition?: (row: any) => boolean; // Optional condition to show/hide action per row
+    disabledCondition?: (row: any) => boolean; // Optional condition to disable action per row
+    disabledLabel?: string; // Label to show when disabled
   }>;
   // Pagination props
   page: number;
@@ -176,10 +179,28 @@ export default function MUITable({
                           </Button>}
 
                         {/* Custom Actions */}
-                        {customActions.map((action, actionIndex) => <Button key={actionIndex} variant={action.variant || "outline"} size="sm" onClick={() => action.action(row)} title={action.label} className={`h-8 px-3 text-xs ${action.className || ''}`}>
+                        {customActions.map((action, actionIndex) => {
+                          // Check if action should be shown for this row
+                          if (action.condition && !action.condition(row)) {
+                            return null;
+                          }
+                          // Check if action should be disabled for this row
+                          const isDisabled = action.disabledCondition ? action.disabledCondition(row) : false;
+                          const buttonLabel = isDisabled && action.disabledLabel ? action.disabledLabel : action.label;
+                          
+                          return <Button 
+                            key={actionIndex} 
+                            variant={isDisabled ? "secondary" : (action.variant || "outline")} 
+                            size="sm" 
+                            onClick={() => !isDisabled && action.action(row)} 
+                            title={buttonLabel} 
+                            disabled={isDisabled}
+                            className={`h-8 px-3 text-xs ${action.className || ''} ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          >
                             {action.icon && <span className="mr-1">{action.icon}</span>}
-                            {action.label}
-                          </Button>)}
+                            {buttonLabel}
+                          </Button>;
+                        })}
                       </div>
                     </TableCell>}
                   </TableRow>;

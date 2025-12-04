@@ -21,23 +21,29 @@ export const getImageUrl = (imageUrl: string | null | undefined): string => {
   
   // Extract relative path from AWS S3 URLs
   // Format: https://bucket-name.s3.region.amazonaws.com/path/to/file
-  const s3Match = imageUrl.match(/https?:\/\/[^\/]+\.s3[^\/]*\.amazonaws\.com\/(.+?)(?:\?.*)?$/);
+  const s3Match = imageUrl.match(/https?:\/\/[^\/]+\.s3[^\/]*\.amazonaws\.com\/(.+)$/);
   if (s3Match) {
-    return `${STORAGE_BASE_URL}/${s3Match[1]}`;
+    // Remove query string if present
+    const path = s3Match[1].split('?')[0];
+    return `${STORAGE_BASE_URL}/${path}`;
   }
   
   // Extract relative path from GCS URLs
   // Format: https://storage.googleapis.com/bucket-name/path/to/file
-  const gcsMatch = imageUrl.match(/https?:\/\/storage\.googleapis\.com\/[^\/]+\/(.+?)(?:\?.*)?$/);
+  const gcsMatch = imageUrl.match(/https?:\/\/storage\.googleapis\.com\/[^\/]+\/(.+)$/);
   if (gcsMatch) {
-    return `${STORAGE_BASE_URL}/${gcsMatch[1]}`;
+    // Remove query string if present
+    const path = gcsMatch[1].split('?')[0];
+    return `${STORAGE_BASE_URL}/${path}`;
   }
   
   // Extract relative path from direct GCS bucket URLs
   // Format: https://bucket-name.storage.googleapis.com/path/to/file
-  const gcsBucketMatch = imageUrl.match(/https?:\/\/[^\/]+\.storage\.googleapis\.com\/(.+?)(?:\?.*)?$/);
+  const gcsBucketMatch = imageUrl.match(/https?:\/\/[^\/]+\.storage\.googleapis\.com\/(.+)$/);
   if (gcsBucketMatch) {
-    return `${STORAGE_BASE_URL}/${gcsBucketMatch[1]}`;
+    // Remove query string if present
+    const path = gcsBucketMatch[1].split('?')[0];
+    return `${STORAGE_BASE_URL}/${path}`;
   }
   
   // If no pattern matches, try to extract path after the domain

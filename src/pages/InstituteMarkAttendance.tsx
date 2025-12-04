@@ -29,8 +29,17 @@ const InstituteMarkAttendance = () => {
   const [scannerStatus, setScannerStatus] = useState('Ready to Scan');
   const [location, setLocation] = useState<string>('');
   const [lastAttendance, setLastAttendance] = useState<LastAttendance | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const inputRef = useRef<HTMLInputElement>(null);
   const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Live clock update
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Build address from current selection
   const buildAddress = () => {
@@ -304,7 +313,7 @@ const InstituteMarkAttendance = () => {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Date</p>
                   <p className="text-lg font-semibold text-foreground">
-                    {new Date().toLocaleDateString('en-US', { 
+                    {currentTime.toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'short', 
                       day: 'numeric' 
@@ -314,7 +323,7 @@ const InstituteMarkAttendance = () => {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Time</p>
                   <p className="text-lg font-semibold text-foreground">
-                    {new Date().toLocaleTimeString('en-US', { 
+                    {currentTime.toLocaleTimeString('en-US', { 
                       hour: '2-digit', 
                       minute: '2-digit',
                       second: '2-digit'

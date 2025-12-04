@@ -133,7 +133,7 @@ export async function uploadWithSignedUrl(
       fileSize: file.size.toString()
     });
 
-    const signedUrlResponse = await fetch(`${baseUrl}/organization/api/v1/upload/get-signed-url?${params}`, {
+    const signedUrlResponse = await fetch(`${baseUrl}/upload/get-signed-url?${params}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -185,7 +185,7 @@ export async function uploadWithSignedUrl(
     // Step 3: Verify and make file public
     onProgress?.('Verifying upload...', 80);
 
-    const verifyResponse = await fetch(`${baseUrl}/organization/api/v1/upload/verify-and-publish`, {
+    const verifyResponse = await fetch(`${baseUrl}/upload/verify-and-publish`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

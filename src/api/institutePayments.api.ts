@@ -13,9 +13,9 @@ export interface InstitutePayment {
   paymentInstructions?: string;
   bankDetails?: {
     bankName: string;
-    ifscCode: string;
     accountNumber: string;
     accountHolderName: string;
+    branch?: string;
   };
   lateFeeAmount?: number;
   lateFeeAfterDays?: number;

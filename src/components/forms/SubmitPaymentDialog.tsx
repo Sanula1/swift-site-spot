@@ -161,7 +161,7 @@ const SubmitPaymentDialog = ({ open, onOpenChange, payment, instituteId, onSucce
                 <p className="text-sm font-medium mb-2">Bank Details:</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   <p><strong>Bank:</strong> {payment.bankDetails.bankName}</p>
-                  <p><strong>IFSC:</strong> {payment.bankDetails.ifscCode}</p>
+                  <p><strong>Branch:</strong> {payment.bankDetails.branch}</p>
                   <p><strong>Account:</strong> {payment.bankDetails.accountNumber}</p>
                   <p><strong>Holder:</strong> {payment.bankDetails.accountHolderName}</p>
                 </div>

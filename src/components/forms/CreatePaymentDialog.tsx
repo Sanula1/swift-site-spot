@@ -30,7 +30,8 @@ const CreatePaymentDialog = ({ open, onOpenChange, instituteId, onSuccess }: Cre
     bankDetails: {
       bankName: '',
       accountNumber: '',
-      accountHolderName: ''
+      accountHolderName: '',
+      branch: ''
     },
     lateFeeAmount: 0,
     lateFeeAfterDays: 5,
@@ -69,11 +70,12 @@ const CreatePaymentDialog = ({ open, onOpenChange, instituteId, onSuccess }: Cre
     try {
       // Clean up bankDetails - only include if has meaningful data, exclude ifscCode
       const cleanedBankDetails = formData.bankDetails && 
-        (formData.bankDetails.bankName || formData.bankDetails.accountNumber || formData.bankDetails.accountHolderName)
+        (formData.bankDetails.bankName || formData.bankDetails.accountNumber || formData.bankDetails.accountHolderName || formData.bankDetails.branch)
         ? {
             bankName: formData.bankDetails.bankName || '',
             accountNumber: formData.bankDetails.accountNumber || '',
             accountHolderName: formData.bankDetails.accountHolderName || '',
+            branch: formData.bankDetails.branch || '',
           }
         : undefined;
 
@@ -101,7 +103,8 @@ const CreatePaymentDialog = ({ open, onOpenChange, instituteId, onSuccess }: Cre
         bankDetails: {
           bankName: '',
           accountNumber: '',
-          accountHolderName: ''
+          accountHolderName: '',
+          branch: ''
         },
         lateFeeAmount: 0,
         lateFeeAfterDays: 5,
@@ -233,14 +236,25 @@ const CreatePaymentDialog = ({ open, onOpenChange, instituteId, onSuccess }: Cre
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="accountNumber">Account Number</Label>
-                <Input
-                  id="accountNumber"
-                  value={formData.bankDetails?.accountNumber || ''}
-                  onChange={(e) => handleBankDetailsChange('accountNumber', e.target.value)}
-                  placeholder="1234567890"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={formData.bankDetails?.accountNumber || ''}
+                    onChange={(e) => handleBankDetailsChange('accountNumber', e.target.value)}
+                    placeholder="1234567890"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="branch">Branch (Bank Branch)</Label>
+                  <Input
+                    id="branch"
+                    value={formData.bankDetails?.branch || ''}
+                    onChange={(e) => handleBankDetailsChange('branch', e.target.value)}
+                    placeholder="Main Branch"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

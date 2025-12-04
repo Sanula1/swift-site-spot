@@ -170,7 +170,7 @@ export interface CreatePaymentRequest {
     bankName: string;
     accountNumber: string;
     accountHolderName: string;
-    ifscCode?: string;
+    branch?: string;
   };
   lateFeeAmount?: number;
   lateFeeAfterDays?: number;

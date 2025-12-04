@@ -15,6 +15,7 @@ import { enhancedCachedClient } from '@/api/enhancedCachedClient';
 import { CACHE_TTL } from '@/config/cacheTTL';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface PaymentSubmission {
   id: string;
@@ -205,12 +206,12 @@ const StudentSubmissionsDialog = ({
   };
 
   const handleViewReceipt = (receiptUrl: string) => {
-    window.open(receiptUrl, '_blank');
+    window.open(getImageUrl(receiptUrl), '_blank');
   };
 
   const handleDownloadReceipt = (receiptUrl: string, filename: string) => {
     const link = document.createElement('a');
-    link.href = receiptUrl;
+    link.href = getImageUrl(receiptUrl);
     link.download = filename;
     document.body.appendChild(link);
     link.click();

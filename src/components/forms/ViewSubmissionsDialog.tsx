@@ -8,6 +8,7 @@ import { FileText, CheckCircle, AlertCircle, Calendar, DollarSign, RefreshCw, X 
 import { useAuth } from '@/contexts/AuthContext';
 import { institutePaymentsApi, PaymentSubmissionsResponse, PaymentSubmission, InstitutePayment } from '@/api/institutePayments.api';
 import { useToast } from '@/hooks/use-toast';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface ViewSubmissionsDialogProps {
   open: boolean;
@@ -261,7 +262,7 @@ const ViewSubmissionsDialog = ({ open, onOpenChange, payment, instituteId }: Vie
                       {submission.receiptUrl && (
                         <div className="mt-4">
                           <button
-                            onClick={() => window.open(submission.receiptUrl, '_blank')}
+                            onClick={() => window.open(getImageUrl(submission.receiptUrl), '_blank')}
                             className="text-blue-600 hover:text-blue-800 text-sm underline"
                           >
                             View Receipt

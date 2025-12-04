@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import VerifySubjectPaymentDialog from '@/components/forms/VerifySubjectPaymentDialog';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PDFViewer } from '@/components/ui/pdf-viewer';
 import Paper from '@mui/material/Paper';
@@ -360,7 +361,7 @@ const PaymentSubmissionsPage: React.FC = () => {
                         }
                       }}>
                                   {submission.receiptUrl ? <Button variant="outline" size="sm" onClick={() => {
-                                    setSelectedReceiptUrl(submission.receiptUrl);
+                                    setSelectedReceiptUrl(getImageUrl(submission.receiptUrl));
                                     setReceiptModalOpen(true);
                                   }} className="flex items-center gap-1 text-xs px-2 py-1">
                                       <Eye className="h-3 w-3" />

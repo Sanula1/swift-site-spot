@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { subjectPaymentsApi, SubjectSubmissionsResponse } from '@/api/subjectPayments.api';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 const SubjectSubmissions = () => {
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
@@ -308,7 +309,7 @@ const SubjectSubmissions = () => {
                         {submission.receiptFileUrl && (
                           <Button variant="outline" size="sm" asChild>
                             <a 
-                              href={submission.receiptFileUrl} 
+                              href={getImageUrl(submission.receiptFileUrl)} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="flex items-center space-x-1"

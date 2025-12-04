@@ -14,6 +14,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { institutePaymentsApi, PaymentSubmissionsResponse, PaymentSubmission } from '@/api/institutePayments.api';
 import { subjectPaymentsApi, SubjectPaymentSubmission } from '@/api/subjectPayments.api';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import VerifySubmissionDialog from '@/components/forms/VerifySubmissionDialog';
@@ -242,9 +243,8 @@ const PaymentSubmissions = () => {
   };
   const handleViewReceipt = (receiptUrl: string) => {
     if (receiptUrl) {
-      // Convert relative URL to absolute URL using backend base URL
-      const baseUrl = getBaseUrl();
-      const fullUrl = receiptUrl.startsWith('http') ? receiptUrl : `${baseUrl}${receiptUrl}`;
+      // Convert to storage.suraksha.lk URL format
+      const fullUrl = getImageUrl(receiptUrl);
       setSelectedReceiptUrl(fullUrl);
       setReceiptModalOpen(true);
     }

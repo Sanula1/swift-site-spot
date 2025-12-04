@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import MUITable from '@/components/ui/mui-table';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 const MySubmissions = () => {
   const { selectedInstitute } = useAuth();
@@ -196,7 +197,7 @@ const MySubmissions = () => {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => window.open(value, '_blank')}
+          onClick={() => window.open(getImageUrl(value), '_blank')}
         >
           <Eye className="h-4 w-4 mr-1" />
           View

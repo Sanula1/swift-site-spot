@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CheckCircle, XCircle, User, Calendar, DollarSign, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SubjectPaymentSubmission } from '@/api/subjectPayments.api';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface VerifySubjectPaymentDialogProps {
   open: boolean;
@@ -98,7 +99,7 @@ const VerifySubjectPaymentDialog = ({ open, onOpenChange, submission, onVerify }
               <a 
                 target="_blank"
                 rel="noopener noreferrer"
-                href={submission.receiptUrl}
+                href={getImageUrl(submission.receiptUrl)}
                 className="text-primary hover:underline text-sm"
               >
                 View Receipt

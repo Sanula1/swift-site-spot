@@ -15,8 +15,21 @@ const MyAttendance = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [attendanceData, setAttendanceData] = useState<StudentAttendanceResponse | null>(null);
-  const [startDate, setStartDate] = useState('2025-09-01');
-  const [endDate, setEndDate] = useState('2025-09-27');
+  // Set default dates: yesterday to tomorrow
+  const getYesterday = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    return date.toISOString().split('T')[0];
+  };
+  
+  const getTomorrow = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+  const [startDate, setStartDate] = useState(getYesterday());
+  const [endDate, setEndDate] = useState(getTomorrow());
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [showFilters, setShowFilters] = useState(false);

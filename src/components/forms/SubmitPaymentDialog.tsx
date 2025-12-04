@@ -25,13 +25,20 @@ const SubmitPaymentDialog = ({ open, onOpenChange, payment, instituteId, onSucce
   const [uploadMessage, setUploadMessage] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState<Omit<SubmitPaymentRequest, 'receiptUrl'>>({
-    paymentAmount: 0,
+    paymentAmount: payment?.amount || 0,
     paymentMethod: 'BANK_TRANSFER',
     transactionReference: '',
     paymentDate: '',
     paymentRemarks: ''
   });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+
+  // Auto-fill payment amount when payment changes
+  React.useEffect(() => {
+    if (payment?.amount) {
+      setFormData(prev => ({ ...prev, paymentAmount: payment.amount }));
+    }
+  }, [payment?.amount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

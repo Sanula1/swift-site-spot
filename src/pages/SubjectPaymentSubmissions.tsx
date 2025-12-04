@@ -17,6 +17,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { enhancedCachedClient } from '@/api/enhancedCachedClient';
 import { CACHE_TTL } from '@/config/cacheTTL';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 interface PaymentSubmission {
   id: string;
   paymentId: string;
@@ -320,11 +321,11 @@ const SubjectPaymentSubmissions = () => {
     return submissionsData.data.filter(submission => submission.status === status);
   };
   const handleViewReceipt = (receiptUrl: string) => {
-    window.open(receiptUrl, '_blank');
+    window.open(getImageUrl(receiptUrl), '_blank');
   };
   const handleDownloadReceipt = (receiptUrl: string, filename: string) => {
     const link = document.createElement('a');
-    link.href = receiptUrl;
+    link.href = getImageUrl(receiptUrl);
     link.download = filename;
     document.body.appendChild(link);
     link.click();

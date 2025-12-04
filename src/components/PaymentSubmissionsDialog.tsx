@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Eye, Download, CheckCircle, Clock, XCircle, User, Calendar, FileText, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { subjectPaymentsApi, SubjectPaymentSubmission } from '@/api/subjectPayments.api';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface PaymentSubmissionsDialogProps {
   open: boolean;
@@ -218,7 +219,7 @@ const PaymentSubmissionsDialog: React.FC<PaymentSubmissionsDialogProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(submission.receiptFileUrl, '_blank')}
+                            onClick={() => window.open(getImageUrl(submission.receiptFileUrl), '_blank')}
                             className="flex items-center justify-center space-x-1 w-full sm:w-auto text-xs sm:text-sm"
                           >
                             <Download className="h-3 w-3" />

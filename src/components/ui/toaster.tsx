@@ -25,7 +25,7 @@ export function Toaster() {
                 <img 
                   src={imageUrl} 
                   alt="Student" 
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-14 h-14 rounded-full object-cover ring-2 ring-primary/30 shadow-md"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}

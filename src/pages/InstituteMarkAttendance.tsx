@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wifi, ArrowLeft, MapPin, CheckCircle } from 'lucide-react';
+import { Wifi, ArrowLeft, MapPin, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -158,8 +158,6 @@ const InstituteMarkAttendance = () => {
         const studentName = result.name || result.data?.studentName || 'Student';
         const imageUrl = result.imageUrl;
         const userIdByInstitute = result.userIdByInstitute || '';
-        const dateStr = result.data?.date ? new Date(result.data.date).toLocaleDateString() : new Date().toLocaleDateString();
-        const timeStr = result.data?.markedAt ? new Date(result.data.markedAt).toLocaleTimeString() : new Date().toLocaleTimeString();
         
         setLastAttendance({
           instituteCardId: instituteCardId.trim(),
@@ -170,12 +168,10 @@ const InstituteMarkAttendance = () => {
           imageUrl: imageUrl || undefined,
         });
 
+        // Only show one toast notification - positioned top-left
         toast({
-          title: status === 'present' ? 'Attendance Marked ✓' : 'Attendance Marked',
-          description: `${studentName} - ${status.toUpperCase()} - ${dateStr} ${timeStr}`,
-          isAttendanceAlert: true,
-          imageUrl: imageUrl,
-          status: status,
+          title: `✓ ${studentName}`,
+          description: `${status.toUpperCase()} - ${new Date().toLocaleTimeString()}`,
         });
         setInstituteCardId('');
         setScannerStatus('Attendance Marked Successfully');
@@ -380,7 +376,14 @@ const InstituteMarkAttendance = () => {
             className="w-full h-14 text-lg font-medium bg-blue-500 hover:bg-blue-600 text-white"
             size="lg"
           >
-            {isProcessing ? 'Processing...' : 'Mark Attendance'}
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Mark Attendance'
+            )}
           </Button>
         </div>
       </div>

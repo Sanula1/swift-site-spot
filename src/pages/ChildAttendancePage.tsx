@@ -3,7 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, RefreshCw, UserCheck, UserX, Clock, Filter } from 'lucide-react';
+import { 
+  Calendar, 
+  RefreshCw, 
+  UserCheck, 
+  UserX, 
+  Clock, 
+  Filter, 
+  TrendingUp,
+  CalendarDays,
+  Download,
+  Search
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { childAttendanceApi, type ChildAttendanceResponse } from '@/api/childAttendance.api';
@@ -69,24 +80,24 @@ const ChildAttendancePage = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'present':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
       case 'absent':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
       case 'late':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'present':
-        return <UserCheck className="h-4 w-4" />;
+        return <UserCheck className="h-3.5 w-3.5" />;
       case 'absent':
-        return <UserX className="h-4 w-4" />;
+        return <UserX className="h-3.5 w-3.5" />;
       case 'late':
-        return <Clock className="h-4 w-4" />;
+        return <Clock className="h-3.5 w-3.5" />;
       default:
         return null;
     }
@@ -102,125 +113,212 @@ const ChildAttendancePage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col space-y-4 p-4 overflow-hidden">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Attendance Records
+    <div className="h-screen flex flex-col space-y-6 p-6 overflow-hidden bg-gradient-to-br from-background to-muted/20">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+              <CalendarDays className="h-5 w-5 text-primary-foreground" />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Start Date</label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">End Date</label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-          <Button onClick={loadAttendance} disabled={loading} className="w-full">
-            {loading ? (
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Calendar className="h-4 w-4 mr-2" />
-            )}
-            Load Attendance
+            Attendance Records
+          </h1>
+        <p className="text-muted-foreground">
+          {selectedChild?.user?.firstName 
+            ? `Viewing attendance for ${selectedChild.user.firstName} ${selectedChild.user.lastName || ''}`.trim() 
+            : 'Select a child to view attendance'}
+        </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`gap-2 ${showFilters ? 'bg-muted' : ''}`}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
           </Button>
+          {attendanceData && (
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Filters Card */}
+      <Card className={`transition-all duration-300 ${showFilters ? 'opacity-100' : 'hidden'}`}>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                Start Date
+              </label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                End Date
+              </label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Button onClick={loadAttendance} disabled={loading} className="gap-2 h-10">
+              {loading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              {loading ? 'Loading...' : 'Search'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Load Button - Show when no data */}
+      {!attendanceData && !showFilters && (
+        <Card className="border-dashed border-2 bg-gradient-to-br from-muted/30 to-muted/10">
+          <CardContent className="py-12">
+            <div className="text-center space-y-6">
+              <div className="relative inline-flex">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <CalendarDays className="w-10 h-10 text-primary" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">Load Attendance Data</h3>
+                <p className="text-muted-foreground max-w-sm mx-auto">
+                  Click below to fetch attendance records for your child
+                </p>
+              </div>
+              <Button onClick={loadAttendance} disabled={loading} size="lg" className="gap-2 px-8">
+                {loading ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <CalendarDays className="h-5 w-5" />
+                    Load Attendance
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary Cards */}
       {attendanceData?.summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Present</CardTitle>
-              <UserCheck className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">
-                {attendanceData.summary.totalPresent}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-shadow">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Present</p>
+                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {attendanceData.summary.totalPresent}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <UserCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Absent</CardTitle>
-              <UserX className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">
-                {attendanceData.summary.totalAbsent}
+          <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Absent</p>
+                  <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                    {attendanceData.summary.totalAbsent}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <UserX className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Late</CardTitle>
-              <Clock className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-warning">
-                {attendanceData.summary.totalLate}
+          <Card className="border-l-4 border-l-amber-500 hover:shadow-lg transition-shadow">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Late</p>
+                  <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                    {attendanceData.summary.totalLate}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {attendanceData.summary.attendanceRate}%
+          <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Rate</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {attendanceData.summary.attendanceRate}%
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
+      {/* Data Table */}
       {attendanceData && (
-          <Card className="flex-1 overflow-hidden flex flex-col">
-          <CardHeader className="flex-shrink-0">
-            <CardTitle>Records ({attendanceData.pagination.totalRecords})</CardTitle>
+        <Card className="flex-1 overflow-hidden flex flex-col">
+          <CardHeader className="flex-shrink-0 border-b">
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                Records
+                <Badge variant="secondary" className="ml-2">
+                  {attendanceData.pagination.totalRecords}
+                </Badge>
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
             {attendanceData.data && attendanceData.data.length > 0 ? (
-                <Paper sx={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-                    <Table stickyHeader aria-label="attendance records table">
+              <Paper sx={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
+                  <Table stickyHeader aria-label="attendance records table">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Institute</TableCell>
-                        <TableCell>Class</TableCell>
-                        <TableCell>Subject</TableCell>
-                        <TableCell>Location</TableCell>
-                        <TableCell>Method</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Institute</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Class</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Subject</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Method</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -228,10 +326,14 @@ const ChildAttendancePage = () => {
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                         .map((record) => (
                           <TableRow hover key={record.attendanceId}>
-                            <TableCell>{new Date(record.markedAt).toLocaleDateString()}</TableCell>
                             <TableCell>
-                              <Badge className={getStatusColor(record.status)}>
-                                <div className="flex items-center gap-1">
+                              <span className="font-medium">
+                                {new Date(record.markedAt).toLocaleDateString()}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`${getStatusColor(record.status)} border`}>
+                                <div className="flex items-center gap-1.5">
                                   {getStatusIcon(record.status)}
                                   {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                                 </div>
@@ -240,9 +342,9 @@ const ChildAttendancePage = () => {
                             <TableCell>{record.instituteName}</TableCell>
                             <TableCell>{record.className}</TableCell>
                             <TableCell>{record.subjectName}</TableCell>
-                            <TableCell>{record.address}</TableCell>
+                            <TableCell className="text-muted-foreground">{record.address}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs font-normal">
                                 {record.markingMethod}
                               </Badge>
                             </TableCell>
@@ -262,9 +364,13 @@ const ChildAttendancePage = () => {
                 />
               </Paper>
             ) : (
-              <p className="text-center text-muted-foreground py-8">
-                No attendance records found for the selected date range.
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <CalendarDays className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <p className="text-lg font-medium">No Records Found</p>
+                <p className="text-muted-foreground">
+                  No attendance records found for the selected date range.
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

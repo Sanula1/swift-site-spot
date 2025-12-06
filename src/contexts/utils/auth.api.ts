@@ -2,7 +2,7 @@
 import { LoginCredentials, ApiResponse, User } from '../types/auth.types';
 
 export const getBaseUrl = (): string => {
-  return import.meta.env.VITE_LMS_BASE_URL || 'https://lms-923357517997.europe-west1.run.app';
+  return import.meta.env.VITE_LMS_BASE_URL || 'https://lmsapi.suraksha.lk';
 };
 
 export const getBaseUrl2 = (): string => {
@@ -20,7 +20,7 @@ export const getBaseUrl2 = (): string => {
 };
 
 export const getAttendanceUrl = (): string => {
-  return import.meta.env.VITE_ATTENDANCE_BASE_URL || 'https://laas-backend-02-923357517997.europe-west1.run.app';
+  return import.meta.env.VITE_ATTENDANCE_BASE_URL || 'https://lmsapi.suraksha.lk';
 };
 
 export const getApiHeaders = (): Record<string, string> => {

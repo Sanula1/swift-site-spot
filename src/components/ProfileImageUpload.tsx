@@ -173,7 +173,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       console.log('Upload successful, received URL:', publicUrl);
       
       // Update profile image URL in backend
-      const baseUrl = 'https://lms-923357517997.europe-west1.run.app';
+      const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lms.api.suraksha.lk';
       const token = localStorage.getItem('access_token');
       
       const response = await fetch(`${baseUrl}/users/${user.id}/profile`, {

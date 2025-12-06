@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, RefreshCw, Users, Search, Filter, UserPlus, ChevronRight } from 'lucide-react';
+import { Plus, RefreshCw, Users, Search, Filter, UserPlus, ChevronRight, User } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
@@ -141,6 +143,7 @@ const Students = () => {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [includeParentInfo, setIncludeParentInfo] = useState(false);
   const [imagePreview, setImagePreview] = useState<{ isOpen: boolean; url: string; title: string }>({
     isOpen: false,
     url: '',
@@ -236,9 +239,13 @@ const Students = () => {
     }
     
     try {
+      const queryParams: Record<string, string> = {
+        parent: String(includeParentInfo)
+      };
+      
       const data: InstituteStudentsResponse = await enhancedCachedClient.get(
         `/institute-users/institute/${selectedInstitute.id}/users/STUDENT/class/${selectedClass.id}`,
-        { parent: 'true' },
+        queryParams,
         {
           ttl: CACHE_TTL.STUDENTS,
           forceRefresh,
@@ -294,9 +301,13 @@ const Students = () => {
     }
     
     try {
+      const queryParams: Record<string, string> = {
+        parent: String(includeParentInfo)
+      };
+      
       const data: InstituteStudentsResponse = await enhancedCachedClient.get(
         `/institute-users/institute/${selectedInstitute.id}/users/STUDENT/class/${selectedClass.id}/subject/${selectedSubject.id}`,
-        { parent: 'true' },
+        queryParams,
         {
           ttl: CACHE_TTL.STUDENTS,
           forceRefresh,
@@ -374,6 +385,18 @@ const Students = () => {
     
     loadData();
   }, [contextKey, shouldUseInstituteApi]);
+
+  // Refetch when parent filter changes
+  useEffect(() => {
+    if (!shouldUseInstituteApi || !selectedClass || !dataLoaded) return;
+    
+    // Trigger refresh with the new filter
+    if (selectedSubject) {
+      fetchInstituteSubjectStudents(true);
+    } else {
+      fetchInstituteClassStudents(true);
+    }
+  }, [includeParentInfo]);
 
   // Determine which fetch function to use (for refresh button - forces backend call)
   const getLoadFunction = () => {
@@ -829,11 +852,24 @@ const Students = () => {
                   </SelectContent>
                 </Select>
               )}
+              {shouldUseInstituteApi && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="includeParentInfo" 
+                    checked={includeParentInfo}
+                    onCheckedChange={(checked) => setIncludeParentInfo(checked === true)}
+                  />
+                  <Label htmlFor="includeParentInfo" className="text-sm font-medium cursor-pointer">
+                    Include Parent Info
+                  </Label>
+                </div>
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm('');
                   setStatusFilter('all');
+                  setIncludeParentInfo(false);
                 }}
                 className="w-full"
               >

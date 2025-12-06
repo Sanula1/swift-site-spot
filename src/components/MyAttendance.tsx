@@ -1,20 +1,43 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Calendar, Clock, MapPin, User, RefreshCw, AlertTriangle, TrendingUp, UserCheck, UserX, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, RefreshCw, AlertTriangle, TrendingUp, UserCheck, UserX, Filter, Building2, BookOpen, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRefreshWithCooldown } from '@/hooks/useRefreshWithCooldown';
 import { studentAttendanceApi, type StudentAttendanceRecord, type StudentAttendanceResponse } from '@/api/studentAttendance.api';
-import { useApiRequest } from '@/hooks/useApiRequest';
 
 const MyAttendance = () => {
-  const { user } = useAuth();
+  const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
+  const params = useParams();
   const { toast } = useToast();
   const [attendanceData, setAttendanceData] = useState<StudentAttendanceResponse | null>(null);
+  
+  // Get context from URL params, then current IDs, then selected objects
+  const instituteId = params.instituteId || currentInstituteId || selectedInstitute?.id;
+  const classId = params.classId || currentClassId || selectedClass?.id;
+  const subjectId = params.subjectId || currentSubjectId || selectedSubject?.id;
+  
+  console.log('MyAttendance context:', { 
+    paramsInstituteId: params.instituteId, paramsClassId: params.classId, paramsSubjectId: params.subjectId,
+    currentInstituteId, currentClassId, currentSubjectId,
+    finalInstituteId: instituteId, finalClassId: classId, finalSubjectId: subjectId 
+  });
+  
+  // Determine context level for display
+  const getContextLevel = () => {
+    if (subjectId && classId && instituteId) return 'subject';
+    if (classId && instituteId) return 'class';
+    if (instituteId) return 'institute';
+    return 'all';
+  };
+  
+  const contextLevel = getContextLevel();
+  
   // Set default dates: yesterday to tomorrow
   const getYesterday = () => {
     const date = new Date();
@@ -28,29 +51,46 @@ const MyAttendance = () => {
     return date.toISOString().split('T')[0];
   };
 
+  // Get min/max dates for 30-day limit
+  const getMinDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getMaxDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toISOString().split('T')[0];
+  };
+
   const [startDate, setStartDate] = useState(getYesterday());
   const [endDate, setEndDate] = useState(getTomorrow());
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [showFilters, setShowFilters] = useState(false);
-
-  const { execute: fetchAttendance, loading } = useApiRequest(studentAttendanceApi.getStudentAttendance);
+  const [loading, setLoading] = useState(false);
   const { refresh, isRefreshing, canRefresh, cooldownRemaining } = useRefreshWithCooldown(10);
 
   const loadStudentAttendance = async (forceRefresh = false) => {
-    if (!user?.id) {
+    if (!user?.id || !instituteId) {
       toast({
-        title: "Authentication Error",
-        description: "Please log in to view attendance",
+        title: "Missing Context",
+        description: "Please select an institute to view attendance",
         variant: "destructive",
       });
       return;
     }
 
+    setLoading(true);
     try {
-      console.log('Loading attendance for student:', user.id);
-      const response = await fetchAttendance({
+      console.log('Loading attendance for student:', user.id, 'with context:', { instituteId, classId, subjectId });
+      
+      const response = await studentAttendanceApi.getAttendance({
         studentId: user.id,
+        instituteId,
+        classId,
+        subjectId,
         startDate,
         endDate,
         page: currentPage,
@@ -62,9 +102,10 @@ const MyAttendance = () => {
       console.log('Student attendance API response:', response);
       setAttendanceData(response);
       
+      const contextText = contextLevel === 'subject' ? 'subject' : contextLevel === 'class' ? 'class' : 'institute';
       toast({
         title: response.success ? "Attendance Loaded" : "Partial Load",
-        description: response.message || `Loaded ${response.data?.length || 0} attendance records`,
+        description: response.message || `Loaded ${response.data?.length || 0} ${contextText} attendance records`,
       });
     } catch (error) {
       console.error('Error loading student attendance:', error);
@@ -73,14 +114,16 @@ const MyAttendance = () => {
         description: "Failed to load attendance data",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && instituteId) {
       loadStudentAttendance();
     }
-  }, [user?.id, currentPage, limit]);
+  }, [user?.id, currentPage, limit, instituteId, classId, subjectId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -146,7 +189,24 @@ const MyAttendance = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Attendance</h1>
           <p className="text-muted-foreground">
-            Your attendance records and statistics
+            {contextLevel === 'subject' && selectedSubject ? (
+              <span className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                {selectedInstitute?.name} → {selectedClass?.name} → {selectedSubject?.name}
+              </span>
+            ) : contextLevel === 'class' && selectedClass ? (
+              <span className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                {selectedInstitute?.name} → {selectedClass?.name}
+              </span>
+            ) : contextLevel === 'institute' && selectedInstitute ? (
+              <span className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                {selectedInstitute?.name}
+              </span>
+            ) : (
+              'Your attendance records and statistics'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -191,6 +251,8 @@ const MyAttendance = () => {
                 <Input
                   type="date"
                   value={startDate}
+                  min={getMinDate()}
+                  max={endDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
@@ -199,6 +261,8 @@ const MyAttendance = () => {
                 <Input
                   type="date"
                   value={endDate}
+                  min={startDate}
+                  max={getMaxDate()}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
@@ -409,6 +473,24 @@ const MyAttendance = () => {
                 </div>
               )}
             </>
+          ) : attendanceData?.summary && (attendanceData.summary.totalPresent > 0 || attendanceData.summary.totalAbsent > 0 || attendanceData.summary.totalLate > 0) ? (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Attendance Summary Available</h3>
+              <p className="text-muted-foreground">
+                Your attendance summary is shown above. Detailed records are being processed by the system.
+              </p>
+              <div className="mt-4 flex justify-center gap-4">
+                <Badge variant="outline" className="px-4 py-2">
+                  <UserCheck className="h-4 w-4 mr-2 text-green-600" />
+                  Present: {attendanceData.summary.totalPresent}
+                </Badge>
+                <Badge variant="outline" className="px-4 py-2">
+                  <UserX className="h-4 w-4 mr-2 text-red-600" />
+                  Absent: {attendanceData.summary.totalAbsent}
+                </Badge>
+              </div>
+            </div>
           ) : (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

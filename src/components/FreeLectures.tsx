@@ -107,7 +107,7 @@ const FreeLectures = () => {
     setError(null);
 
     try {
-      const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lms-923357517997.europe-west1.run.app';
+      const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lms.api.suraksha.lk';
       const endpoint = `/api/structured-lectures/subject/${selectedSubject.id}/grade/${selectedClassGrade || selectedClass?.grade || 10}`;
       
       const token = localStorage.getItem('access_token');

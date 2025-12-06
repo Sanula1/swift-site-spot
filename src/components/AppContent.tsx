@@ -31,6 +31,7 @@ import MyAttendance from '@/components/MyAttendance';
 
 import AttendanceMarkers from '@/components/AttendanceMarkers';
 import QRAttendance from '@/components/QRAttendance';
+import RfidAttendance from '@/pages/RFIDAttendance';
 import InstituteMarkAttendance from '@/pages/InstituteMarkAttendance';
 import Lectures from '@/components/Lectures';
 import LiveLectures from '@/components/LiveLectures';
@@ -122,6 +123,18 @@ const AppContent = ({ initialPage }: AppContentProps) => {
     // exam/:id/create-results
     if (/\/exam\/[^\/]+\/create-results/.test(path)) {
       return 'exam-create-results';
+    }
+    // child/:id/child-results
+    if (/\/child\/[^\/]+\/child-results/.test(path)) {
+      return 'child-results';
+    }
+    // child/:id/child-attendance or child/:id/attendance
+    if (/\/child\/[^\/]+\/(child-)?attendance/.test(path)) {
+      return 'child-attendance';
+    }
+    // child/:id/child-transport
+    if (/\/child\/[^\/]+\/child-transport/.test(path)) {
+      return 'child-transport';
     }
     return null;
   }, [location.pathname]);
@@ -398,6 +411,14 @@ const AppContent = ({ initialPage }: AppContentProps) => {
   };
 
   const renderComponent = () => {
+    // CRITICAL: Handle child routes FIRST - regardless of user role
+    // When a child is selected and URL matches child routes, render the child pages
+    if (selectedChild && nestedRouteComponent) {
+      if (nestedRouteComponent === 'child-results') return <ChildResults />;
+      if (nestedRouteComponent === 'child-attendance') return <ChildAttendancePage />;
+      if (nestedRouteComponent === 'child-transport') return <ChildTransportPage />;
+    }
+    
     // Handle organization-related pages
     if (currentPage === 'organizations') {
       if (showCreateOrgForm) {
@@ -553,6 +574,11 @@ const AppContent = ({ initialPage }: AppContentProps) => {
 
     // For Parent role
     if (userRole === 'Parent') {
+      // Handle nested child routes first
+      if (nestedRouteComponent === 'child-results') return <ChildResults />;
+      if (nestedRouteComponent === 'child-attendance') return <ChildAttendancePage />;
+      if (nestedRouteComponent === 'child-transport') return <ChildTransportPage />;
+
       if (currentPage === 'parents') {
         return <ParentChildrenSelector />;
       }
@@ -709,10 +735,12 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <MyAttendance />;
         case 'attendance-markers':
           return <AttendanceMarkers />;
-        case 'qr-attendance':
-          return <QRAttendance />;
-        case 'institute-mark-attendance':
-          return <InstituteMarkAttendance />;
+      case 'qr-attendance':
+        return <QRAttendance />;
+      case 'rfid-attendance':
+        return <RfidAttendance />;
+      case 'institute-mark-attendance':
+        return <InstituteMarkAttendance />;
         case 'profile':
           return <Profile />;
         case 'select-institute':
@@ -842,6 +870,8 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <AttendanceMarkers />;
       case 'qr-attendance':
         return <QRAttendance />;
+      case 'rfid-attendance':
+        return <RfidAttendance />;
       case 'institute-mark-attendance':
         return <InstituteMarkAttendance />;
       case 'lectures':

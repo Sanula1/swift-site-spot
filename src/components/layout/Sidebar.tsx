@@ -283,7 +283,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
     // Special handling for Teacher role
     if (userRole === 'Teacher') {
-      // 1. Teacher without institute - only show basic options + payment
+      // 1. Teacher without institute - only show basic options (NO Organizations)
       if (!selectedInstitute) {
         return [
           {
@@ -299,18 +299,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: LayoutDashboard,
             permission: 'view-dashboard',
             alwaysShow: false
-          },
-          {
-            id: 'organizations',
-            label: 'Organizations',
-            icon: Building2,
-            permission: 'view-organizations',
-            alwaysShow: true
           }
         ];
       }
 
-      // 2. Teacher with institute selected (but no class/subject)
+      // 2. Teacher with institute selected (but no class/subject) - NO Organizations
       if (selectedInstitute && !selectedClass && !selectedSubject) {
         return [
           {
@@ -319,13 +312,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: LayoutDashboard,
             permission: 'view-dashboard',
             alwaysShow: false
-          },
-          {
-            id: 'organizations',
-            label: 'Organizations',
-            icon: Building2,
-            permission: 'view-organizations',
-            alwaysShow: true
           },
           {
             id: 'subjects',
@@ -1222,15 +1208,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
 
   const getMyChildrenItems = () => {
-    // Show "My Children" section when no institute is selected for Parent and User roles
+    // Show "My Children" section when no institute is selected for Parent, User, and UserWithoutStudent roles
     const userType = user?.userType?.toLowerCase();
-    if (!selectedInstitute && (userType === 'parent' || userType === 'user')) {
+    const isParentOrUserRole = userType === 'parent' || userType === 'user' || userType === 'user_without_student' || userRole === 'UserWithoutStudent';
+    if (!selectedInstitute && isParentOrUserRole) {
       return [
         {
           id: 'my-children',
           label: 'My Children',
           icon: Users,
-          permission: 'view-profile',
+          permission: 'view-parents',
           alwaysShow: true
         }
       ];
@@ -1248,7 +1235,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     
     return [
       {
-        id: 'child/:childId/results',
+        id: 'child-results',
         label: 'Results',
         icon: Award,
         permission: 'view-profile',
@@ -1256,7 +1243,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         path: `/child/${childId}/results`
       },
       {
-        id: 'child/:childId/attendance',
+        id: 'child-attendance',
         label: 'Attendance',
         icon: UserCheck,
         permission: 'view-profile',
@@ -1264,7 +1251,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         path: `/child/${childId}/attendance`
       },
       {
-        id: 'child/:childId/transport',
+        id: 'child-transport',
         label: 'Transport',
         icon: Truck,
         permission: 'view-profile',

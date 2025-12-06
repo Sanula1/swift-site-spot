@@ -10,8 +10,9 @@ import TableRow from '@mui/material/TableRow';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
-import { RefreshCw, CheckCircle, Eye, XCircle } from 'lucide-react';
+import { RefreshCw, CheckCircle, Eye, XCircle, ImageIcon, ImageOff } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import {
@@ -24,6 +25,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface UnverifiedImageStudent {
   id: string;
@@ -323,24 +325,44 @@ const VerifyImage = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                students.map((student) => (
+                students.map((student) => {
+                  const hasInstituteImage = !!student.instituteUserImageUrl;
+                  const instituteImageUrl = getImageUrl(student.instituteUserImageUrl);
+                  const profileImageUrl = getImageUrl(student.imageUrl);
+                  
+                  return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={student.id}>
                     <TableCell align="center">
-                      <Avatar 
-                        className="h-16 w-16 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setPreviewImage({ url: student.instituteUserImageUrl, title: `${student.name} - Institute Image` })}
-                      >
-                        <AvatarImage src={student.instituteUserImageUrl} alt={student.name} />
-                        <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
+                      <div className="flex flex-col items-center gap-1">
+                        {hasInstituteImage ? (
+                          <Avatar 
+                            className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setPreviewImage({ url: instituteImageUrl, title: `${student.name} - Institute Image` })}
+                          >
+                            <AvatarImage src={instituteImageUrl} alt={student.name} />
+                            <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                            <ImageOff className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                        <Badge variant={hasInstituteImage ? "default" : "secondary"} className="text-xs">
+                          {hasInstituteImage ? (
+                            <><ImageIcon className="h-3 w-3 mr-1" /> Uploaded</>
+                          ) : (
+                            <><ImageOff className="h-3 w-3 mr-1" /> No Image</>
+                          )}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell align="center">
                       {student.imageUrl ? (
                         <Avatar 
                           className="h-16 w-16 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setPreviewImage({ url: student.imageUrl!, title: `${student.name} - Profile Image` })}
+                          onClick={() => setPreviewImage({ url: profileImageUrl, title: `${student.name} - Profile Image` })}
                         >
-                          <AvatarImage src={student.imageUrl} alt={student.name} />
+                          <AvatarImage src={profileImageUrl} alt={student.name} />
                           <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                         </Avatar>
                       ) : (
@@ -382,7 +404,8 @@ const VerifyImage = () => {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                );
+                })
               )}
             </TableBody>
           </Table>
@@ -427,13 +450,19 @@ const VerifyImage = () => {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">Institute Image</Label>
                 <div className="flex justify-center">
-                  <Avatar 
-                    className="h-32 w-32 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setPreviewImage({ url: selectedStudent.instituteUserImageUrl, title: `${selectedStudent.name} - Institute Image` })}
-                  >
-                    <AvatarImage src={selectedStudent.instituteUserImageUrl} alt={selectedStudent.name} />
-                    <AvatarFallback>{selectedStudent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
+                  {selectedStudent.instituteUserImageUrl ? (
+                    <Avatar 
+                      className="h-32 w-32 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setPreviewImage({ url: getImageUrl(selectedStudent.instituteUserImageUrl), title: `${selectedStudent.name} - Institute Image` })}
+                    >
+                      <AvatarImage src={getImageUrl(selectedStudent.instituteUserImageUrl)} alt={selectedStudent.name} />
+                      <AvatarFallback>{selectedStudent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-32 w-32 rounded-full bg-muted flex items-center justify-center">
+                      <ImageOff className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -444,9 +473,9 @@ const VerifyImage = () => {
                   <div className="flex justify-center">
                     <Avatar 
                       className="h-32 w-32 cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setPreviewImage({ url: selectedStudent.imageUrl!, title: `${selectedStudent.name} - Profile Image` })}
+                      onClick={() => setPreviewImage({ url: getImageUrl(selectedStudent.imageUrl!), title: `${selectedStudent.name} - Profile Image` })}
                     >
-                      <AvatarImage src={selectedStudent.imageUrl} alt={`${selectedStudent.name} profile`} />
+                      <AvatarImage src={getImageUrl(selectedStudent.imageUrl)} alt={`${selectedStudent.name} profile`} />
                       <AvatarFallback>{selectedStudent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
                   </div>

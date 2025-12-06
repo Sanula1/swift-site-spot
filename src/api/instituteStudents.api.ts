@@ -105,9 +105,13 @@ class InstituteStudentsApi {
   ): Promise<StudentListResponse> {
     const queryParams = new URLSearchParams({
       page: String(params.page || 1),
-      limit: String(params.limit || 50),
-      parent: String(params.parent ?? true)
+      limit: String(params.limit || 50)
     });
+    
+    // Only add parent param if explicitly specified
+    if (params.parent !== undefined) {
+      queryParams.append('parent', String(params.parent));
+    }
 
     console.log('Fetching students for institute:', instituteId, 'class:', classId);
 
@@ -131,9 +135,13 @@ class InstituteStudentsApi {
   ): Promise<StudentListResponse> {
     const queryParams = new URLSearchParams({
       page: String(params.page || 1),
-      limit: String(params.limit || 50),
-      parent: String(params.parent ?? true)
+      limit: String(params.limit || 50)
     });
+    
+    // Only add parent param if explicitly specified
+    if (params.parent !== undefined) {
+      queryParams.append('parent', String(params.parent));
+    }
 
     console.log('Fetching students for institute:', instituteId, 'class:', classId, 'subject:', subjectId);
 

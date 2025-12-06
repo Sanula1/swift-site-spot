@@ -99,7 +99,9 @@ export interface ChildData {
   id: string;
   name: string;
   phoneNumber: string;
+  email?: string;
   relationship: string;
+  imageUrl?: string;
 }
 
 export interface ParentChildrenResponse {

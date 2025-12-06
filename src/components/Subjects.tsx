@@ -121,14 +121,27 @@ const Subjects = () => {
   } = tableData;
   
   // Transform nested API response to flattened structure for table
-  const transformedData = subjectsData.map((item: any) => ({
-    ...item.subject,
-    teacher: item.teacher,
-    teacherId: item.teacherId,
-    instituteId: item.instituteId,
-    classId: item.classId,
-    subjectId: item.subjectId || item.subject?.id
-  }));
+  // Handle both nested (class-level) and flat (all subjects) response formats
+  const transformedData = subjectsData.map((item: any) => {
+    // If item has a 'subject' property, it's from class-level endpoint (nested)
+    if (item.subject) {
+      return {
+        ...item.subject,
+        teacher: item.teacher,
+        teacherId: item.teacherId,
+        instituteId: item.instituteId,
+        classId: item.classId,
+        subjectId: item.subjectId || item.subject?.id
+      };
+    }
+    // Otherwise it's from /subjects/all endpoint (flat structure)
+    return {
+      ...item,
+      teacher: item.teacher || null,
+      teacherId: item.teacherId || null,
+      subjectId: item.id
+    };
+  });
   
   const dataLoaded = subjectsData.length > 0;
   const isInstituteAdmin = userRole === 'InstituteAdmin';

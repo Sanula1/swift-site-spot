@@ -138,7 +138,8 @@ export const extractPageFromUrl = (pathname: string): string => {
     return 'exams'; // Map to parent for sidebar highlighting
   }
   
-  // Map sub-routes to their parent pages
+  // Map sub-routes to their parent pages (for sidebar highlighting only)
+  // NOTE: rfid-attendance removed - it needs to return its own page name for rendering
   const subRouteMap: Record<string, string> = {
     'system-payments/create': 'system-payment',
     'payment-submissions': 'system-payment',

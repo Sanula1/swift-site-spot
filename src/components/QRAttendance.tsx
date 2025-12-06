@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Camera, QrCode, UserCheck, CheckCircle, MapPin, X, BarChart3, Smartphone, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Camera, QrCode, UserCheck, CheckCircle, MapPin, X, BarChart3, Smartphone, AlertCircle, Loader2 } from 'lucide-react';
 import jsQR from 'jsqr';
 import { childAttendanceApi, MarkAttendanceByCardRequest, MarkAttendanceRequest } from '@/api/childAttendance.api';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
@@ -42,6 +42,7 @@ const QRAttendance = () => {
   const [showMethodDialog, setShowMethodDialog] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'qr' | 'barcode' | 'rfid/nfc'>('qr');
   const [studentImagesMap, setStudentImagesMap] = useState<Map<string, string>>(new Map());
+  const [isManualProcessing, setIsManualProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -195,7 +196,19 @@ const QRAttendance = () => {
     
     // Navigate to RFID page if RFID/NFC is selected
     if (method === 'rfid/nfc') {
-      navigate('/rfid-attendance');
+      // Build context-aware URL for RFID attendance
+      let rfidUrl = '/rfid-attendance';
+      if (currentInstituteId) {
+        rfidUrl = `/institute/${currentInstituteId}`;
+        if (selectedClass?.id) {
+          rfidUrl += `/class/${selectedClass.id}`;
+          if (selectedSubject?.id) {
+            rfidUrl += `/subject/${selectedSubject.id}`;
+          }
+        }
+        rfidUrl += '/rfid-attendance';
+      }
+      navigate(rfidUrl);
       return;
     }
     
@@ -521,6 +534,7 @@ const QRAttendance = () => {
       return;
     }
 
+    setIsManualProcessing(true);
     try {
       const request: MarkAttendanceRequest = {
         studentId: studentId.trim(),
@@ -588,14 +602,6 @@ const QRAttendance = () => {
         console.log('New Count:', previousCount + 1);
         console.log('Input field cleared');
 
-        addAlert({
-          type: 'success',
-          studentName: result.name || `Student ${studentId}`,
-          studentId: studentId,
-          status: result.status,
-          message: `${result.name || `Student ${studentId}`} marked as ${result.status}`
-        });
-
         setTimeout(() => {
           console.log('🎯 Focusing on input field for next entry');
           inputRef.current?.focus();
@@ -636,6 +642,8 @@ const QRAttendance = () => {
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to mark attendance'
       });
+    } finally {
+      setIsManualProcessing(false);
     }
   };
 
@@ -968,15 +976,24 @@ const QRAttendance = () => {
                </div>
              </div>
              
-             <Button 
-               onClick={handleManualMarkAttendance}
-               className="w-full"
-               disabled={!studentId.trim()}
-               size="lg"
-             >
-               <UserCheck className="h-5 w-5 mr-2" />
-               Mark Attendance
-             </Button>
+              <Button 
+                onClick={handleManualMarkAttendance}
+                className="w-full"
+                disabled={!studentId.trim() || isManualProcessing}
+                size="lg"
+              >
+                {isManualProcessing ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="h-5 w-5 mr-2" />
+                    Mark Attendance
+                  </>
+                )}
+              </Button>
            </CardContent>
         </Card>
       </div>

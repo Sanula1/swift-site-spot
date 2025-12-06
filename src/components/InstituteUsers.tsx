@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, RefreshCw, GraduationCap, Users, UserCheck, Plus, UserPlus, UserCog, Filter, Search, Shield, Upload, CheckCircle, UserX, UserMinus } from 'lucide-react';
+import { Eye, RefreshCw, GraduationCap, Users, UserCheck, Plus, UserPlus, UserCog, Filter, Search, Shield, Upload, CheckCircle, UserX, UserMinus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
@@ -122,6 +122,10 @@ const InstituteUsers = () => {
     open: false,
     student: null
   });
+  
+  // Loading states for individual button actions
+  const [activatingUserId, setActivatingUserId] = useState<string | null>(null);
+  const [deactivatingUserId, setDeactivatingUserId] = useState<string | null>(null);
 
   // Get current filters based on active tab
   const getCurrentFilters = () => {
@@ -343,6 +347,7 @@ const InstituteUsers = () => {
   const handleActivateUser = async (userId: string) => {
     if (!currentInstituteId) return;
     
+    setActivatingUserId(userId);
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(
@@ -379,12 +384,15 @@ const InstituteUsers = () => {
         variant: "destructive",
         duration: 1500
       });
+    } finally {
+      setActivatingUserId(null);
     }
   };
 
   const handleDeactivateUser = async (userId: string) => {
     if (!currentInstituteId) return;
     
+    setDeactivatingUserId(userId);
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(
@@ -420,6 +428,8 @@ const InstituteUsers = () => {
         variant: "destructive",
         duration: 1500
       });
+    } finally {
+      setDeactivatingUserId(null);
     }
   };
 
@@ -878,24 +888,24 @@ const InstituteUsers = () => {
                   </TableCell>
                   <TableCell>
                     {userData.instituteUserImageUrl ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-green-600 hover:text-green-700 pointer-events-none"
-                        disabled
-                      >
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                      <Badge variant="default" className="bg-green-600 hover:bg-green-600 text-white">
+                        <CheckCircle className="h-3 w-3 mr-1" />
                         Uploaded
-                      </Button>
+                      </Badge>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setUploadingUserId(userData.id)}
-                      >
-                        <Upload className="h-4 w-4 mr-1" />
-                        Upload
-                      </Button>
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge variant="secondary" className="text-xs">
+                          No Image
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setUploadingUserId(userData.id)}
+                        >
+                          <Upload className="h-4 w-4 mr-1" />
+                          Upload
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                   {activeTab === 'STUDENT' && (
@@ -927,19 +937,29 @@ const InstituteUsers = () => {
                           size="sm"
                           variant="default"
                           onClick={() => handleActivateUser(userData.id)}
+                          disabled={activatingUserId === userData.id}
                           className="bg-green-600 hover:bg-green-700"
                         >
-                          <UserCheck className="h-4 w-4 mr-1" />
-                          Activate
+                          {activatingUserId === userData.id ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <UserCheck className="h-4 w-4 mr-1" />
+                          )}
+                          {activatingUserId === userData.id ? 'Activating...' : 'Activate'}
                         </Button>
                       ) : (
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeactivateUser(userData.id)}
+                          disabled={deactivatingUserId === userData.id}
                         >
-                          <UserMinus className="h-4 w-4 mr-1" />
-                          Deactivate
+                          {deactivatingUserId === userData.id ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <UserMinus className="h-4 w-4 mr-1" />
+                          )}
+                          {deactivatingUserId === userData.id ? 'Deactivating...' : 'Deactivate'}
                         </Button>
                       )}
                       <Button

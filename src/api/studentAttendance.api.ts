@@ -1,4 +1,3 @@
-import { getAttendanceUrl, getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';
 import { enhancedCachedClient } from './enhancedCachedClient';
 
 export interface StudentAttendanceRecord {
@@ -6,8 +5,8 @@ export interface StudentAttendanceRecord {
   studentId: string;
   studentName: string;
   instituteName: string;
-  className: string;
-  subjectName: string;
+  className?: string;
+  subjectName?: string;
   address: string;
   markedBy: string;
   markedAt: string;
@@ -37,31 +36,60 @@ export interface StudentAttendanceResponse {
 
 export interface StudentAttendanceParams {
   studentId: string;
-  startDate?: string;
-  endDate?: string;
+  instituteId: string;
+  classId?: string;
+  subjectId?: string;
+  startDate: string;
+  endDate: string;
   page?: number;
   limit?: number;
   userId?: string;
   role?: string;
-  instituteId?: string;
-  classId?: string;
 }
 
 export const studentAttendanceApi = {
-  getStudentAttendance: async (params: StudentAttendanceParams, forceRefresh = false): Promise<StudentAttendanceResponse> => {
-    // Build query params
+  // Institute level attendance
+  getInstituteAttendance: async (params: StudentAttendanceParams, forceRefresh = false): Promise<StudentAttendanceResponse> => {
     const queryParams = new URLSearchParams();
-    if (params.startDate) queryParams.append('startDate', params.startDate);
-    if (params.endDate) queryParams.append('endDate', params.endDate);
+    queryParams.append('startDate', params.startDate);
+    queryParams.append('endDate', params.endDate);
+    queryParams.append('studentId', params.studentId);
     queryParams.append('page', (params.page || 1).toString());
     queryParams.append('limit', (params.limit || 50).toString());
 
-    const endpoint = `/attendance/student/${params.studentId}?${queryParams.toString()}`;
+    const endpoint = `/api/attendance/institute/${params.instituteId}?${queryParams.toString()}`;
     
-    console.log('=== STUDENT ATTENDANCE API CALL ===');
+    console.log('=== INSTITUTE ATTENDANCE API CALL ===');
     console.log('Endpoint:', endpoint);
     
-    // Use enhancedCachedClient with context
+    return enhancedCachedClient.get<StudentAttendanceResponse>(endpoint, undefined, {
+      forceRefresh,
+      ttl: 10,
+      useStaleWhileRevalidate: true,
+      userId: params.userId || params.studentId,
+      instituteId: params.instituteId,
+      role: params.role
+    });
+  },
+
+  // Class level attendance
+  getClassAttendance: async (params: StudentAttendanceParams, forceRefresh = false): Promise<StudentAttendanceResponse> => {
+    if (!params.classId) {
+      throw new Error('classId is required for class level attendance');
+    }
+    
+    const queryParams = new URLSearchParams();
+    queryParams.append('startDate', params.startDate);
+    queryParams.append('endDate', params.endDate);
+    queryParams.append('studentId', params.studentId);
+    queryParams.append('page', (params.page || 1).toString());
+    queryParams.append('limit', (params.limit || 50).toString());
+
+    const endpoint = `/api/attendance/institute/${params.instituteId}/class/${params.classId}?${queryParams.toString()}`;
+    
+    console.log('=== CLASS ATTENDANCE API CALL ===');
+    console.log('Endpoint:', endpoint);
+    
     return enhancedCachedClient.get<StudentAttendanceResponse>(endpoint, undefined, {
       forceRefresh,
       ttl: 10,
@@ -73,50 +101,44 @@ export const studentAttendanceApi = {
     });
   },
 
-  // Utility methods
-  hasAttendanceCached: (params: StudentAttendanceParams) => {
+  // Subject level attendance
+  getSubjectAttendance: async (params: StudentAttendanceParams, forceRefresh = false): Promise<StudentAttendanceResponse> => {
+    if (!params.classId || !params.subjectId) {
+      throw new Error('classId and subjectId are required for subject level attendance');
+    }
+    
     const queryParams = new URLSearchParams();
-    if (params.startDate) queryParams.append('startDate', params.startDate);
-    if (params.endDate) queryParams.append('endDate', params.endDate);
+    queryParams.append('startDate', params.startDate);
+    queryParams.append('endDate', params.endDate);
+    queryParams.append('studentId', params.studentId);
     queryParams.append('page', (params.page || 1).toString());
     queryParams.append('limit', (params.limit || 50).toString());
 
-    return enhancedCachedClient.hasCache(`/attendance/student/${params.studentId}?${queryParams.toString()}`, undefined, {
-      userId: params.userId || params.studentId,
-      instituteId: params.instituteId,
-      classId: params.classId,
-      role: params.role
-    });
-  },
-
-  getCachedAttendance: (params: StudentAttendanceParams) => {
-    const queryParams = new URLSearchParams();
-    if (params.startDate) queryParams.append('startDate', params.startDate);
-    if (params.endDate) queryParams.append('endDate', params.endDate);
-    queryParams.append('page', (params.page || 1).toString());
-    queryParams.append('limit', (params.limit || 50).toString());
-
-    return enhancedCachedClient.getCachedOnly<StudentAttendanceResponse>(`/attendance/student/${params.studentId}?${queryParams.toString()}`, undefined, {
-      userId: params.userId || params.studentId,
-      instituteId: params.instituteId,
-      classId: params.classId,
-      role: params.role
-    });
-  },
-
-  preloadAttendance: async (params: StudentAttendanceParams) => {
-    const queryParams = new URLSearchParams();
-    if (params.startDate) queryParams.append('startDate', params.startDate);
-    if (params.endDate) queryParams.append('endDate', params.endDate);
-    queryParams.append('page', (params.page || 1).toString());
-    queryParams.append('limit', (params.limit || 50).toString());
-
-    await enhancedCachedClient.get<StudentAttendanceResponse>(`/attendance/student/${params.studentId}?${queryParams.toString()}`, undefined, {
+    const endpoint = `/api/attendance/institute/${params.instituteId}/class/${params.classId}/subject/${params.subjectId}?${queryParams.toString()}`;
+    
+    console.log('=== SUBJECT ATTENDANCE API CALL ===');
+    console.log('Endpoint:', endpoint);
+    
+    return enhancedCachedClient.get<StudentAttendanceResponse>(endpoint, undefined, {
+      forceRefresh,
       ttl: 10,
+      useStaleWhileRevalidate: true,
       userId: params.userId || params.studentId,
       instituteId: params.instituteId,
       classId: params.classId,
+      subjectId: params.subjectId,
       role: params.role
     });
+  },
+
+  // Smart method that picks the right endpoint based on context
+  getAttendance: async (params: StudentAttendanceParams, forceRefresh = false): Promise<StudentAttendanceResponse> => {
+    if (params.subjectId && params.classId) {
+      return studentAttendanceApi.getSubjectAttendance(params, forceRefresh);
+    } else if (params.classId) {
+      return studentAttendanceApi.getClassAttendance(params, forceRefresh);
+    } else {
+      return studentAttendanceApi.getInstituteAttendance(params, forceRefresh);
+    }
   }
 };

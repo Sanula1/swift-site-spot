@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { childAttendanceApi } from '@/api/childAttendance.api';
-import AppLayout from '@/components/layout/AppLayout';
 
 interface LastAttendance {
   rfidCardId: string;
@@ -30,8 +29,17 @@ const RfidAttendance = () => {
   const [scannerStatus, setScannerStatus] = useState('Ready to Scan');
   const [location, setLocation] = useState<string>('');
   const [lastAttendance, setLastAttendance] = useState<LastAttendance | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const inputRef = useRef<HTMLInputElement>(null);
   const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Live clock update every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Build address from current selection
   const buildAddress = () => {
@@ -207,8 +215,7 @@ const RfidAttendance = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    <div className="bg-background p-4 sm:p-6 lg:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="flex items-center gap-4">
             <Button 
@@ -317,7 +324,7 @@ const RfidAttendance = () => {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Date</p>
                   <p className="text-lg font-semibold text-foreground">
-                    {new Date().toLocaleDateString('en-US', { 
+                    {currentTime.toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'short', 
                       day: 'numeric' 
@@ -326,8 +333,8 @@ const RfidAttendance = () => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Time</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {new Date().toLocaleTimeString('en-US', { 
+                  <p className="text-lg font-semibold text-foreground tabular-nums">
+                    {currentTime.toLocaleTimeString('en-US', { 
                       hour: '2-digit', 
                       minute: '2-digit',
                       second: '2-digit'
@@ -386,9 +393,8 @@ const RfidAttendance = () => {
           >
             {isProcessing ? 'Processing...' : 'Mark Attendance'}
           </Button>
-        </div>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

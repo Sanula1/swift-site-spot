@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import MUITable from '@/components/ui/mui-table';
-import { Users, RefreshCw, Search, Plus, AlertTriangle, User, MapPin, Phone, Briefcase, Calendar, Home, Filter, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Users, RefreshCw, Search, Plus, AlertTriangle, User, MapPin, Phone, Briefcase, Calendar, Home, Filter, ChevronDown, ChevronUp, X, Eye, GraduationCap, Mail, Check, ChevronsUpDown } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { type UserRole } from '@/contexts/types/auth.types';
@@ -17,6 +22,94 @@ import { useTableData } from '@/hooks/useTableData';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import { Occupation, formatOccupation } from '@/types/occupation.types';
 import { getImageUrl } from '@/utils/imageUrlHelper';
+import { cn } from '@/lib/utils';
+
+// Searchable Occupation Combobox Component
+const OccupationCombobox = ({ value, onValueChange }: { value: string; onValueChange: (value: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const occupations = useMemo(() => {
+    return Object.values(Occupation).map(occ => ({
+      value: occ,
+      label: formatOccupation(occ)
+    }));
+  }, []);
+  
+  const filteredOccupations = useMemo(() => {
+    if (!searchQuery) return occupations;
+    return occupations.filter(occ => 
+      occ.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [occupations, searchQuery]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full sm:w-[250px] justify-between bg-background"
+        >
+          {value && value !== 'all'
+            ? formatOccupation(value)
+            : "Filter by Occupation"}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-0" align="start">
+        <Command>
+          <CommandInput 
+            placeholder="Search occupation..." 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandList className="max-h-[300px]">
+            <CommandEmpty>No occupation found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="all"
+                onSelect={() => {
+                  onValueChange('all');
+                  setOpen(false);
+                  setSearchQuery('');
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === 'all' ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                All Occupations
+              </CommandItem>
+              {filteredOccupations.map((occupation) => (
+                <CommandItem
+                  key={occupation.value}
+                  value={occupation.label}
+                  onSelect={() => {
+                    onValueChange(occupation.value);
+                    setOpen(false);
+                    setSearchQuery('');
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === occupation.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {occupation.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 const Parents = () => {
   const {
@@ -36,6 +129,11 @@ const Parents = () => {
     url: '',
     title: ''
   });
+  const [childrenDialog, setChildrenDialog] = useState<{ isOpen: boolean; parent: any; children: any[] }>({
+    isOpen: false,
+    parent: null,
+    children: []
+  });
 
   // Filter states
   const [selectedOccupation, setSelectedOccupation] = useState<string>('');
@@ -43,6 +141,7 @@ const Parents = () => {
   const [enrolledAfter, setEnrolledAfter] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [includeStudentInfo, setIncludeStudentInfo] = useState(true);
   const [filters, setFilters] = useState({
     instituteId: '',
     name: '',
@@ -76,7 +175,7 @@ const Parents = () => {
   const tableData = useTableData({
     endpoint: getEndpoint(),
     defaultParams: {
-      parent: 'true',
+      students: String(includeStudentInfo),
       ...(selectedOccupation && { occupation: selectedOccupation }),
       ...(selectedWorkplace && { workplace: selectedWorkplace }),
       ...(enrolledAfter && { enrolledAfter }),
@@ -88,7 +187,7 @@ const Parents = () => {
       defaultLimit: 50,
       availableLimits: [25, 50, 100]
     },
-    dependencies: [selectedOccupation, selectedWorkplace, enrolledAfter, sortBy, sortOrder, selectedClass?.id, selectedSubject?.id]
+    dependencies: [selectedOccupation, selectedWorkplace, enrolledAfter, sortBy, sortOrder, selectedClass?.id, selectedSubject?.id, includeStudentInfo]
   });
 
   // Table columns configuration
@@ -166,7 +265,58 @@ const Parents = () => {
               {row.workPlace}
             </div>}
         </div>
-  }];
+  }, 
+  // Children column - only shown when includeStudentInfo is true - Modern UI
+  ...(includeStudentInfo ? [{
+    id: 'students',
+    label: 'Children',
+    minWidth: 200,
+    align: 'center' as const,
+    format: (value: any[], row: any) => {
+      const children = value || row.children || [];
+      return (
+        <div className="flex items-center justify-center gap-3">
+          {/* Children count with gradient badge */}
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {children.slice(0, 3).map((child: any, idx: number) => (
+                <Avatar key={idx} className="h-8 w-8 border-2 border-background ring-2 ring-primary/20">
+                  <AvatarImage src={getImageUrl(child.imageUrl)} alt={child.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-xs font-medium">
+                    {child.name?.charAt(0) || 'C'}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+              {children.length > 3 && (
+                <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
+                  +{children.length - 3}
+                </div>
+              )}
+            </div>
+            <Badge 
+              variant="secondary" 
+              className="text-xs font-semibold bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-primary border border-primary/20"
+            >
+              {children.length} {children.length === 1 ? 'Child' : 'Children'}
+            </Badge>
+          </div>
+          
+          {/* View button with modern styling */}
+          {children.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setChildrenDialog({ isOpen: true, parent: row, children })}
+              className="h-8 px-3 bg-gradient-to-r from-blue-500/5 to-purple-500/5 hover:from-blue-500/10 hover:to-purple-500/10 border-primary/20 hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow"
+            >
+              <Eye className="h-4 w-4 mr-1.5 text-primary" />
+              <span className="font-medium">View Details</span>
+            </Button>
+          )}
+        </div>
+      );
+    }
+  }] : [])];
 
   // Filter data based on search term and filters
   const filteredData = tableData.state.data.filter(parent => {
@@ -203,6 +353,7 @@ const Parents = () => {
     setSortBy('name');
     setSortOrder('ASC');
     setSearchTerm('');
+    setIncludeStudentInfo(false);
   };
 
   // Access control check
@@ -243,23 +394,14 @@ const Parents = () => {
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          {/* Occupation Filter */}
-          <Select value={selectedOccupation} onValueChange={setSelectedOccupation}>
-            <SelectTrigger className="w-full sm:w-[220px] bg-background">
-              <SelectValue placeholder="Filter by Occupation" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover max-h-[300px]">
-              <SelectItem value="all" className="hover:bg-accent">All Occupations</SelectItem>
-              {Object.values(Occupation).map((occupation) => (
-                <SelectItem key={occupation} value={occupation} className="hover:bg-accent">
-                  {formatOccupation(occupation)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center">
+          {/* Occupation Filter - Searchable Combobox */}
+          <OccupationCombobox 
+            value={selectedOccupation} 
+            onValueChange={setSelectedOccupation} 
+          />
           
-          {selectedOccupation && (
+          {selectedOccupation && selectedOccupation !== 'all' && (
             <Button
               variant="ghost"
               size="sm"
@@ -381,6 +523,20 @@ const Parents = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Include Children Info</label>
+                    <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-background">
+                      <Checkbox 
+                        id="includeStudentInfoFilter" 
+                        checked={includeStudentInfo}
+                        onCheckedChange={(checked) => setIncludeStudentInfo(checked === true)}
+                      />
+                      <Label htmlFor="includeStudentInfoFilter" className="text-sm cursor-pointer">
+                        Show Children Details
+                      </Label>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -399,6 +555,77 @@ const Parents = () => {
         imageUrl={imagePreview.url}
         title={imagePreview.title}
       />
+
+      {/* Children Details Dialog */}
+      <Dialog open={childrenDialog.isOpen} onOpenChange={(open) => !open && setChildrenDialog({ isOpen: false, parent: null, children: [] })}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              Children of {childrenDialog.parent?.name}
+            </DialogTitle>
+            <DialogDescription>
+              {childrenDialog.children.length} {childrenDialog.children.length === 1 ? 'child' : 'children'} found
+            </DialogDescription>
+          </DialogHeader>
+          
+          {childrenDialog.children.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Avatar</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Date of Birth</TableHead>
+                  <TableHead>Address</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {childrenDialog.children.map((child: any, index: number) => (
+                  <TableRow key={child.id || index}>
+                    <TableCell>
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={getImageUrl(child.imageUrl)} alt={child.name} />
+                        <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="font-medium">{child.name || 'N/A'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        {child.email || 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        {child.phoneNumber || 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {child.dateOfBirth ? new Date(child.dateOfBirth).toLocaleDateString() : 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        {child.addressLine1 || 'N/A'}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No children information available
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 export default Parents;

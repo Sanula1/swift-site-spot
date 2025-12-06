@@ -183,89 +183,103 @@ const MyChildren = () => {
           {childrenData && childrenData.children.length > 0 && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {childrenData.children.map((child, index) => (
-                <Card 
+                <div 
                   key={`${child.id}-${child.relationship}-${index}`} 
-                  className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border-2 border-blue-500/50 bg-gradient-to-br from-blue-50/50 to-card dark:from-blue-950/20 dark:to-card"
+                  className="group relative cursor-pointer"
                   onClick={() => handleSelectChild(child)}
                 >
-                  {/* Blue decorative gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  {/* Glowing background effect */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 rounded-2xl opacity-60 group-hover:opacity-100 blur-sm transition-all duration-500 group-hover:blur-md" />
                   
-                  <CardContent className="relative pt-6 pb-6">
-                    <div className="space-y-5">
-                      {/* Image & Name Section */}
-                      <div className="flex items-start gap-4">
-                        <div className="relative">
-                          {/* Profile Image */}
-                          <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-blue-500/30 shadow-lg group-hover:border-blue-500/60 transition-colors duration-300">
-                            {child.imageUrl ? (
-                              <img 
-                                src={child.imageUrl} 
-                                alt={child.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : null}
-                            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-blue-600/10 ${child.imageUrl ? 'hidden' : ''}`}>
-                              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {getInitials(child.name)}
-                              </span>
-                            </div>
+                  <div className="relative bg-card rounded-2xl overflow-hidden border-0 shadow-xl">
+                    {/* Header gradient banner */}
+                    <div className="h-24 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L3N2Zz4=')] opacity-30" />
+                      <div className="absolute top-3 right-3">
+                        <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm capitalize">
+                          {getRelationshipIcon(child.relationship)}
+                        </Badge>
+                      </div>
+                      {/* Decorative circles */}
+                      <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-white/10 rounded-full" />
+                      <div className="absolute -top-4 -left-4 w-16 h-16 bg-white/10 rounded-full" />
+                    </div>
+                    
+                    {/* Profile image - overlapping banner */}
+                    <div className="relative -mt-12 px-6">
+                      <div className="relative inline-block">
+                        <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/50">
+                          {child.imageUrl ? (
+                            <img 
+                              src={child.imageUrl} 
+                              alt={child.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`absolute inset-0 flex items-center justify-center ${child.imageUrl ? 'hidden' : ''}`}>
+                            <span className="text-3xl font-bold bg-gradient-to-br from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                              {getInitials(child.name)}
+                            </span>
                           </div>
-                          {/* Online indicator */}
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background flex items-center justify-center">
-                            <Sparkles className="w-2.5 h-2.5 text-white" />
+                        </div>
+                        {/* Status indicator */}
+                        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-3 border-card flex items-center justify-center shadow-lg">
+                          <Sparkles className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="p-6 pt-4 space-y-4">
+                      <div>
+                        <h3 className="font-bold text-xl text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                          {child.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">Student</p>
+                      </div>
+                      
+                      {/* Contact info cards */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border border-blue-100 dark:border-blue-900/50">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <Phone className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-muted-foreground">Phone</p>
+                            <p className="text-sm font-medium truncate">
+                              {child.phoneNumber || 'Not available'}
+                            </p>
                           </div>
                         </div>
                         
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <h3 className="font-bold text-lg truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                            {child.name}
-                          </h3>
-                          <Badge 
-                            variant="outline" 
-                            className={`capitalize text-xs font-medium ${getRelationshipColor(child.relationship)}`}
-                          >
-                            {getRelationshipIcon(child.relationship)}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      {/* Contact Info */}
-                      <div className="space-y-2.5 pt-2 border-t border-blue-500/20">
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <span className="text-muted-foreground">
-                            {child.phoneNumber || 'No phone number'}
-                          </span>
-                        </div>
                         {child.email && (
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                              <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-100 dark:border-cyan-900/50">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                              <Mail className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-muted-foreground truncate">{child.email}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-muted-foreground">Email</p>
+                              <p className="text-sm font-medium truncate">{child.email}</p>
+                            </div>
                           </div>
                         )}
                       </div>
 
                       {/* Action Button */}
                       <Button 
-                        className="w-full gap-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white border-blue-500/30 transition-all duration-300"
-                        variant="outline"
+                        className="w-full h-12 gap-2 bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 hover:from-blue-600 hover:via-blue-700 hover:to-cyan-600 text-white border-0 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 rounded-xl font-semibold"
                       >
-                        <User className="w-4 h-4" />
+                        <User className="w-5 h-5" />
                         Select Children
-                        <ChevronRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform duration-300" />
+                        <ChevronRight className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}

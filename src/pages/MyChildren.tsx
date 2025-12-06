@@ -185,11 +185,11 @@ const MyChildren = () => {
               {childrenData.children.map((child, index) => (
                 <Card 
                   key={`${child.id}-${child.relationship}-${index}`} 
-                  className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border-0 bg-gradient-to-br from-card to-card/50"
+                  className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border-2 border-blue-500/50 bg-gradient-to-br from-blue-50/50 to-card dark:from-blue-950/20 dark:to-card"
                   onClick={() => handleSelectChild(child)}
                 >
-                  {/* Decorative gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  {/* Blue decorative gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   <CardContent className="relative pt-6 pb-6">
                     <div className="space-y-5">
@@ -197,7 +197,7 @@ const MyChildren = () => {
                       <div className="flex items-start gap-4">
                         <div className="relative">
                           {/* Profile Image */}
-                          <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-border shadow-lg group-hover:border-primary/30 transition-colors duration-300">
+                          <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-blue-500/30 shadow-lg group-hover:border-blue-500/60 transition-colors duration-300">
                             {child.imageUrl ? (
                               <img 
                                 src={child.imageUrl} 
@@ -209,8 +209,8 @@ const MyChildren = () => {
                                 }}
                               />
                             ) : null}
-                            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 ${child.imageUrl ? 'hidden' : ''}`}>
-                              <span className="text-2xl font-bold text-primary">
+                            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-blue-600/10 ${child.imageUrl ? 'hidden' : ''}`}>
+                              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {getInitials(child.name)}
                               </span>
                             </div>
@@ -222,7 +222,7 @@ const MyChildren = () => {
                         </div>
                         
                         <div className="flex-1 min-w-0 space-y-2">
-                          <h3 className="font-bold text-lg truncate group-hover:text-primary transition-colors duration-300">
+                          <h3 className="font-bold text-lg truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                             {child.name}
                           </h3>
                           <Badge 
@@ -235,10 +235,10 @@ const MyChildren = () => {
                       </div>
                       
                       {/* Contact Info */}
-                      <div className="space-y-2.5 pt-2 border-t border-border/50">
+                      <div className="space-y-2.5 pt-2 border-t border-blue-500/20">
                         <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center">
-                            <Phone className="w-4 h-4 text-muted-foreground" />
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <span className="text-muted-foreground">
                             {child.phoneNumber || 'No phone number'}
@@ -246,8 +246,8 @@ const MyChildren = () => {
                         </div>
                         {child.email && (
                           <div className="flex items-center gap-3 text-sm">
-                            <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center">
-                              <Mail className="w-4 h-4 text-muted-foreground" />
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                              <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             </div>
                             <span className="text-muted-foreground truncate">{child.email}</span>
                           </div>
@@ -256,11 +256,11 @@ const MyChildren = () => {
 
                       {/* Action Button */}
                       <Button 
-                        className="w-full gap-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border-0 transition-all duration-300"
+                        className="w-full gap-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white border-blue-500/30 transition-all duration-300"
                         variant="outline"
                       >
                         <User className="w-4 h-4" />
-                        View Details
+                        Select Children
                         <ChevronRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
                     </div>

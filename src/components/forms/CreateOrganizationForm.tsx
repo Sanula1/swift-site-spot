@@ -160,24 +160,24 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
   };
 
   return (
-    <div className="w-full h-full max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
+    <div className="w-full min-h-full max-w-4xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 overflow-y-auto">
       <Card className="border-border/50 shadow-sm">
-        <CardHeader className="space-y-1 pb-4 sm:pb-6 px-4 sm:px-6 sticky top-0 bg-card z-10">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 bg-primary/10 rounded-lg shrink-0">
-              <Building2 className="h-5 w-5 text-primary" />
+        <CardHeader className="space-y-1 pb-3 sm:pb-4 md:pb-6 px-3 sm:px-4 md:px-6 sticky top-0 bg-card z-10 border-b">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="p-2 sm:p-2.5 bg-primary/10 rounded-lg shrink-0">
+              <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
-              <CardTitle className="text-lg sm:text-xl">Organization Details</CardTitle>
-              <CardDescription className="text-xs sm:text-sm mt-1">
+              <CardTitle className="text-base sm:text-lg md:text-xl">Organization Details</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-0.5 sm:mt-1">
                 Fill in the information below to create your organization
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 px-4 sm:px-6 pb-4 sm:pb-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-            <div className="space-y-2">
+        <CardContent className="pt-3 sm:pt-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 overflow-y-auto max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-12rem)]">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-5">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="name" className="text-xs sm:text-sm font-medium">
                 Organization Name *
               </Label>

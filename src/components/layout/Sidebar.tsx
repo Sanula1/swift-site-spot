@@ -1953,7 +1953,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} text-sm hover:bg-gray-100 dark:hover:bg-gray-700 h-8 sm:h-9`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} text-sm hover:bg-destructive hover:text-destructive-foreground hover:border-destructive h-8 sm:h-9 transition-colors`}
           >
             <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
             {!isCollapsed && <span className="text-xs sm:text-sm">Logout</span>}

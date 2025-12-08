@@ -894,9 +894,6 @@ const InstituteUsers = () => {
                       </Badge>
                     ) : (
                       <div className="flex flex-col items-center gap-1">
-                        <Badge variant="secondary" className="text-xs">
-                          No Image
-                        </Badge>
                         <Button
                           size="sm"
                           variant="outline"

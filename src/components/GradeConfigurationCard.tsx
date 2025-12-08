@@ -4,13 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Save, X } from 'lucide-react';
-
 export interface GradeRange {
   grade: string;
   minScore: number;
   maxScore: number;
 }
-
 interface GradeConfigurationCardProps {
   gradeRanges: GradeRange[];
   onGradeRangesChange: (ranges: GradeRange[]) => void;
@@ -18,7 +16,6 @@ interface GradeConfigurationCardProps {
   onSave: () => void;
   onClose?: () => void;
 }
-
 const GradeConfigurationCard: React.FC<GradeConfigurationCardProps> = ({
   gradeRanges,
   onGradeRangesChange,
@@ -27,7 +24,6 @@ const GradeConfigurationCard: React.FC<GradeConfigurationCardProps> = ({
   onClose
 }) => {
   const ALLOWED_GRADES = ['A', 'B', 'C', 'S', 'F'];
-  
   const handleRangeChange = (index: number, field: keyof GradeRange, value: string | number) => {
     // Validate grade input
     if (field === 'grade') {
@@ -37,7 +33,6 @@ const GradeConfigurationCard: React.FC<GradeConfigurationCardProps> = ({
       }
       value = gradeValue;
     }
-    
     const updatedRanges = [...gradeRanges];
     updatedRanges[index] = {
       ...updatedRanges[index],
@@ -45,16 +40,9 @@ const GradeConfigurationCard: React.FC<GradeConfigurationCardProps> = ({
     };
     onGradeRangesChange(updatedRanges);
   };
-
-  return (
-    <Card className="relative">
+  return <Card className="relative">
       {onClose && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 h-8 w-8 rounded-full z-10"
-          onClick={onClose}
-        >
+        <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-3 right-3">
           <X className="h-4 w-4" />
         </Button>
       )}
@@ -73,51 +61,24 @@ const GradeConfigurationCard: React.FC<GradeConfigurationCardProps> = ({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {gradeRanges.map((range, index) => (
-            <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-3">
+          {gradeRanges.map((range, index) => <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-3">
               <div>
                 <Label htmlFor={`grade-${index}`} className="text-sm font-medium">Grade</Label>
-                <Input
-                  id={`grade-${index}`}
-                  value={range.grade}
-                  onChange={(e) => handleRangeChange(index, 'grade', e.target.value)}
-                  className="font-bold text-center mt-1"
-                  maxLength={1}
-                  placeholder="A/B/C/S/F"
-                />
+                <Input id={`grade-${index}`} value={range.grade} onChange={e => handleRangeChange(index, 'grade', e.target.value)} className="font-bold text-center mt-1" maxLength={1} placeholder="A/B/C/S/F" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor={`min-${index}`} className="text-sm font-medium">Min Score</Label>
-                  <Input
-                    id={`min-${index}`}
-                    type="number"
-                    value={range.minScore}
-                    onChange={(e) => handleRangeChange(index, 'minScore', e.target.value)}
-                    min={0}
-                    max={100}
-                    className="mt-1"
-                  />
+                  <Input id={`min-${index}`} type="number" value={range.minScore} onChange={e => handleRangeChange(index, 'minScore', e.target.value)} min={0} max={100} className="mt-1" />
                 </div>
                 <div>
                   <Label htmlFor={`max-${index}`} className="text-sm font-medium">Max Score</Label>
-                  <Input
-                    id={`max-${index}`}
-                    type="number"
-                    value={range.maxScore}
-                    onChange={(e) => handleRangeChange(index, 'maxScore', e.target.value)}
-                    min={0}
-                    max={100}
-                    className="mt-1"
-                  />
+                  <Input id={`max-${index}`} type="number" value={range.maxScore} onChange={e => handleRangeChange(index, 'maxScore', e.target.value)} min={0} max={100} className="mt-1" />
                 </div>
               </div>
-            </div>
-          ))}
+            </div>)}
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default GradeConfigurationCard;

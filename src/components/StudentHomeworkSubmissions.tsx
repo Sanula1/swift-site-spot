@@ -11,8 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import MUITable from '@/components/ui/mui-table';
 import { usePagination } from '@/hooks/usePagination';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PDFViewer } from '@/components/ui/pdf-viewer';
+
 const StudentHomeworkSubmissions = () => {
   const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,9 +19,6 @@ const StudentHomeworkSubmissions = () => {
   const [sortBy, setSortBy] = useState('submissionDate');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [showFilters, setShowFilters] = useState(false);
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  const [selectedPdfUrl, setSelectedPdfUrl] = useState('');
-  const [selectedPdfTitle, setSelectedPdfTitle] = useState('');
   const {
     toast
   } = useToast();
@@ -144,9 +140,7 @@ const StudentHomeworkSubmissions = () => {
     label: 'View Correction',
     action: (row: HomeworkSubmission) => {
       if (row.teacherCorrectionFileUrl) {
-        setSelectedPdfUrl(row.teacherCorrectionFileUrl);
-        setSelectedPdfTitle('Teacher Correction');
-        setPdfModalOpen(true);
+        window.open(row.teacherCorrectionFileUrl, '_blank');
       }
     },
     icon: <Eye className="h-4 w-4" />,
@@ -155,9 +149,7 @@ const StudentHomeworkSubmissions = () => {
     label: 'View My Submission',
     action: (row: HomeworkSubmission) => {
       if (row.fileUrl) {
-        setSelectedPdfUrl(row.fileUrl);
-        setSelectedPdfTitle('My Submission');
-        setPdfModalOpen(true);
+        window.open(row.fileUrl, '_blank');
       }
     },
     icon: <Eye className="h-4 w-4" />,
@@ -298,18 +290,6 @@ const StudentHomeworkSubmissions = () => {
             </p>
           </CardContent>
         </Card>}
-      
-      {/* PDF Viewer Modal */}
-      <Dialog open={pdfModalOpen} onOpenChange={setPdfModalOpen}>
-        <DialogContent className="max-w-5xl h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>{selectedPdfTitle}</DialogTitle>
-          </DialogHeader>
-          <div className="w-full h-[calc(90vh-80px)]">
-            {selectedPdfUrl && <PDFViewer url={selectedPdfUrl} title={selectedPdfTitle} />}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>;
 };
 export default StudentHomeworkSubmissions;

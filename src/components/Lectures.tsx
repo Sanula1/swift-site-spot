@@ -92,8 +92,16 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
     actions
   } = tableData;
 
-  // Track if we've attempted to load data at least once
+  // Track if we've attempted to load data at least once - auto-load when subject is selected
   const [hasAttemptedLoad, setHasAttemptedLoad] = React.useState(false);
+
+  // Auto-load when context is ready
+  React.useEffect(() => {
+    if (currentInstituteId && currentClassId && currentSubjectId && !hasAttemptedLoad) {
+      setHasAttemptedLoad(true);
+      actions.loadData(false);
+    }
+  }, [currentInstituteId, currentClassId, currentSubjectId]);
 
   const handleLoadData = async (forceRefresh = false) => {
     if (userRole === 'Student') {

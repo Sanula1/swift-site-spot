@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
 import { BasicUser } from '@/api/users.api';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface UserInfoDialogProps {
   open: boolean;
@@ -31,7 +32,7 @@ const UserInfoDialog: React.FC<UserInfoDialogProps> = ({ open, onClose, user }) 
         
         <div className="flex flex-col items-center space-y-4 py-6">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={user.imageUrl} alt={user.fullName} />
+            <AvatarImage src={getImageUrl(user.imageUrl)} alt={user.fullName} />
             <AvatarFallback className="text-2xl bg-primary/10 text-primary">
               {getInitials(user.fullName)}
             </AvatarFallback>

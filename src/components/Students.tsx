@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, RefreshCw, Users, Search, Filter, UserPlus, ChevronRight, User } from 'lucide-react';
+import { Plus, RefreshCw, Users, Search, Filter, UserPlus, ChevronRight, User, Eye, Phone, MapPin, Briefcase, Mail, Home } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +22,7 @@ import { cachedApiClient } from '@/api/cachedClient';
 import { useApiRequest } from '@/hooks/useApiRequest';
 import { useTableData } from '@/hooks/useTableData';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import { enhancedCachedClient } from '@/api/enhancedCachedClient';
 import { CACHE_TTL } from '@/config/cacheTTL';
@@ -143,7 +146,11 @@ const Students = () => {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [includeParentInfo, setIncludeParentInfo] = useState(false);
+  const [includeParentInfo, setIncludeParentInfo] = useState(true);
+  const [parentDetailsDialog, setParentDetailsDialog] = useState<{ open: boolean; parent: any }>({
+    open: false,
+    parent: null
+  });
   const [imagePreview, setImagePreview] = useState<{ isOpen: boolean; url: string; title: string }>({
     isOpen: false,
     url: '',
@@ -466,7 +473,7 @@ const Students = () => {
               }}
             >
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10 hover:opacity-80 transition-opacity">
-                <AvatarImage src={imageUrl || ''} alt={name} />
+                <AvatarImage src={getImageUrl(imageUrl)} alt={name} />
                 <AvatarFallback className="text-xs">
                   {name.split(' ').map(n => n.charAt(0)).join('')}
                 </AvatarFallback>
@@ -542,6 +549,9 @@ const Students = () => {
       key: 'guardians',
       header: 'Parent/Guardian',
       render: (value: any, row: Student | InstituteStudent) => {
+        const student = row as InstituteStudent;
+        const hasParent = student.father || student.fatherId || student.motherId || student.guardianId;
+        
         if ('user' in row) {
           // Original Student structure
           return (
@@ -568,27 +578,39 @@ const Students = () => {
           );
         }
         
-        // InstituteStudent structure
-        const student = row as InstituteStudent;
+        // InstituteStudent structure with View button
         return (
-          <div className="space-y-1">
-            {student.fatherId && (
-              <Badge variant="outline" className="text-xs">
-                Father: {student.fatherId}
-              </Badge>
-            )}
-            {student.motherId && (
-              <Badge variant="outline" className="text-xs">
-                Mother: {student.motherId}
-              </Badge>
-            )}
-            {student.guardianId && (
-              <Badge variant="outline" className="text-xs">
-                Guardian: {student.guardianId}
-              </Badge>
-            )}
-            {!student.fatherId && !student.motherId && !student.guardianId && (
-              <span className="text-sm text-muted-foreground">N/A</span>
+          <div className="flex items-center gap-2">
+            <div className="space-y-1">
+              {student.fatherId && (
+                <Badge variant="outline" className="text-xs">
+                  Father
+                </Badge>
+              )}
+              {student.motherId && (
+                <Badge variant="outline" className="text-xs">
+                  Mother
+                </Badge>
+              )}
+              {student.guardianId && (
+                <Badge variant="outline" className="text-xs">
+                  Guardian
+                </Badge>
+              )}
+              {!student.fatherId && !student.motherId && !student.guardianId && (
+                <span className="text-sm text-muted-foreground">N/A</span>
+              )}
+            </div>
+            {student.father && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setParentDetailsDialog({ open: true, parent: student.father })}
+                className="h-7 px-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 hover:from-blue-500/10 hover:to-purple-500/10 border-primary/20 hover:border-primary/40 transition-all"
+              >
+                <Eye className="h-3 w-3 mr-1 text-primary" />
+                <span className="text-xs">View</span>
+              </Button>
             )}
           </div>
         );
@@ -972,6 +994,107 @@ const Students = () => {
         onOpenChange={(open) => setStudentDetailsDialog({ open, student: null })}
         student={studentDetailsDialog.student}
       />
+
+      {/* Parent Details Dialog */}
+      <Dialog open={parentDetailsDialog.open} onOpenChange={(open) => !open && setParentDetailsDialog({ open: false, parent: null })}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              {parentDetailsDialog.parent?.name || 'Parent Details'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {parentDetailsDialog.parent && (
+            <div className="space-y-6">
+              {/* Parent Avatar and Info */}
+              <div className="flex items-center gap-4 pb-4 border-b">
+                <Avatar className="h-16 w-16 border-2 border-primary/20">
+                  <AvatarImage src={getImageUrl(parentDetailsDialog.parent.imageUrl)} alt={parentDetailsDialog.parent.name} className="object-cover" />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-lg">
+                    {parentDetailsDialog.parent.name?.split(' ').map((n: string) => n.charAt(0)).join('') || 'P'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-lg font-semibold">{parentDetailsDialog.parent.name || 'N/A'}</h3>
+                  <p className="text-sm text-muted-foreground">{parentDetailsDialog.parent.email || 'N/A'}</p>
+                </div>
+              </div>
+              
+              {/* Parent Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Parent ID:</span>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {parentDetailsDialog.parent.id || 'N/A'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Occupation:</span>
+                  <span>{parentDetailsDialog.parent.occupation || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Workplace:</span>
+                  <span>{parentDetailsDialog.parent.workPlace || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Phone:</span>
+                  <span>{parentDetailsDialog.parent.phoneNumber || 'N/A'}</span>
+                </div>
+              </div>
+
+              {/* Children List */}
+              {parentDetailsDialog.parent.children && parentDetailsDialog.parent.children.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Children ({parentDetailsDialog.parent.children.length})
+                  </h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Avatar</TableHead>
+                        <TableHead>Student ID</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Relationship</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {parentDetailsDialog.parent.children.map((child: any, index: number) => (
+                        <TableRow key={child.userId || index}>
+                          <TableCell>
+                            <Avatar className="h-12 w-12 border-2 border-primary/20">
+                              <AvatarImage src={getImageUrl(child.imageUrl)} alt={child.name} className="object-cover" />
+                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-xs">
+                                {child.name?.charAt(0) || 'C'}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {child.studentId || 'N/A'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{child.name || 'N/A'}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="capitalize">
+                              {child.relationshipType || 'N/A'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

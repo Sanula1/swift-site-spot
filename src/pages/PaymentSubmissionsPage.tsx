@@ -12,8 +12,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import VerifySubjectPaymentDialog from '@/components/forms/VerifySubjectPaymentDialog';
 import { getImageUrl } from '@/utils/imageUrlHelper';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PDFViewer } from '@/components/ui/pdf-viewer';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -45,8 +43,6 @@ const PaymentSubmissionsPage: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
-  const [selectedReceiptUrl, setSelectedReceiptUrl] = useState('');
 
   // Check if user can verify submissions (InstituteAdmin or Teacher only)
   const canVerifySubmissions = role === 'InstituteAdmin' || role === 'Teacher';
@@ -361,8 +357,7 @@ const PaymentSubmissionsPage: React.FC = () => {
                         }
                       }}>
                                   {submission.receiptUrl ? <Button variant="outline" size="sm" onClick={() => {
-                                    setSelectedReceiptUrl(getImageUrl(submission.receiptUrl));
-                                    setReceiptModalOpen(true);
+                                    window.open(getImageUrl(submission.receiptUrl), '_blank');
                                   }} className="flex items-center gap-1 text-xs px-2 py-1">
                                       <Eye className="h-3 w-3" />
                                       <span className="hidden sm:inline">View</span>
@@ -414,18 +409,6 @@ const PaymentSubmissionsPage: React.FC = () => {
         
         {/* Verification Dialog */}
         <VerifySubjectPaymentDialog open={!!verifyingSubmission} onOpenChange={open => !open && setVerifyingSubmission(null)} submission={verifyingSubmission} onVerify={handleVerifySubmission} />
-        
-        {/* Receipt Viewer Modal */}
-        <Dialog open={receiptModalOpen} onOpenChange={setReceiptModalOpen}>
-          <DialogContent className="max-w-5xl h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>Payment Receipt</DialogTitle>
-            </DialogHeader>
-            <div className="w-full h-[calc(90vh-80px)]">
-              {selectedReceiptUrl && <PDFViewer url={selectedReceiptUrl} title="Payment Receipt" />}
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </AppLayout>;
 };

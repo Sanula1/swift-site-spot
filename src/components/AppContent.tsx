@@ -503,6 +503,10 @@ const AppContent = ({ initialPage }: AppContentProps) => {
 
     // For Student role - simplified interface
     if (userRole === 'Student') {
+      // Handle nested routes first for Student role
+      if (nestedRouteComponent === 'exam-results-view') return <ExamResults />;
+      if (nestedRouteComponent === 'homework-submissions-view') return <HomeworkSubmissions />;
+      
       if (!selectedInstitute && user.institutes.length === 1) {
         // Auto-select the only institute available
         // This should be handled by the auth context
@@ -705,6 +709,16 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <Appearance />;
         case 'institute-profile':
           return <InstituteProfile />;
+        case 'institute-payments':
+          return <InstitutePayments />;
+        case 'subject-payments':
+          return <SubjectPayments />;
+        case 'subject-submissions':
+          return <SubjectSubmissions />;
+        case 'my-submissions':
+          return <MySubmissions />;
+        case 'subject-pay-submission':
+          return <SubjectPaymentSubmissions />;
         default:
           return <Dashboard />;
       }

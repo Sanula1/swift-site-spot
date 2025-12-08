@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,12 +10,14 @@ import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { enhancedCachedClient } from '@/api/enhancedCachedClient';
 import { CACHE_TTL } from '@/config/cacheTTL';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 interface Child {
   id: string;
   name: string;
   phoneNumber: string;
   relationship: string;
+  imageUrl?: string;
 }
 
 interface ParentData {
@@ -209,15 +210,19 @@ const ParentChildrenSelector = () => {
             >
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage 
-                      src={`https://images.unsplash.com/photo-1535268647677-300dbf3d78d1`} 
-                      alt={child.name}
-                    />
-                    <AvatarFallback className="text-lg">
-                      {child.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="h-16 w-16 rounded-full overflow-hidden ring-2 ring-primary/10 flex-shrink-0">
+                    {child.imageUrl ? (
+                      <img 
+                        src={getImageUrl(child.imageUrl)} 
+                        alt={child.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-bold text-lg">
+                        {child.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       {child.name}

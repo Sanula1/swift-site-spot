@@ -94,8 +94,16 @@ const Exams = ({
     autoLoad: true // Enable auto-loading from cache
   });
 
-  // Track if we've attempted to load data at least once
+  // Track if we've attempted to load data at least once - auto-load when context is ready
   const [hasAttemptedLoad, setHasAttemptedLoad] = React.useState(false);
+
+  // Auto-load when context is ready
+  React.useEffect(() => {
+    if (currentInstituteId && currentClassId && currentSubjectId && !hasAttemptedLoad) {
+      setHasAttemptedLoad(true);
+      refresh();
+    }
+  }, [currentInstituteId, currentClassId, currentSubjectId]);
 
   const handleLoadData = async (forceRefresh = false) => {
     // For students: require all context selections
@@ -147,8 +155,15 @@ const Exams = ({
     setSelectedExam(null);
   };
   const handleViewResults = (examData: any) => {
-    // 🛡️ SECURE: Use full hierarchical URL
-    if (!currentInstituteId || !currentClassId || !currentSubjectId) {
+    // Use context from exam data if available, otherwise use current context
+    const instId = examData.instituteId || examData.institute?.id || currentInstituteId;
+    const clsId = examData.classId || examData.class?.id || currentClassId;
+    const subId = examData.subjectId || examData.subject?.id || currentSubjectId;
+    const examId = examData.id;
+    
+    console.log('View Results clicked:', { examData, instId, clsId, subId, examId });
+    
+    if (!instId || !clsId || !subId || !examId) {
       toast({
         title: "Missing Context",
         description: "Please select institute, class, and subject first",
@@ -157,7 +172,9 @@ const Exams = ({
       return;
     }
     
-    navigate(`/institute/${currentInstituteId}/class/${currentClassId}/subject/${currentSubjectId}/exam/${examData.id}/results`);
+    const url = `/institute/${instId}/class/${clsId}/subject/${subId}/exam/${examId}/results`;
+    console.log('Navigating to:', url);
+    navigate(url);
   };
   const handleDeleteExam = async (examData: any) => {
     console.log('Deleting exam:', examData);
@@ -239,7 +256,8 @@ const Exams = ({
   }, ...((['InstituteAdmin', 'Teacher'] as UserRole[]).includes(userRole) ? [{
     key: 'createResults',
     header: 'Create Results',
-    render: (value: any, row: any) => <Button size="sm" variant="outline" onClick={() => {
+    render: (value: any, row: any) => <Button size="sm" variant="outline" onClick={(e) => {
+      e.stopPropagation();
       if (!currentInstituteId || !currentClassId || !currentSubjectId) {
         toast({
           title: "Missing Context",
@@ -256,7 +274,10 @@ const Exams = ({
   }] : []), {
     key: 'results',
     header: 'View Results',
-    render: (value: any, row: any) => <Button size="sm" variant="default" onClick={() => handleViewResults(row)} className="flex items-center gap-2">
+    render: (value: any, row: any) => <Button size="sm" variant="default" onClick={(e) => {
+      e.stopPropagation();
+      handleViewResults(row);
+    }} className="flex items-center gap-2">
           <Eye className="h-4 w-4" />
           View
         </Button>

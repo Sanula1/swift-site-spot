@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   User, 
@@ -84,7 +85,7 @@ const StudentDetailsDialog: React.FC<StudentDetailsDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={student.imageUrl} alt={student.name} />
+              <AvatarImage src={getImageUrl(student.imageUrl)} alt={student.name} />
               <AvatarFallback>
                 {student.name.split(' ').map(n => n.charAt(0)).join('')}
               </AvatarFallback>
@@ -217,7 +218,7 @@ const StudentDetailsDialog: React.FC<StudentDetailsDialogProps> = ({
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 pb-3 border-b">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={(student.father || student.parentDetails?.father)?.imageUrl} alt="Father" />
+                          <AvatarImage src={getImageUrl((student.father || student.parentDetails?.father)?.imageUrl)} alt="Father" />
                           <AvatarFallback>
                             {(student.father || student.parentDetails?.father)?.name?.split(' ').map(n => n.charAt(0)).join('') || 'F'}
                           </AvatarFallback>
@@ -271,7 +272,7 @@ const StudentDetailsDialog: React.FC<StudentDetailsDialogProps> = ({
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 pb-3 border-b">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={(student.mother || student.parentDetails?.mother)?.imageUrl} alt="Mother" />
+                          <AvatarImage src={getImageUrl((student.mother || student.parentDetails?.mother)?.imageUrl)} alt="Mother" />
                           <AvatarFallback>
                             {(student.mother || student.parentDetails?.mother)?.name?.split(' ').map(n => n.charAt(0)).join('') || 'M'}
                           </AvatarFallback>

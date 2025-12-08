@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import PageContainer from '@/components/layout/PageContainer';
 import AppLayout from '@/components/layout/AppLayout';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 const MyChildren = () => {
   const [childrenData, setChildrenData] = useState<ParentChildrenResponse | null>(null);
@@ -94,52 +95,38 @@ const MyChildren = () => {
     <AppLayout currentPage="my-children">
       <PageContainer>
         <div className="space-y-8">
-          {/* Modern Header */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-8 border border-primary/10">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                    <Heart className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">My Children</h1>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                      View and manage your children's information
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                onClick={handleLoadChildren} 
-                disabled={loading}
-                variant="outline"
-                size="sm"
-                className="gap-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight">My Children</h1>
+              <p className="text-muted-foreground text-sm">
+                View and manage your children's information
+              </p>
             </div>
-            
-            {/* Parent Info */}
-            {childrenData && (
-              <div className="mt-4 pt-4 border-t border-primary/10">
-                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-background/60 backdrop-blur-sm border border-border/50">
-                  <Avatar className="h-8 w-8 border-2 border-primary/20">
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                      {getInitials(childrenData.parentName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{childrenData.parentName}</span>
-                  <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
-                    Parent
-                  </Badge>
-                </div>
-              </div>
-            )}
+            <Button 
+              onClick={handleLoadChildren} 
+              disabled={loading}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
+          
+          {/* Parent Info */}
+          {childrenData && (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                  {getInitials(childrenData.parentName)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium">{childrenData.parentName}</span>
+              <Badge variant="secondary" className="text-xs">Parent</Badge>
+            </div>
+          )}
 
           {/* Loading State */}
           {loading && !childrenData && (
@@ -183,103 +170,74 @@ const MyChildren = () => {
           {childrenData && childrenData.children.length > 0 && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {childrenData.children.map((child, index) => (
-                <div 
+                <Card 
                   key={`${child.id}-${child.relationship}-${index}`} 
-                  className="group relative cursor-pointer"
-                  onClick={() => handleSelectChild(child)}
+                  className="group relative overflow-hidden border border-blue-400/50 bg-gradient-to-br from-card to-card/80 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
                 >
-                  {/* Glowing background effect */}
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 rounded-2xl opacity-60 group-hover:opacity-100 blur-sm transition-all duration-500 group-hover:blur-md" />
+                  {/* Decorative gradient */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
                   
-                  <div className="relative bg-card rounded-2xl overflow-hidden border-0 shadow-xl">
-                    {/* Header gradient banner */}
-                    <div className="h-24 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L3N2Zz4=')] opacity-30" />
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm capitalize">
-                          {getRelationshipIcon(child.relationship)}
-                        </Badge>
-                      </div>
-                      {/* Decorative circles */}
-                      <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-white/10 rounded-full" />
-                      <div className="absolute -top-4 -left-4 w-16 h-16 bg-white/10 rounded-full" />
-                    </div>
-                    
-                    {/* Profile image - overlapping banner */}
-                    <div className="relative -mt-12 px-6">
-                      <div className="relative inline-block">
-                        <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/50">
-                          {child.imageUrl ? (
-                            <img 
-                              src={child.imageUrl} 
-                              alt={child.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null}
-                          <div className={`absolute inset-0 flex items-center justify-center ${child.imageUrl ? 'hidden' : ''}`}>
-                            <span className="text-3xl font-bold bg-gradient-to-br from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                              {getInitials(child.name)}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Status indicator */}
-                        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-3 border-card flex items-center justify-center shadow-lg">
-                          <Sparkles className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="p-6 pt-4 space-y-4">
-                      <div>
-                        <h3 className="font-bold text-xl text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                          {child.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">Student</p>
-                      </div>
-                      
-                      {/* Contact info cards */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border border-blue-100 dark:border-blue-900/50">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                            <Phone className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground">Phone</p>
-                            <p className="text-sm font-medium truncate">
-                              {child.phoneNumber || 'Not available'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {child.email && (
-                          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-100 dark:border-cyan-900/50">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                              <Mail className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-muted-foreground">Email</p>
-                              <p className="text-sm font-medium truncate">{child.email}</p>
-                            </div>
+                  <CardContent className="p-6 relative">
+                    {/* Header with Avatar and Relationship Badge */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="h-20 w-20 rounded-full ring-4 ring-primary/10 group-hover:ring-primary/20 transition-all overflow-hidden flex-shrink-0">
+                        {child.imageUrl ? (
+                          <img 
+                            src={getImageUrl(child.imageUrl)} 
+                            alt={child.name} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-bold text-xl">
+                            {getInitials(child.name)}
                           </div>
                         )}
                       </div>
-
-                      {/* Action Button */}
-                      <Button 
-                        className="w-full h-12 gap-2 bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 hover:from-blue-600 hover:via-blue-700 hover:to-cyan-600 text-white border-0 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 rounded-xl font-semibold"
-                      >
-                        <User className="w-5 h-5" />
-                        Select Children
-                        <ChevronRight className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform duration-300" />
-                      </Button>
+                      <div className="flex-1 min-w-0 pt-1">
+                        <Badge variant="outline" className={`mb-2 text-xs font-medium ${getRelationshipColor(child.relationship)}`}>
+                          <Heart className="h-3 w-3 mr-1" />
+                          {getRelationshipIcon(child.relationship)}
+                        </Badge>
+                        <h3 className="text-lg font-bold text-foreground truncate">{child.name}</h3>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    {/* Contact Details */}
+                    <div className="space-y-3 mb-5">
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-foreground font-medium">{child.phoneNumber || 'No phone number'}</span>
+                      </div>
+                      {child.email && (
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="p-2 rounded-lg bg-muted/50">
+                            <Mail className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-muted-foreground truncate">{child.email}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-muted-foreground">Child ID: {child.id.slice(0, 8)}...</span>
+                      </div>
+                    </div>
+
+                    {/* Select Child Button */}
+                    <Button 
+                      onClick={() => handleSelectChild(child)}
+                      className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                      size="lg"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Select Child
+                      <ChevronRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}

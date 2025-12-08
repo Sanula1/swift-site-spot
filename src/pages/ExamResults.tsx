@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,19 +12,30 @@ import { examResultsApi, type ExamResult, type ExamResultsQueryParams } from '@/
 import { useApiRequest } from '@/hooks/useApiRequest';
 import MUITable from '@/components/ui/mui-table';
 
+// Parse URL params manually since we use catch-all routes
+const parseUrlParams = (pathname: string) => {
+  const instituteMatch = pathname.match(/\/institute\/(\d+)/);
+  const classMatch = pathname.match(/\/class\/(\d+)/);
+  const subjectMatch = pathname.match(/\/subject\/(\d+)/);
+  const examMatch = pathname.match(/\/exam\/(\d+)/);
+  
+  return {
+    instituteId: instituteMatch?.[1] || null,
+    classId: classMatch?.[1] || null,
+    subjectId: subjectMatch?.[1] || null,
+    examId: examMatch?.[1] || null,
+  };
+};
+
 const ExamResults = () => {
   const navigate = useNavigate();
-  const {
-    instituteId,
-    classId,
-    subjectId,
-    examId
-  } = useParams<{
-    instituteId: string;
-    classId: string;
-    subjectId: string;
-    examId: string;
-  }>();
+  const location = useLocation();
+  
+  // Parse URL params manually since useParams doesn't work with catch-all routes
+  const { instituteId, classId, subjectId, examId } = parseUrlParams(location.pathname);
+  
+  console.log('ExamResults - Parsed URL params:', { instituteId, classId, subjectId, examId });
+
   const [examDetails, setExamDetails] = useState<{
     title?: string;
     examType?: string;
@@ -35,10 +46,7 @@ const ExamResults = () => {
     user,
     selectedInstitute,
     selectedClass,
-    selectedSubject,
-    currentInstituteId,
-    currentClassId,
-    currentSubjectId
+    selectedSubject
   } = useAuth();
   const {
     toast
@@ -58,11 +66,11 @@ const ExamResults = () => {
   } = useApiRequest(examResultsApi.getExamResults);
 
   // Track current context to prevent unnecessary reloads
-  const contextKey = `${currentInstituteId}-${currentClassId}-${currentSubjectId}-${examId}`;
+  const contextKey = `${instituteId}-${classId}-${subjectId}-${examId}`;
   const [lastLoadedContext, setLastLoadedContext] = useState<string>('');
 
   const loadExamResults = async (page = currentPage) => {
-    if (!currentInstituteId || !currentClassId || !currentSubjectId) {
+    if (!instituteId || !classId || !subjectId) {
       toast({
         title: "Selection Required",
         description: "Please select institute, class, and subject to view exam results",
@@ -74,9 +82,9 @@ const ExamResults = () => {
       const params: ExamResultsQueryParams = {
         page,
         limit: 10,
-        instituteId: currentInstituteId,
-        classId: currentClassId,
-        subjectId: currentSubjectId
+        instituteId: instituteId,
+        classId: classId,
+        subjectId: subjectId
       };
       if (examId) {
         params.examId = examId;
@@ -112,7 +120,7 @@ const ExamResults = () => {
     }
   };
   useEffect(() => {
-    if (currentInstituteId && currentClassId && currentSubjectId && examId && contextKey !== lastLoadedContext) {
+    if (instituteId && classId && subjectId && examId && contextKey !== lastLoadedContext) {
       setLastLoadedContext(contextKey);
       loadExamResults(1);
     }
@@ -225,7 +233,7 @@ const ExamResults = () => {
           </Button>
         </div>
 
-        {!currentInstituteId || !currentClassId || !currentSubjectId ? <Card>
+        {!instituteId || !classId || !subjectId ? <Card>
             <CardContent className="p-8 text-center">
               <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Selection Required</h3>

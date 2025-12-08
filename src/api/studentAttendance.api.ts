@@ -1,17 +1,18 @@
 import { enhancedCachedClient } from './enhancedCachedClient';
 
 export interface StudentAttendanceRecord {
-  attendanceId: string;
   studentId: string;
   studentName: string;
+  instituteId: string;
   instituteName: string;
+  classId?: string;
   className?: string;
+  subjectId?: string;
   subjectName?: string;
-  address: string;
-  markedBy: string;
-  markedAt: string;
-  markingMethod: string;
+  date: string;
   status: 'present' | 'absent' | 'late';
+  location: string;
+  markingMethod: string;
 }
 
 export interface StudentAttendanceResponse {
@@ -29,7 +30,7 @@ export interface StudentAttendanceResponse {
   summary: {
     totalPresent: number;
     totalAbsent: number;
-    totalLate: number;
+    totalLate?: number;
     attendanceRate: number;
   };
 }

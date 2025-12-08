@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, FileText, CheckCircle, AlertCircle, Calendar, DollarSign, RefreshCw, ExternalLink, Eye, Search, Filter, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PDFViewer } from '@/components/ui/pdf-viewer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -53,8 +51,6 @@ const PaymentSubmissions = () => {
   } = useToast();
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<PaymentSubmission | SubjectPaymentSubmission | null>(null);
-  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
-  const [selectedReceiptUrl, setSelectedReceiptUrl] = useState<string>('');
   
   // Determine if this is a subject payment submission or institute payment submission
   const isSubjectPayment = selectedClass && selectedSubject;
@@ -243,10 +239,9 @@ const PaymentSubmissions = () => {
   };
   const handleViewReceipt = (receiptUrl: string) => {
     if (receiptUrl) {
-      // Convert to storage.suraksha.lk URL format
+      // Convert to storage.suraksha.lk URL format and open in new tab
       const fullUrl = getImageUrl(receiptUrl);
-      setSelectedReceiptUrl(fullUrl);
-      setReceiptModalOpen(true);
+      window.open(fullUrl, '_blank');
     }
   };
   const getStatusColor = (status: string) => {
@@ -285,7 +280,7 @@ const PaymentSubmissions = () => {
       page: 1
     });
   };
-  return <AppLayout>
+  return <AppLayout currentPage="subject-payments">
       <div className="space-y-3 sm:space-y-6 px-2 sm:px-0">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -299,7 +294,7 @@ const PaymentSubmissions = () => {
               <p className="text-muted-foreground text-xs sm:text-sm truncate">Payment ID: {paymentId}</p>
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center justify-center w-full sm:w-auto">
             <Button onClick={() => refresh()} disabled={loading} size="sm" variant="outline" className="gap-2">
               <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
               <span className="text-xs sm:text-sm">{loading ? 'Loading...' : 'Refresh'}</span>
@@ -471,18 +466,6 @@ const PaymentSubmissions = () => {
             onSuccess={() => refresh()} 
           />
         )}
-
-        {/* Receipt Viewer Modal */}
-        <Dialog open={receiptModalOpen} onOpenChange={setReceiptModalOpen}>
-          <DialogContent className="max-w-5xl h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>Payment Receipt</DialogTitle>
-            </DialogHeader>
-            <div className="w-full h-[calc(90vh-80px)]">
-              {selectedReceiptUrl && <PDFViewer url={selectedReceiptUrl} title="Payment Receipt" />}
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </AppLayout>;
 };

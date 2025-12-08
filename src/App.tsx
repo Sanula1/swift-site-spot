@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster as Sonner, ErrorToaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
@@ -55,6 +55,7 @@ const App = () => {
           <AuthProvider>
             <Toaster />
             <Sonner />
+            <ErrorToaster />
             <Routes>
               {/* Main Routes - All handled by Index/AppContent */}
               <Route path="/" element={<Index />} />

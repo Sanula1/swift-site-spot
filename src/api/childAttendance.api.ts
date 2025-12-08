@@ -3,17 +3,22 @@ import { getAttendanceUrl, getApiHeaders, getBaseUrl } from '@/contexts/utils/au
 import { attendanceDuplicateChecker } from '@/utils/attendanceDuplicateCheck';
 
 export interface ChildAttendanceRecord {
-  attendanceId: string;
+  attendanceId?: string;
   studentId: string;
   studentName: string;
+  instituteId?: string;
   instituteName: string;
-  className: string;
-  subjectName: string;
-  address: string;
-  markedBy: string;
-  markedAt: string;
-  markingMethod: string;
+  classId?: string;
+  className?: string;
+  subjectId?: string;
+  subjectName?: string;
+  date: string;
   status: 'present' | 'absent' | 'late';
+  location: string;
+  markingMethod: string;
+  address?: string;
+  markedBy?: string;
+  markedAt?: string;
 }
 
 export interface ChildAttendanceResponse {

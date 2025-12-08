@@ -558,10 +558,10 @@ const Parents = () => {
 
       {/* Children Details Dialog */}
       <Dialog open={childrenDialog.isOpen} onOpenChange={(open) => !open && setChildrenDialog({ isOpen: false, parent: null, children: [] })}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
+              <GraduationCap className="h-5 w-5 text-primary" />
               Children of {childrenDialog.parent?.name}
             </DialogTitle>
             <DialogDescription>
@@ -574,45 +574,54 @@ const Parents = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Avatar</TableHead>
+                  <TableHead>Student ID</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Relationship</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Date of Birth</TableHead>
-                  <TableHead>Address</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {childrenDialog.children.map((child: any, index: number) => (
-                  <TableRow key={child.id || index}>
+                  <TableRow key={child.userId || index}>
                     <TableCell>
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={getImageUrl(child.imageUrl)} alt={child.name} />
-                        <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                      </Avatar>
+                      <div 
+                        className="cursor-pointer"
+                        onClick={() => {
+                          if (child.imageUrl) {
+                            setImagePreview({ 
+                              isOpen: true, 
+                              url: getImageUrl(child.imageUrl), 
+                              title: child.name 
+                            });
+                          }
+                        }}
+                      >
+                        <Avatar className="h-14 w-14 border-2 border-primary/20 hover:border-primary/40 hover:scale-105 transition-all duration-200 shadow-md">
+                          <AvatarImage src={getImageUrl(child.imageUrl)} alt={child.name} className="object-cover" />
+                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40">
+                            <User className="h-6 w-6" />
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {child.studentId || 'N/A'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-medium">{child.name || 'N/A'}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        {child.email || 'N/A'}
-                      </div>
+                      <Badge 
+                        variant="secondary" 
+                        className="capitalize bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-primary border border-primary/20"
+                      >
+                        {child.relationshipType || 'N/A'}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <Phone className="h-3 w-3 text-muted-foreground" />
                         {child.phoneNumber || 'N/A'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        {child.dateOfBirth ? new Date(child.dateOfBirth).toLocaleDateString() : 'N/A'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        {child.addressLine1 || 'N/A'}
                       </div>
                     </TableCell>
                   </TableRow>

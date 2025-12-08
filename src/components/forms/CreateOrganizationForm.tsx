@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
@@ -130,112 +129,132 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Add New Organization</CardTitle>
-        <CardDescription>Enter organization information to create a new record</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Organization Name</FormLabel>
+    <div className="w-full">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-foreground">Add New Organization</h2>
+        <p className="text-sm text-muted-foreground">Enter organization information to create a new record</p>
+      </div>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          {/* Row 1: Name & Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Organization Name</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter organization name" 
+                      className="h-9 text-sm"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Organization Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input placeholder="Enter organization name" {...field} />
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
+                    <SelectContent>
+                      <SelectItem value="INSTITUTE">Institute</SelectItem>
+                      <SelectItem value="GLOBAL">Global</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Row 2: Enrollment Key & Institute */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="enrollmentKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">
+                    Enrollment Key {watchType === 'INSTITUTE' ? '*' : '(Optional)'}
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={watchType === 'INSTITUTE' ? "Enter secret key" : "Optional key"} 
+                      className="h-9 text-sm"
+                      {...field} 
+                      disabled={watchType !== 'INSTITUTE'}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+
+            {instituteId ? (
+              <FormItem>
+                <FormLabel className="text-sm">Linked Institute</FormLabel>
+                <Input 
+                  value={instituteName || instituteId} 
+                  disabled 
+                  className="h-9 text-sm bg-muted"
+                />
+              </FormItem>
+            ) : (
               <FormField
                 control={form.control}
-                name="type"
+                name="instituteId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Organization Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="INSTITUTE">Institute</SelectItem>
-                        <SelectItem value="GLOBAL">Global</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="enrollmentKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Enrollment Key {watchType === 'INSTITUTE' ? '*' : '(Optional)'}</FormLabel>
+                    <FormLabel className="text-sm">Institute ID (Optional)</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder={watchType === 'INSTITUTE' ? "Enter secret key" : "Optional key"} 
+                        placeholder="Enter institute ID" 
+                        className="h-9 text-sm"
                         {...field} 
-                        disabled={watchType !== 'INSTITUTE'}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
+            )}
+          </div>
 
-              {instituteId ? (
-                <FormItem>
-                  <FormLabel>Linked Institute</FormLabel>
-                  <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/50">
-                    <span className="text-sm font-medium">{instituteName || instituteId}</span>
-                  </div>
-                </FormItem>
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="instituteId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Institute ID (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter institute ID" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>Organization Image (Optional)</FormLabel>
+          {/* Image Upload - Compact */}
+          <div>
+            <FormLabel className="text-sm">Organization Image (Optional)</FormLabel>
+            <div className="mt-1.5">
               <OrganizationImageUpload
                 currentImageUrl={imageUrl}
                 onImageUpdate={(newImageUrl) => setImageUrl(newImageUrl)}
                 organizationName={form.watch('name')}
               />
             </div>
+          </div>
 
+          {/* Settings - Compact toggles */}
+          <div className="space-y-2">
             <FormField
               control={form.control}
               name="isPublic"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Public Organization</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Anyone can view this organization
-                    </div>
+                <FormItem className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <FormLabel className="text-sm font-medium">Public Organization</FormLabel>
+                    <p className="text-xs text-muted-foreground">Anyone can view this organization</p>
                   </div>
                   <FormControl>
                     <Switch
@@ -251,12 +270,10 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
               control={form.control}
               name="needEnrollmentVerification"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Require Verification</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      New members need approval to join
-                    </div>
+                <FormItem className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <FormLabel className="text-sm font-medium">Require Verification</FormLabel>
+                    <p className="text-xs text-muted-foreground">New members need approval to join</p>
                   </div>
                   <FormControl>
                     <Switch
@@ -272,12 +289,10 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
               control={form.control}
               name="enabledEnrollments"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Enable Enrollments</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Allow new members to join
-                    </div>
+                <FormItem className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <FormLabel className="text-sm font-medium">Enable Enrollments</FormLabel>
+                    <p className="text-xs text-muted-foreground">Allow new members to join</p>
                   </div>
                   <FormControl>
                     <Switch
@@ -288,19 +303,20 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
                 </FormItem>
               )}
             />
-            
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Organization'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </div>
+          
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" disabled={isLoading}>
+              {isLoading ? 'Creating...' : 'Create Organization'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 };
 

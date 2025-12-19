@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -182,6 +183,16 @@ const NewAttendance = () => {
     endpoint,
     title
   } = getPermissionAndEndpoint();
+
+  // SEO + page title
+  useEffect(() => {
+    document.title = `${title} | SurakshaLMS`;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      meta.setAttribute('content', `${title} - View and manage daily attendance records.`);
+    }
+  }, [title]);
+
   const getApiHeaders = () => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
     const headers: Record<string, string> = {
@@ -438,51 +449,57 @@ const NewAttendance = () => {
         </Card>
       </div>;
   }
-  if (!dataLoaded) {
-    return <div className="container mx-auto p-6 space-y-6">
-        <div className="text-center py-12">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            {title}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Current Selection: {getContextInfo()}
+    return (
+      <main className="container mx-auto max-w-5xl p-4 sm:p-6">
+        <section className="rounded-xl border bg-card p-6 sm:p-8 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{title}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6">
+            Current Selection: <span className="font-medium text-foreground">{getContextInfo()}</span>
           </p>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            View and manage attendance records
-          </p>
-          <Button onClick={loadAttendanceData} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
-            {isLoading ? <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading Data...
-              </> : <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Load Attendance Data
-              </>}
-          </Button>
-        </div>
-      </div>;
+
+          <div className="flex items-center justify-center">
+            <Button onClick={loadAttendanceData} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Loading…
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Load Attendance
+                </>
+              )}
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
   }
-  return <div className="container mx-auto p-6 space-y-6">
+  return (
+    <main className="container mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {title}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Current Selection: {getContextInfo()}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Current Selection: <span className="font-medium text-foreground">{getContextInfo()}</span>
           </p>
         </div>
         <Button onClick={loadAttendanceData} disabled={isLoading} variant="outline" size="sm">
-          {isLoading ? <>
+          {isLoading ? (
+            <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Refreshing...
-            </> : <>
+              Refreshing…
+            </>
+          ) : (
+            <>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
-            </>}
+            </>
+          )}
         </Button>
-      </div>
+      </header>
 
       {/* Filter Toggle Button */}
       <div className="flex justify-end">
@@ -533,7 +550,12 @@ const NewAttendance = () => {
               {/* Occupation Filter */}
               <Popover open={occupationSearchOpen} onOpenChange={setOccupationSearchOpen}>
                 <PopoverTrigger asChild>
-                  
+                  <Button type="button" variant="outline" className="w-full justify-between">
+                    <span className="truncate">
+                      {occupationFilter ? formatOccupation(occupationFilter as Occupation) : 'All Occupations'}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[300px] p-0 pointer-events-auto bg-background border shadow-md z-50" align="start">
                   <Command className="bg-background">

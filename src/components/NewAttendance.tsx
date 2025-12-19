@@ -741,6 +741,7 @@ const NewAttendance = () => {
             {filteredRecords.map((record, index) => <AttendanceCard key={index} record={record} />)}
           </div>}
       </div>
-    </div>;
+    </main>
+  );
 };
 export default NewAttendance;

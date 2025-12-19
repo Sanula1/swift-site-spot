@@ -264,17 +264,18 @@ const Attendance = () => {
   const displayData = viewType === 'student' ? childAttendanceRecords : studentAttendanceRecords;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Current Selection: {getCurrentSelection()}
+            Current Selection: <span className="font-medium text-foreground">{getCurrentSelection()}</span>
           </p>
         </div>
-        <Button 
-          onClick={loadStudentAttendanceData} 
+
+        <Button
+          onClick={loadStudentAttendanceData}
           disabled={isLoading}
           variant="outline"
           className="shrink-0"
@@ -287,11 +288,12 @@ const Attendance = () => {
           ) : (
             <>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
+              <span className="hidden sm:inline">Refresh Data</span>
+              <span className="sm:hidden">Refresh</span>
             </>
           )}
         </Button>
-      </div>
+      </header>
 
       {/* Filters Section */}
       <AttendanceFilters

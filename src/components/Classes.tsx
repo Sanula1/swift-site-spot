@@ -317,48 +317,135 @@ const Classes = () => {
 
   // Apply pagination to filtered results
   const paginatedClasses = filteredClasses.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-  const columns = [{
-    key: 'imageUrl',
-    header: 'Image',
-    render: (value: string, row: any) => <Avatar className="h-12 w-12">
-          <AvatarImage src={getImageUrl(value)} alt={row.name} className="object-cover" />
-          <AvatarFallback className="bg-blue-100 text-blue-600">
+  const columns = [
+    {
+      key: 'imageUrl',
+      header: 'Image',
+      render: (value: string, row: any) => (
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={getImageUrl(value)} alt={`${row.name} class image`} className="object-cover" />
+          <AvatarFallback className="bg-muted text-muted-foreground">
             <Image className="h-6 w-6" />
           </AvatarFallback>
         </Avatar>
-  }, {
-    key: 'name',
-    header: 'Class Name',
-    render: (value: string, row: any) => <div className="min-w-0">
+      )
+    },
+    {
+      key: 'name',
+      header: 'Class Name',
+      render: (value: string) => (
+        <div className="min-w-0">
           <div className="font-medium truncate">{value}</div>
         </div>
-  }, {
-    key: 'grade',
-    header: 'Grade',
-    render: (value: number) => `Grade ${value}`
-  }, {
-    key: 'academicYear',
-    header: 'Academic Year'
-  }, ...(userRole === 'InstituteAdmin' ? [{
-    key: 'actions',
-    header: 'Actions',
-    render: (value: any, row: ClassData) => <div className="flex items-center gap-2">
-        {row.classTeacher ? <Button variant="destructive" size="sm" onClick={() => handleUnassignTeacher(row.id)} disabled={unassigningClassId === row.id || !!assigningTeacherId} className="h-8 px-3" title="Remove teacher">
-              {unassigningClassId === row.id ? <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> : <UserMinus className="h-4 w-4 mr-1" />}
-              {unassigningClassId === row.id ? 'Removing...' : 'Remove'}
-            </Button> : <Button variant="outline" size="sm" onClick={() => handleAssignTeacher(row.id)} disabled={assigningTeacherId === row.id || !!unassigningClassId} className="h-8 px-3" title="Assign teacher">
-              {assigningTeacherId === row.id ? <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
-              {assigningTeacherId === row.id ? 'Assigning...' : 'Assign'}
-            </Button>}
-          <Button variant="outline" size="sm" onClick={() => handleViewCode(row.id)} disabled={loadingCodeId === row.id} className="h-8 px-3">
-            {loadingCodeId === row.id ? <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> : <QrCode className="h-4 w-4 mr-1" />}
-            Code
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleEditClass(row)} className="h-8 w-8 p-0">
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
-  }] : [])];
+      )
+    },
+    {
+      key: 'classTeacher',
+      header: 'Class Teacher',
+      render: (_value: any, row: ClassData) => {
+        const t = row.classTeacher;
+        if (!t) return <span className="text-sm text-muted-foreground">Not assigned</span>;
+
+        const fullName = `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Teacher';
+        const initials = fullName
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((p) => p[0]?.toUpperCase())
+          .join('');
+
+        return (
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar className="h-9 w-9">
+              <AvatarImage
+                src={getImageUrl(t.imageUrl)}
+                alt={`${fullName} teacher profile image`}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                {initials || 'T'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-xs text-muted-foreground truncate">{t.email}</div>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'grade',
+      header: 'Grade',
+      render: (value: number) => `Grade ${value}`
+    },
+    {
+      key: 'academicYear',
+      header: 'Academic Year'
+    },
+    ...(userRole === 'InstituteAdmin'
+      ? [
+          {
+            key: 'actions',
+            header: 'Actions',
+            render: (value: any, row: ClassData) => (
+              <div className="flex items-center gap-2">
+                {row.classTeacher ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleUnassignTeacher(row.id)}
+                    disabled={unassigningClassId === row.id || !!assigningTeacherId}
+                    className="h-8 px-3"
+                    title="Remove teacher"
+                  >
+                    {unassigningClassId === row.id ? (
+                      <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <UserMinus className="h-4 w-4 mr-1" />
+                    )}
+                    {unassigningClassId === row.id ? 'Removing...' : 'Remove'}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAssignTeacher(row.id)}
+                    disabled={assigningTeacherId === row.id || !!unassigningClassId}
+                    className="h-8 px-3"
+                    title="Assign teacher"
+                  >
+                    {assigningTeacherId === row.id ? (
+                      <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-4 w-4 mr-1" />
+                    )}
+                    {assigningTeacherId === row.id ? 'Assigning...' : 'Assign'}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewCode(row.id)}
+                  disabled={loadingCodeId === row.id}
+                  className="h-8 px-3"
+                >
+                  {loadingCodeId === row.id ? (
+                    <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <QrCode className="h-4 w-4 mr-1" />
+                  )}
+                  Code
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleEditClass(row)} className="h-8 w-8 p-0">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+            )
+          }
+        ]
+      : [])
+  ];
   return <div className="container mx-auto p-6 space-y-6">
       {/* Search Bar */}
       

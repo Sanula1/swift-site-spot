@@ -49,7 +49,7 @@ export default function ClassMultiSelectDialog({
       try {
         const data: any = await enhancedCachedClient.get(
           "/institute-classes",
-          { instituteId, page: 1, limit: 200 },
+          { instituteId, page: 1, limit: 100 },
           {
             ttl: CACHE_TTL.INSTITUTE_CLASSES,
             forceRefresh: false,

@@ -519,16 +519,24 @@ const SMS = () => {
   const [activeTab, setActiveTab] = useState('bulk');
 
   return (
-    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="container mx-auto max-w-6xl p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <header className="space-y-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">SMS</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Send bulk messages, manage sender masks, and track payments.
+        </p>
+      </header>
+
       {/* SMS Credits Display */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               SMS Credits Information
             </CardTitle>
-            <div className="flex items-center gap-2">
+
+            <div className="flex flex-wrap items-center gap-2">
               {credentials && (
                 <Badge variant={credentials.isActive ? 'default' : 'destructive'}>
                   {credentials.isActive ? 'Active' : 'Inactive'}
@@ -537,6 +545,7 @@ const SMS = () => {
               <Button variant="outline" size="sm" onClick={fetchCredentials} disabled={loadingCredentials}>
                 <RefreshCw className={`h-4 w-4 ${loadingCredentials ? 'animate-spin' : ''}`} />
                 <span className="ml-2 hidden sm:inline">{loadingCredentials ? 'Loading...' : 'Load Data'}</span>
+                <span className="ml-2 sm:hidden">{loadingCredentials ? 'Loading' : 'Load'}</span>
               </Button>
             </div>
           </div>

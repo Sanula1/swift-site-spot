@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wifi, ArrowLeft, MapPin, CheckCircle, Loader2 } from 'lucide-react';
+import { MapPin, CheckCircle, Loader2, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +27,6 @@ const InstituteMarkAttendance = () => {
   const [instituteCardId, setInstituteCardId] = useState('');
   const [status, setStatus] = useState<'present' | 'absent' | 'late'>('present');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [scannerStatus, setScannerStatus] = useState('Ready to Scan');
   const [location, setLocation] = useState<string>('');
   const [lastAttendance, setLastAttendance] = useState<LastAttendance | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -129,7 +128,6 @@ const InstituteMarkAttendance = () => {
     }
 
     setIsProcessing(true);
-    setScannerStatus('Processing...');
 
     try {
       const request: any = {
@@ -169,13 +167,11 @@ const InstituteMarkAttendance = () => {
           imageUrl: imageUrl || undefined,
         });
 
-        // Only show one toast notification - positioned top-left
         toast({
           title: `✓ ${studentName}`,
           description: `${status.toUpperCase()} - ${new Date().toLocaleTimeString()}`,
         });
         setInstituteCardId('');
-        setScannerStatus('Attendance Marked Successfully');
         inputRef.current?.focus();
       } else {
         throw new Error(result.message || 'Failed to mark attendance');
@@ -187,10 +183,8 @@ const InstituteMarkAttendance = () => {
         description: error instanceof Error ? error.message : 'Failed to mark attendance',
         variant: "destructive"
       });
-      setScannerStatus('Error - Try Again');
     } finally {
       setIsProcessing(false);
-      setTimeout(() => setScannerStatus('Ready to Scan'), 2000);
     }
   };
 
@@ -201,241 +195,164 @@ const InstituteMarkAttendance = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/qr-attendance')} 
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div className="flex-1 space-y-1">
-              <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-                <Wifi className="h-6 w-6" />
-                Institute Mark Attendance
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Tap your RFID card or enter the ID manually to mark attendance
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Current Selection Card */}
+        <Card className="border-primary/20 bg-card shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Current Selection</p>
+            <p className="font-semibold text-foreground">
+              Institute: {selectedInstitute?.name || 'Not selected'}
+            </p>
+            {location && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <MapPin className="h-3 w-3" />
+                {location}
               </p>
-            </div>
-          </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="p-4">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Current Selection</h3>
-              <div className="space-y-1">
-                <p className="text-sm">
-                  <span className="font-medium">Institute:</span> {selectedInstitute?.name || 'Not selected'}
+        {/* Main Attendance Card */}
+        <Card className="border shadow-lg">
+          <CardContent className="p-0">
+            {/* Date/Time Header */}
+            <div className="flex border-b">
+              <div className="flex-1 p-4 text-center border-r">
+                <p className="text-xs text-muted-foreground mb-1">Date</p>
+                <p className="font-semibold text-foreground">
+                  {currentTime.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
                 </p>
-                {selectedClass && (
-                  <p className="text-sm">
-                    <span className="font-medium">Class:</span> {selectedClass.name}
-                  </p>
-                )}
-                {selectedSubject && (
-                  <p className="text-sm">
-                    <span className="font-medium">Subject:</span> {selectedSubject.name}
-                  </p>
-                )}
-                {location && (
-                  <p className="text-sm flex items-start gap-1">
-                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span className="text-xs text-muted-foreground">
-                      {selectedInstitute?.name ? `${selectedInstitute.name} - ` : ''}{location}
-                    </span>
-                  </p>
-                )}
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex-1 p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Time</p>
+                <p className="font-semibold text-foreground tabular-nums">
+                  {currentTime.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </p>
+              </div>
+            </div>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 overflow-hidden">
-            <CardContent className="p-8 sm:p-12 lg:p-16">
-              <div className="flex flex-col items-center justify-center space-y-8">
-                {/* Status Icon */}
-                <div className={`relative p-6 rounded-full ${
-                  lastAttendance 
-                    ? lastAttendance.status === 'present' 
-                      ? 'bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50' 
-                      : lastAttendance.status === 'absent'
-                      ? 'bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/50 dark:to-red-800/50'
-                      : 'bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/50 dark:to-yellow-800/50'
-                    : 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50'
-                } shadow-lg`}>
-                  {lastAttendance ? (
-                    <CheckCircle className={`h-16 w-16 ${
-                      lastAttendance.status === 'present' 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : lastAttendance.status === 'absent'
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-yellow-600 dark:text-yellow-400'
-                    }`} strokeWidth={2} />
-                  ) : (
-                    <Wifi className="h-16 w-16 text-blue-600 dark:text-blue-400" strokeWidth={2} />
-                  )}
-                </div>
-
-                <div className="text-center space-y-4">
-                  <h2 className="text-3xl font-bold text-foreground">
-                    {scannerStatus}
-                  </h2>
-                  
-                  {lastAttendance ? (
-                    <div className="space-y-6 flex flex-col items-center">
-                      {/* Student Image - Bigger and Modern */}
-                      {lastAttendance.imageUrl && (
-                        <div className="relative">
-                          <div className={`absolute inset-0 rounded-full blur-lg opacity-50 ${
-                            lastAttendance.status === 'present' 
-                              ? 'bg-green-400' 
-                              : lastAttendance.status === 'absent'
-                              ? 'bg-red-400'
-                              : 'bg-yellow-400'
-                          }`}></div>
-                          <img
-                            src={getImageUrl(lastAttendance.imageUrl)}
-                            alt={`${lastAttendance.studentName} photo`}
-                            className={`relative h-32 w-32 sm:h-40 sm:w-40 rounded-full object-cover ring-4 shadow-2xl ${
-                              lastAttendance.status === 'present' 
-                                ? 'ring-green-500' 
-                                : lastAttendance.status === 'absent'
-                                ? 'ring-red-500'
-                                : 'ring-yellow-500'
-                            }`}
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Student Name */}
-                      <p className={`text-2xl font-bold ${
-                        lastAttendance.status === 'present' 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : lastAttendance.status === 'absent'
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-yellow-600 dark:text-yellow-400'
-                      }`}>
-                        {lastAttendance.studentName}
-                      </p>
-                      
-                      {/* Status Badge */}
-                      <div className={`px-6 py-2 rounded-full font-bold text-lg ${
-                        lastAttendance.status === 'present' 
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' 
-                          : lastAttendance.status === 'absent'
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
-                      }`}>
-                        Status: {lastAttendance.status.toUpperCase()}
-                      </div>
-                      
-                      {/* Card Info */}
-                      <div className="text-center space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Card ID: <span className="font-medium text-foreground">{lastAttendance.instituteCardId}</span>
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          User ID: <span className="font-medium text-foreground">{lastAttendance.userIdByInstitute}</span>
-                        </p>
+            {/* Main Content - Two Column Layout */}
+            <div className="grid lg:grid-cols-2 gap-0">
+              {/* Left Side - Image/Scanner Area */}
+              <div className="p-6 lg:p-8 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r">
+                {/* Image Placeholder or Student Image */}
+                <div className="relative mb-6">
+                  {lastAttendance?.imageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={getImageUrl(lastAttendance.imageUrl)}
+                        alt={`${lastAttendance.studentName} photo`}
+                        className="h-48 w-48 sm:h-56 sm:w-56 rounded-lg object-cover border-4 border-destructive shadow-lg"
+                      />
+                      {/* Success Checkmark */}
+                      <div className="absolute -bottom-3 -right-3 bg-emerald-500 rounded-full p-2 shadow-lg">
+                        <CheckCircle className="h-8 w-8 text-white" />
                       </div>
                     </div>
                   ) : (
-                    <p className="text-lg text-muted-foreground">
-                      Place your RFID card near the scanner or enter ID below
-                    </p>
+                    <div className="h-48 w-48 sm:h-56 sm:w-56 border-4 border-destructive rounded-lg flex items-center justify-center bg-muted/30">
+                      <User className="h-20 w-20 text-muted-foreground/50" />
+                    </div>
                   )}
                 </div>
+
+                {/* Student Info */}
+                {lastAttendance && (
+                  <div className="text-center space-y-3">
+                    <p className="text-xl font-bold text-primary">
+                      {lastAttendance.studentName}
+                    </p>
+                    <div className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
+                      lastAttendance.status === 'present' 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' 
+                        : lastAttendance.status === 'absent'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+                    }`}>
+                      Status: {lastAttendance.status.toUpperCase()}
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>Card ID: <span className="font-medium text-foreground">{lastAttendance.instituteCardId}</span></p>
+                      <p>User ID: <span className="font-medium text-foreground">{lastAttendance.userIdByInstitute}</span></p>
+                    </div>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className="border-muted bg-muted/50">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Date</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {currentTime.toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </p>
+              {/* Right Side - Inputs */}
+              <div className="p-6 lg:p-8 flex flex-col justify-center space-y-6">
+                {/* RFID ID Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="institute-card-input" className="text-sm font-medium text-foreground">
+                    RFID ID
+                  </Label>
+                  <Input
+                    id="institute-card-input"
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Scan or enter RFID ID..."
+                    value={instituteCardId}
+                    onChange={(e) => setInstituteCardId(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={isProcessing}
+                    className="h-12 text-base border-2 border-destructive focus:border-destructive focus-visible:ring-0 focus-visible:ring-offset-0"
+                    autoFocus
+                  />
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Time</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {currentTime.toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
-                  </p>
+
+                {/* Status Select */}
+                <div className="space-y-2">
+                  <Label htmlFor="status-select" className="text-sm font-medium text-foreground">
+                    Status
+                  </Label>
+                  <Select 
+                    value={status} 
+                    onValueChange={(value: 'present' | 'absent' | 'late') => setStatus(value)}
+                    disabled={isProcessing}
+                  >
+                    <SelectTrigger id="status-select" className="h-12 text-base border-2 border-destructive">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="present">Present</SelectItem>
+                      <SelectItem value="absent">Absent</SelectItem>
+                      <SelectItem value="late">Late</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {/* Mark Attendance Button */}
+                <Button
+                  onClick={handleMarkAttendance}
+                  disabled={isProcessing || !instituteCardId.trim()}
+                  className="w-full h-14 text-lg font-semibold border-2 border-destructive bg-background hover:bg-destructive/10 text-foreground"
+                  variant="outline"
+                  size="lg"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Mark Attendance'
+                  )}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="institute-card-input" className="text-sm font-medium text-foreground">
-                Institute Card ID
-              </Label>
-              <Input
-                id="institute-card-input"
-                ref={inputRef}
-                type="text"
-                placeholder="Scan or enter institute card ID..."
-                value={instituteCardId}
-                onChange={(e) => setInstituteCardId(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={isProcessing}
-                className="h-12 text-base border-2 border-blue-500 focus:border-blue-600 focus-visible:ring-0 focus-visible:ring-offset-0"
-                autoFocus
-              />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status-select" className="text-sm font-medium text-foreground">
-                Status
-              </Label>
-              <Select 
-                value={status} 
-                onValueChange={(value: 'present' | 'absent' | 'late') => setStatus(value)}
-                disabled={isProcessing}
-              >
-                <SelectTrigger id="status-select" className="h-12 text-base border-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="absent">Absent</SelectItem>
-                  <SelectItem value="late">Late</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleMarkAttendance}
-            disabled={isProcessing || !instituteCardId.trim()}
-            className="w-full h-14 text-lg font-medium bg-blue-500 hover:bg-blue-600 text-white"
-            size="lg"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Mark Attendance'
-            )}
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
       </div>
+    </div>
   );
 };
 

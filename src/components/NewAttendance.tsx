@@ -449,6 +449,8 @@ const NewAttendance = () => {
         </Card>
       </div>;
   }
+
+  if (!dataLoaded) {
     return (
       <main className="container mx-auto max-w-5xl p-4 sm:p-6">
         <section className="rounded-xl border bg-card p-6 sm:p-8 text-center">

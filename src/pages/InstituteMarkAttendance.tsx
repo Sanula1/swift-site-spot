@@ -251,16 +251,28 @@ const InstituteMarkAttendance = () => {
                       <img
                         src={getImageUrl(lastAttendance.imageUrl)}
                         alt={`${lastAttendance.studentName} photo`}
-                        className="h-48 w-48 sm:h-56 sm:w-56 rounded-lg object-cover border-4 border-destructive shadow-lg"
+                        className={`h-48 w-48 sm:h-56 sm:w-56 rounded-lg object-cover border-4 shadow-lg ${
+                          lastAttendance.status === 'present' 
+                            ? 'border-emerald-500' 
+                            : lastAttendance.status === 'absent'
+                            ? 'border-red-500'
+                            : 'border-amber-500'
+                        }`}
                       />
-                      {/* Success Checkmark */}
-                      <div className="absolute -bottom-3 -right-3 bg-emerald-500 rounded-full p-2 shadow-lg">
+                      {/* Status Icon */}
+                      <div className={`absolute -bottom-3 -right-3 rounded-full p-2 shadow-lg ${
+                        lastAttendance.status === 'present' 
+                          ? 'bg-emerald-500' 
+                          : lastAttendance.status === 'absent'
+                          ? 'bg-red-500'
+                          : 'bg-amber-500'
+                      }`}>
                         <CheckCircle className="h-8 w-8 text-white" />
                       </div>
                     </div>
                   ) : (
-                    <div className="h-48 w-48 sm:h-56 sm:w-56 border-4 border-destructive rounded-lg flex items-center justify-center bg-muted/30">
-                      <User className="h-20 w-20 text-muted-foreground/50" />
+                    <div className="h-48 w-48 sm:h-56 sm:w-56 border-4 border-red-500 rounded-lg flex items-center justify-center bg-muted/30">
+                      <User className="h-20 w-20 text-red-400" />
                     </div>
                   )}
                 </div>
@@ -268,7 +280,13 @@ const InstituteMarkAttendance = () => {
                 {/* Student Info */}
                 {lastAttendance && (
                   <div className="text-center space-y-3">
-                    <p className="text-xl font-bold text-primary">
+                    <p className={`text-xl font-bold ${
+                      lastAttendance.status === 'present' 
+                        ? 'text-emerald-600 dark:text-emerald-400' 
+                        : lastAttendance.status === 'absent'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }`}>
                       {lastAttendance.studentName}
                     </p>
                     <div className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
@@ -280,9 +298,15 @@ const InstituteMarkAttendance = () => {
                     }`}>
                       Status: {lastAttendance.status.toUpperCase()}
                     </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>Card ID: <span className="font-medium text-foreground">{lastAttendance.instituteCardId}</span></p>
-                      <p>User ID: <span className="font-medium text-foreground">{lastAttendance.userIdByInstitute}</span></p>
+                    <div className={`text-sm space-y-1 ${
+                      lastAttendance.status === 'present' 
+                        ? 'text-emerald-600 dark:text-emerald-400' 
+                        : lastAttendance.status === 'absent'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      <p>Card ID: <span className="font-medium">{lastAttendance.instituteCardId}</span></p>
+                      <p>User ID: <span className="font-medium">{lastAttendance.userIdByInstitute}</span></p>
                     </div>
                   </div>
                 )}
@@ -304,7 +328,7 @@ const InstituteMarkAttendance = () => {
                     onChange={(e) => setInstituteCardId(e.target.value)}
                     onKeyPress={handleKeyPress}
                     disabled={isProcessing}
-                    className="h-12 text-base border-2 border-destructive focus:border-destructive focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="h-12 text-base border-2 border-primary focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0"
                     autoFocus
                   />
                 </div>
@@ -319,13 +343,22 @@ const InstituteMarkAttendance = () => {
                     onValueChange={(value: 'present' | 'absent' | 'late') => setStatus(value)}
                     disabled={isProcessing}
                   >
-                    <SelectTrigger id="status-select" className="h-12 text-base border-2 border-destructive">
+                    <SelectTrigger 
+                      id="status-select" 
+                      className={`h-12 text-base border-2 ${
+                        status === 'present' 
+                          ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' 
+                          : status === 'absent'
+                          ? 'border-red-500 text-red-600 dark:text-red-400'
+                          : 'border-amber-500 text-amber-600 dark:text-amber-400'
+                      }`}
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="present">Present</SelectItem>
-                      <SelectItem value="absent">Absent</SelectItem>
-                      <SelectItem value="late">Late</SelectItem>
+                      <SelectItem value="present" className="text-emerald-600 dark:text-emerald-400">Present</SelectItem>
+                      <SelectItem value="absent" className="text-red-600 dark:text-red-400">Absent</SelectItem>
+                      <SelectItem value="late" className="text-amber-600 dark:text-amber-400">Late</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -334,8 +367,7 @@ const InstituteMarkAttendance = () => {
                 <Button
                   onClick={handleMarkAttendance}
                   disabled={isProcessing || !instituteCardId.trim()}
-                  className="w-full h-14 text-lg font-semibold border-2 border-destructive bg-background hover:bg-destructive/10 text-foreground"
-                  variant="outline"
+                  className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white"
                   size="lg"
                 >
                   {isProcessing ? (

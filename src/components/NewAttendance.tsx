@@ -4,15 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { RefreshCw, Search, Filter, Calendar, User, Clock, CheckCircle, MapPin, School, BookOpen, UserCheck, UserX, TrendingUp, ChevronsUpDown, Check } from 'lucide-react';
+import { RefreshCw, Search, Filter, Calendar, User, Clock, CheckCircle, MapPin, School, BookOpen, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { getAttendanceUrl, getBaseUrl } from '@/contexts/utils/auth.api';
-import { Occupation, formatOccupation } from '@/types/occupation.types';
-import { cn } from '@/lib/utils';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -124,8 +120,7 @@ const NewAttendance = () => {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [occupationFilter, setOccupationFilter] = useState<string>('');
-  const [occupationSearchOpen, setOccupationSearchOpen] = useState(false);
+  // Removed occupation filter - not needed
   const [startDate, setStartDate] = useState(getDefaultDates().startDate);
   const [endDate, setEndDate] = useState(getDefaultDates().endDate);
   const [sortOrder, setSortOrder] = useState<string>('descending');
@@ -462,171 +457,141 @@ const NewAttendance = () => {
         </div>
       </div>;
   }
-  return <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Current Selection: <span className="font-medium text-foreground">{getContextInfo()}</span>
-          </p>
-        </div>
+  return <div className="container mx-auto p-4 sm:p-6 space-y-6">
+      {/* Modern Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-border/50 p-6">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+                  {title}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  <span className="font-medium text-primary">{getContextInfo()}</span>
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Button onClick={loadAttendanceData} disabled={isLoading} variant="outline" size="sm" className="gap-2">
-            {isLoading ? <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Refreshing...
-              </> : <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </>}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={loadAttendanceData} 
+              disabled={isLoading} 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 rounded-full px-4 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh'}
+            </Button>
 
-          <Button onClick={() => setShowFilters(!showFilters)} variant="outline" size="sm" className="gap-2">
-            <Filter className="h-4 w-4" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
+            <Button 
+              onClick={() => setShowFilters(!showFilters)} 
+              variant={showFilters ? "default" : "outline"}
+              size="sm" 
+              className="gap-2 rounded-full px-4"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Modern Filters Panel */}
       {showFilters && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Filters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Date Range */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">Start Date</label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="input-premium"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">End Date</label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="input-premium"
-                />
-              </div>
-              <Button onClick={loadAttendanceData} disabled={isLoading} className="gap-2">
-                <Calendar className="h-4 w-4" />
-                Apply
-              </Button>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name / ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 input-premium"
-                />
-              </div>
-
-              {/* Status */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="input-premium">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="absent">Absent</SelectItem>
-                  <SelectItem value="late">Late</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Occupation */}
-              <Popover open={occupationSearchOpen} onOpenChange={setOccupationSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={occupationSearchOpen}
-                    className="w-full justify-between input-premium"
+        <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95 rounded-xl overflow-hidden">
+          <CardContent className="p-5">
+            <div className="space-y-5">
+              {/* Date Range Section */}
+              <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-border/30">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Date Range
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-auto h-9 rounded-lg border-border/50 bg-background/50 focus:border-primary text-sm"
+                  />
+                  <span className="text-muted-foreground text-sm">to</span>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-auto h-9 rounded-lg border-border/50 bg-background/50 focus:border-primary text-sm"
+                  />
+                  <Button 
+                    onClick={loadAttendanceData} 
+                    disabled={isLoading} 
+                    size="sm"
+                    className="h-9 px-4 rounded-lg gap-2 bg-primary hover:bg-primary/90"
                   >
-                    <span className="truncate">
-                      {occupationFilter ? formatOccupation(occupationFilter as Occupation) : 'All Occupations'}
-                    </span>
-                    <ChevronsUpDown className="h-4 w-4 opacity-60" />
+                    Apply
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-[300px] p-0 pointer-events-auto bg-popover border shadow-md z-50"
-                  align="start"
-                >
-                  <Command className="bg-popover">
-                    <CommandInput placeholder="Search occupation..." className="h-9 border-b" />
-                    <CommandList className="max-h-[300px] overflow-y-auto">
-                      <CommandEmpty className="py-6 text-center text-sm">No occupation found.</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem
-                          value="all"
-                          onSelect={() => {
-                            setOccupationFilter('');
-                            setOccupationSearchOpen(false);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              occupationFilter === '' ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          All Occupations
-                        </CommandItem>
-                        {Object.values(Occupation).map((occupation) => (
-                          <CommandItem
-                            key={occupation}
-                            value={formatOccupation(occupation)}
-                            onSelect={() => {
-                              setOccupationFilter(occupation === occupationFilter ? '' : occupation);
-                              setOccupationSearchOpen(false);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                occupationFilter === occupation ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {formatOccupation(occupation)}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                </div>
+              </div>
 
-              {/* Sort */}
-              <Select value={sortOrder} onValueChange={setSortOrder}>
-                <SelectTrigger className="input-premium">
-                  <SelectValue placeholder="Sort" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="descending">Newest First</SelectItem>
-                  <SelectItem value="ascending">Oldest First</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Quick Filters Row */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search name or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 h-9 rounded-lg border-border/50 bg-background/50 focus:border-primary text-sm"
+                  />
+                </div>
+
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px] h-9 rounded-lg border-border/50 bg-background/50 text-sm">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="present">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        Present
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="absent">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                        Absent
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="late">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                        Late
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Sort Filter */}
+                <Select value={sortOrder} onValueChange={setSortOrder}>
+                  <SelectTrigger className="w-[150px] h-9 rounded-lg border-border/50 bg-background/50 text-sm">
+                    <Clock className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="descending">Newest First</SelectItem>
+                    <SelectItem value="ascending">Oldest First</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>

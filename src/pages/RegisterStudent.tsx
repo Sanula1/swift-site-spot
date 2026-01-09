@@ -174,6 +174,7 @@ const RegisterStudent = () => {
       setFatherData({
         firstName: "",
         lastName: "",
+        nameWithInitials: "",
         email: "",
         phoneNumber: "",
         userType: "USER_WITHOUT_STUDENT",
@@ -200,6 +201,7 @@ const RegisterStudent = () => {
       setMotherData({
         firstName: "",
         lastName: "",
+        nameWithInitials: "",
         email: "",
         phoneNumber: "",
         userType: "USER_WITHOUT_STUDENT",
@@ -226,6 +228,7 @@ const RegisterStudent = () => {
       setGuardianData({
         firstName: "",
         lastName: "",
+        nameWithInitials: "",
         email: "",
         phoneNumber: "",
         userType: "USER_WITHOUT_STUDENT",
@@ -286,6 +289,7 @@ const RegisterStudent = () => {
   const [fatherData, setFatherData] = useState({
     firstName: "",
     lastName: "",
+    nameWithInitials: "",
     email: "",
     phoneNumber: "",
     userType: "USER_WITHOUT_STUDENT",
@@ -311,6 +315,7 @@ const RegisterStudent = () => {
   const [motherData, setMotherData] = useState({
     firstName: "",
     lastName: "",
+    nameWithInitials: "",
     email: "",
     phoneNumber: "",
     userType: "USER_WITHOUT_STUDENT",
@@ -336,6 +341,7 @@ const RegisterStudent = () => {
   const [guardianData, setGuardianData] = useState({
     firstName: "",
     lastName: "",
+    nameWithInitials: "",
     email: "",
     phoneNumber: "",
     userType: "USER_WITHOUT_STUDENT",
@@ -361,6 +367,7 @@ const RegisterStudent = () => {
   const [studentData, setStudentData] = useState({
     firstName: "",
     lastName: "",
+    nameWithInitials: "",
     email: "",
     phoneNumber: "",
     userType: "USER_WITHOUT_PARENT",
@@ -986,6 +993,10 @@ const RegisterStudent = () => {
     const lastNameResult = validateRequired(data.lastName, 'Last name');
     if (!lastNameResult.isValid) errors.lastName = lastNameResult.error!;
 
+    // Name with initials is required
+    const nameWithInitialsResult = validateRequired(data.nameWithInitials, 'Name with initials');
+    if (!nameWithInitialsResult.isValid) errors.nameWithInitials = nameWithInitialsResult.error!;
+
     const emailResult = validateEmail(data.email);
     if (!emailResult.isValid) errors.email = emailResult.error!;
 
@@ -1024,6 +1035,10 @@ const RegisterStudent = () => {
     const lastNameResult = validateRequired(data.lastName, 'Last name');
     if (!lastNameResult.isValid) errors.lastName = lastNameResult.error!;
 
+    // Name with initials is required
+    const nameWithInitialsResult = validateRequired(data.nameWithInitials, 'Name with initials');
+    if (!nameWithInitialsResult.isValid) errors.nameWithInitials = nameWithInitialsResult.error!;
+
     const emailResult = validateEmail(data.email);
     if (!emailResult.isValid) errors.email = emailResult.error!;
 
@@ -1044,6 +1059,11 @@ const RegisterStudent = () => {
 
     const provinceResult = validateRequired(data.province, 'Province');
     if (!provinceResult.isValid) errors.province = provinceResult.error!;
+
+    // Profile image is required for student
+    if (!data.image) {
+      errors.image = 'Profile image is required';
+    }
 
     return { isValid: Object.keys(errors).length === 0, errors };
   };
@@ -1749,6 +1769,19 @@ const RegisterStudent = () => {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="father-nameWithInitials" className="text-sm font-semibold">Name with Initials *</Label>
+                    <Input id="father-nameWithInitials" value={fatherData.nameWithInitials} onChange={e => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z. ]/g, '').replace(/  +/g, ' ');
+                      setFatherData({
+                        ...fatherData,
+                        nameWithInitials: value
+                      });
+                    }} maxLength={100} className={`bg-background/50 ${fatherErrors.nameWithInitials ? 'border-destructive ring-2 ring-destructive/20' : 'border-border/50'}`} placeholder="e.g., H.M. DON GAMAGE" />
+                    {fatherErrors.nameWithInitials && <p className="text-xs text-destructive">{fatherErrors.nameWithInitials}</p>}
+                    <p className="text-xs text-muted-foreground">Enter name with initials (e.g., J. DOE)</p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2 group">
                       <Label htmlFor="father-email" className="flex items-center gap-2 text-sm font-semibold">
@@ -1981,6 +2014,19 @@ const RegisterStudent = () => {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="mother-nameWithInitials" className="text-sm font-semibold">Name with Initials *</Label>
+                    <Input id="mother-nameWithInitials" value={motherData.nameWithInitials} onChange={e => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z. ]/g, '').replace(/  +/g, ' ');
+                      setMotherData({
+                        ...motherData,
+                        nameWithInitials: value
+                      });
+                    }} maxLength={100} className={`bg-background/50 ${motherErrors.nameWithInitials ? 'border-destructive ring-2 ring-destructive/20' : 'border-border/50'}`} placeholder="e.g., H.M. DON GAMAGE" />
+                    {motherErrors.nameWithInitials && <p className="text-xs text-destructive">{motherErrors.nameWithInitials}</p>}
+                    <p className="text-xs text-muted-foreground">Enter name with initials (e.g., J. DOE)</p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="mother-email" className="flex items-center gap-2 text-sm font-semibold">
@@ -2205,6 +2251,19 @@ const RegisterStudent = () => {
                       }} maxLength={50} className={`bg-background/50 ${guardianErrors.lastName ? 'border-destructive ring-2 ring-destructive/20' : 'border-border/50'}`} placeholder="e.g., DON GAMAGE" />
                       {guardianErrors.lastName && <p className="text-xs text-destructive">{guardianErrors.lastName}</p>}
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="guardian-nameWithInitials" className="text-sm font-semibold">Name with Initials *</Label>
+                    <Input id="guardian-nameWithInitials" value={guardianData.nameWithInitials} onChange={e => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z. ]/g, '').replace(/  +/g, ' ');
+                      setGuardianData({
+                        ...guardianData,
+                        nameWithInitials: value
+                      });
+                    }} maxLength={100} className={`bg-background/50 ${guardianErrors.nameWithInitials ? 'border-destructive ring-2 ring-destructive/20' : 'border-border/50'}`} placeholder="e.g., H.M. DON GAMAGE" />
+                    {guardianErrors.nameWithInitials && <p className="text-xs text-destructive">{guardianErrors.nameWithInitials}</p>}
+                    <p className="text-xs text-muted-foreground">Enter name with initials (e.g., J. DOE)</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2604,6 +2663,19 @@ const RegisterStudent = () => {
                         </div>
                       </div>
 
+                      <div className="space-y-2">
+                        <Label htmlFor="student-nameWithInitials" className="text-sm font-semibold">Name with Initials *</Label>
+                        <Input id="student-nameWithInitials" value={studentData.nameWithInitials} onChange={e => {
+                          const value = e.target.value.toUpperCase().replace(/[^A-Z. ]/g, '').replace(/  +/g, ' ');
+                          setStudentData({
+                            ...studentData,
+                            nameWithInitials: value
+                          });
+                        }} maxLength={100} className={`bg-background/50 ${studentErrors.nameWithInitials ? 'border-destructive ring-2 ring-destructive/20' : 'border-border/50'}`} placeholder="e.g., H.M. DON GAMAGE" />
+                        {studentErrors.nameWithInitials && <p className="text-xs text-destructive">{studentErrors.nameWithInitials}</p>}
+                        <p className="text-xs text-muted-foreground">Enter your name with initials (e.g., J. DOE, H.M.A. DON GAMAGE)</p>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="student-dob" className="text-sm font-semibold">Date of Birth *</Label>
@@ -2752,7 +2824,7 @@ const RegisterStudent = () => {
                     })} className="bg-background/50 border-border/50 min-h-[100px]" placeholder="Any known allergies" />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Father Information */}
                         <div className="space-y-2">
                           <Label htmlFor="student-fatherId">Father ID (Optional)</Label>
@@ -2769,6 +2841,13 @@ const RegisterStudent = () => {
                           <p className="text-xs text-muted-foreground">
                             {fatherCompleted || fatherExists ? "Locked - filled from Father section" : "Will be auto-filled from Father section"}
                           </p>
+                          {/* Father Skip Reason - Only show if father is skipped */}
+                          {skipFather && fatherSkipReason && (
+                            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md border border-amber-200 dark:border-amber-800">
+                              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Skip Reason:</p>
+                              <p className="text-xs text-amber-600 dark:text-amber-500">{fatherSkipReason}</p>
+                            </div>
+                          )}
                         </div>
 
                         {/* Mother Information */}
@@ -2798,48 +2877,77 @@ const RegisterStudent = () => {
                           <p className="text-xs text-muted-foreground">
                             {motherCompleted || motherExists ? "Locked - filled from Mother section" : skipMother ? "You can enter Mother ID manually" : "Will be auto-filled from Mother section"}
                           </p>
-                        </div>
-
-                        {/* Guardian Information */}
-                        <div className="space-y-2">
-                          <Label htmlFor="student-guardianId">Guardian ID {skipGuardian && "(Optional)"}</Label>
-                          <div className="flex gap-2">
-                            <Input 
-                              id="student-guardianId" 
-                              value={studentData.studentData.guardianId} 
-                              onChange={(e) => {
-                                // Allow typing only if skipped and no existing ID from form
-                                if (skipGuardian && !guardianCompleted && !guardianExists) {
-                                  setStudentData({
-                                    ...studentData,
-                                    studentData: {
-                                      ...studentData.studentData,
-                                      guardianId: e.target.value
-                                    }
-                                  });
-                                }
-                              }}
-                              disabled={guardianCompleted || guardianExists}
-                              className={(guardianCompleted || guardianExists) ? "bg-muted/50 border-border/50 cursor-not-allowed opacity-75" : "bg-background/50 border-border/50"} 
-                              placeholder={skipGuardian ? "Enter Guardian ID (optional)" : "Auto-filled from parent form"} 
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {guardianCompleted || guardianExists ? "Locked - filled from Guardian section" : skipGuardian ? "You can enter Guardian ID manually" : "Will be auto-filled from Guardian section"}
-                          </p>
+                          {/* Mother Skip Reason - Only show if mother is skipped */}
+                          {skipMother && motherSkipReason && (
+                            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md border border-amber-200 dark:border-amber-800">
+                              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Skip Reason:</p>
+                              <p className="text-xs text-amber-600 dark:text-amber-500">{motherSkipReason}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
+                      {/* Guardian Information - Full width row */}
                       <div className="space-y-2">
-                        <Label>Profile Image</Label>
-                        <div className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                          <input type="file" accept="image/*" onChange={e => handleImageUpload(e, setStudentData)} className="hidden" id="student-image" />
-                          <label htmlFor="student-image" className="cursor-pointer">
-                            <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                            <p className="text-sm text-muted-foreground">
-                              {studentData.image ? studentData.image.name : "Click to upload profile image"}
+                        <Label htmlFor="student-guardianId">Guardian ID {skipGuardian && "(Optional)"}</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            id="student-guardianId" 
+                            value={studentData.studentData.guardianId} 
+                            onChange={(e) => {
+                              // Allow typing only if skipped and no existing ID from form
+                              if (skipGuardian && !guardianCompleted && !guardianExists) {
+                                setStudentData({
+                                  ...studentData,
+                                  studentData: {
+                                    ...studentData.studentData,
+                                    guardianId: e.target.value
+                                  }
+                                });
+                              }
+                            }}
+                            disabled={guardianCompleted || guardianExists}
+                            className={(guardianCompleted || guardianExists) ? "bg-muted/50 border-border/50 cursor-not-allowed opacity-75 max-w-md" : "bg-background/50 border-border/50 max-w-md"} 
+                            placeholder={skipGuardian ? "Enter Guardian ID (optional)" : "Auto-filled from parent form"} 
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {guardianCompleted || guardianExists ? "Locked - filled from Guardian section" : skipGuardian ? "You can enter Guardian ID manually" : "Will be auto-filled from Guardian section"}
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className={studentErrors.image ? "text-destructive" : ""}>Profile Image *</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Upload Area */}
+                          <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors ${studentErrors.image ? 'border-destructive bg-destructive/5' : 'border-border/50'}`}>
+                            <input type="file" accept="image/*" onChange={e => handleImageUpload(e, setStudentData)} className="hidden" id="student-image" />
+                            <label htmlFor="student-image" className="cursor-pointer">
+                              <Upload className={`w-8 h-8 mx-auto mb-2 ${studentErrors.image ? 'text-destructive' : 'text-muted-foreground'}`} />
+                              <p className={`text-sm ${studentErrors.image ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                {studentData.image ? studentData.image.name : "Click to upload profile image"}
+                              </p>
+                              {studentErrors.image && <p className="text-xs text-destructive mt-1">{studentErrors.image}</p>}
+                            </label>
+                          </div>
+                          
+                          {/* Example Photo */}
+                          <div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg border border-border/50">
+                            <p className="text-xs font-medium text-muted-foreground">Example Photo Format:</p>
+                            <img 
+                              src="/assets/example-profile-photo.jpg" 
+                              alt="Example profile photo format" 
+                              className="w-24 h-32 object-cover rounded-md border-2 border-primary/30 shadow-sm"
+                              onError={(e) => {
+                                // Fallback if image doesn't load
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            <p className="text-xs text-muted-foreground text-center">
+                              Passport-style photo<br/>
+                              Clear face, neutral background
                             </p>
-                          </label>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2904,6 +3012,7 @@ const RegisterStudent = () => {
                 setStudentData({
                   firstName: "",
                   lastName: "",
+                  nameWithInitials: "",
                   email: "",
                   phoneNumber: "",
                   userType: "USER_WITHOUT_PARENT",

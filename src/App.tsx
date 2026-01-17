@@ -1,47 +1,183 @@
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { ErrorToaster, Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 import Index from "./pages/Index";
+import QRAttendance from "@/components/QRAttendance";
+import RfidAttendance from "@/pages/RFIDAttendance";
+import InstituteMarkAttendance from "@/pages/InstituteMarkAttendance";
+
 import NotFound from "./pages/NotFound";
-import TermsConditions from "./pages/TermsConditions";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import RefundPolicy from "./pages/RefundPolicy";
-import RegisterInstituteAdmin from "./pages/RegisterInstituteAdmin";
-import RegisterTeacher from "./pages/RegisterTeacher";
-import RegisterStudent from "./pages/RegisterStudent";
-import RegisterParent from "./pages/RegisterParent";
-import RegisterBookHireOwner from "./pages/RegisterBookHireOwner";
-import BotPrivacyPolicy from "./pages/BotPrivacyPolicy";
-import Register from "./pages/Register";
+import Payments from "./pages/Payments";
+import CreatePayment from "./pages/CreatePayment";
+import PaymentSubmissions from "./pages/PaymentSubmissions";
+import MySubmissions from "./pages/MySubmissions";
+import InstitutePayments from "./pages/InstitutePayments";
+import SubjectPayments from "./pages/SubjectPayments";
+import SubjectSubmissions from "./pages/SubjectSubmissions";
+import SubjectPaymentSubmissions from "./pages/SubjectPaymentSubmissions";
+import PaymentSubmissionsPage from "./pages/PaymentSubmissionsPage";
+import HomeworkSubmissions from "./pages/HomeworkSubmissions";
+import HomeworkSubmissionDetails from "./pages/HomeworkSubmissionDetails";
+import { AuthProvider } from "@/contexts/AuthContext";
+import UpdateHomework from "@/pages/UpdateHomework";
+import UpdateLecture from "@/pages/UpdateLecture";
+import CardDemo from "@/pages/CardDemo";
+import ExamResults from "@/pages/ExamResults";
+import CreateExamResults from "@/pages/CreateExamResults";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import Transport from "@/pages/Transport";
+import TransportAttendance from "@/pages/TransportAttendance";
+import MyChildren from "@/pages/MyChildren";
+import ChildDashboard from "@/pages/ChildDashboard";
+import ChildResultsPage from "@/pages/ChildResultsPage";
+import ChildAttendancePage from "@/pages/ChildAttendancePage";
+import ChildTransportPage from "@/pages/ChildTransportPage";
+import CardManagement from "@/pages/CardManagement";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/terms" element={<TermsConditions />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/refund" element={<RefundPolicy />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/register/institute-admin" element={<RegisterInstituteAdmin />} />
-          <Route path="/register/teacher" element={<RegisterTeacher />} />
-          <Route path="/register/student" element={<RegisterStudent />} />
-          <Route path="/register/parent" element={<RegisterParent />} />
-          <Route path="/register/book-hire-owner" element={<RegisterBookHireOwner />} />
-          <Route path="/bot-privacy" element={<BotPrivacyPolicy />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+// MUI Theme with Inter font
+const muiTheme = createTheme({
+  typography: {
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    fontSize: 14
+  },
+  components: {
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+        }
+      }
+    },
+    MuiTablePagination: {
+      styleOverrides: {
+        root: {
+          fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+        }
+      }
+    }
+  }
+});
+
+const App = () => {
+  useEffect(() => {
+    // Force light mode
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.add('light');
+    localStorage.setItem('theme', 'light');
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <ThemeProvider theme={muiTheme}>
+        <CssBaseline />
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <ErrorToaster />
+              <Routes>
+                {/* Main Routes - All handled by Index/AppContent */}
+                <Route path="/" element={<Index />} />
+
+                {/* Hierarchical Routes with Context */}
+                <Route path="/institute/:instituteId/*" element={<Index />} />
+                <Route path="/organization/:organizationId/*" element={<Index />} />
+                <Route path="/child/:childId/*" element={<Index />} />
+                <Route path="/transport/:transportId/*" element={<Index />} />
+
+                {/* Dedicated Page Routes (must be protected) */}
+                <Route
+                  path="/my-children"
+                  element={
+                    <ProtectedRoute>
+                      <MyChildren />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/transport"
+                  element={
+                    <ProtectedRoute>
+                      <Transport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/system-payment"
+                  element={
+                    <ProtectedRoute>
+                      <Payments />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/system-payments/create"
+                  element={
+                    <ProtectedRoute>
+                      <CreatePayment />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment-submissions/:paymentId"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentSubmissions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment-submissions"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentSubmissionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-submissions"
+                  element={
+                    <ProtectedRoute>
+                      <MySubmissions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/card-demo"
+                  element={
+                    <ProtectedRoute>
+                      <CardDemo />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/id-cards"
+                  element={
+                    <ProtectedRoute>
+                      <CardManagement />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Catch-all - Everything else goes to Index/AppContent */}
+                <Route path="*" element={<Index />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;
+

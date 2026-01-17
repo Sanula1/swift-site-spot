@@ -1,55 +1,14 @@
-# SurakshaLMS - Best Learning Management System in Sri Lanka
-# Suraksha Learning Management System - LMS Sri Lanka
-
-User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /private/
-
-# Specific bot directives
 User-agent: Googlebot
 Allow: /
-Crawl-delay: 0
-
-User-agent: Googlebot-Image
-Allow: /assets/
-Allow: /public/
 
 User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-User-agent: Slurp
-Allow: /
-Crawl-delay: 1
-
-User-agent: DuckDuckBot
-Allow: /
-Crawl-delay: 1
-
-User-agent: Baiduspider
-Allow: /
-Crawl-delay: 2
-
-User-agent: Yandex
-Allow: /
-Crawl-delay: 2
-
-User-agent: facebookexternalhit
 Allow: /
 
 User-agent: Twitterbot
 Allow: /
 
-User-agent: LinkedInBot
+User-agent: facebookexternalhit
 Allow: /
 
-User-agent: WhatsApp
+User-agent: *
 Allow: /
-
-# Sitemap location
-Sitemap: https://surakshalms.lk/sitemap.xml
-
-# Host
-Host: https://surakshalms.lk

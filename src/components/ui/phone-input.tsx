@@ -1,89 +1,55 @@
 import * as React from "react"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-interface PhoneInputProps extends Omit<React.ComponentProps<"input">, 'onChange' | 'value'> {
-  value: string;
-  onChange: (value: string) => void;
+interface PhoneInputProps extends Omit<React.ComponentProps<"input">, 'type' | 'value' | 'onChange'> {
+  value?: string;
+  onChange?: (value: string) => void;
+  countryCode?: string;
 }
 
 const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
-  ({ className, value, onChange, ...props }, ref) => {
-    const [localValue, setLocalValue] = React.useState(value || "+94");
-
-    React.useEffect(() => {
-      if (!value || value === "") {
-        setLocalValue("+94");
-        onChange("+94");
-      } else if (!value.startsWith("+94")) {
-        setLocalValue("+94" + value);
-        onChange("+94" + value);
+  ({ className, value = '', onChange, countryCode = '+94', ...props }, ref) => {
+    const formatPhoneNumber = (input: string): string => {
+      // Remove all non-digit characters
+      const cleaned = input.replace(/\D/g, '');
+      
+      // If empty, return country code
+      if (!cleaned) return countryCode;
+      
+      // Start with country code
+      let formatted = countryCode + ' ';
+      
+      // Get digits after country code (94)
+      const localDigits = cleaned.startsWith('94') ? cleaned.slice(2) : cleaned;
+      
+      // Format: +94 72 785 3979
+      if (localDigits.length === 0) {
+        return countryCode;
+      } else if (localDigits.length <= 2) {
+        formatted += localDigits;
+      } else if (localDigits.length <= 5) {
+        formatted += localDigits.slice(0, 2) + ' ' + localDigits.slice(2);
       } else {
-        setLocalValue(value);
+        formatted += localDigits.slice(0, 2) + ' ' + localDigits.slice(2, 5) + ' ' + localDigits.slice(5, 9);
       }
-    }, []);
+      
+      return formatted;
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let newValue = e.target.value;
-      
-      // Ensure it always starts with +94
-      if (!newValue.startsWith("+94")) {
-        newValue = "+94";
-      }
-      
-      // Get the part after +94
-      const afterPrefix = newValue.substring(3);
-      
-      // Don't allow 0 as the first digit after +94
-      if (afterPrefix.length > 0 && afterPrefix[0] === "0") {
-        return; // Block the input
-      }
-      
-      // Only allow digits after +94
-      if (afterPrefix && !/^\d*$/.test(afterPrefix)) {
-        return; // Block non-numeric input
-      }
-      
-      setLocalValue(newValue);
-      onChange(newValue);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      const target = e.currentTarget;
-      const cursorPosition = target.selectionStart || 0;
-      
-      // Prevent deleting/modifying the +94 prefix
-      if ((e.key === "Backspace" || e.key === "Delete") && cursorPosition <= 3) {
-        e.preventDefault();
-      }
-      
-      // Prevent moving cursor before +94
-      if ((e.key === "ArrowLeft" || e.key === "Home") && cursorPosition <= 3) {
-        e.preventDefault();
-      }
-    };
-
-    const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
-      const target = e.currentTarget;
-      const cursorPosition = target.selectionStart || 0;
-      
-      // Move cursor after +94 if clicked before it
-      if (cursorPosition < 3) {
-        target.setSelectionRange(3, 3);
-      }
+      const formatted = formatPhoneNumber(e.target.value);
+      onChange?.(formatted);
     };
 
     return (
-      <input
+      <Input
         type="tel"
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className
-        )}
-        ref={ref}
-        value={localValue}
+        className={cn("font-mono", className)}
+        value={value || countryCode}
         onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onClick={handleClick}
+        placeholder="+94 72 785 3979"
+        ref={ref}
         {...props}
       />
     )

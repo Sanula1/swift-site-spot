@@ -466,25 +466,15 @@ const Profile = () => {
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-2">
-                    {!isEditing ? (
-                      <>
-                        <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
-                          <Edit className="h-4 w-4" />
-                          Edit Profile
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button variant="outline" size="sm" onClick={handleCancel} className="gap-2">
-                          <X className="h-4 w-4" />
-                          Cancel
-                        </Button>
-                        <Button size="sm" onClick={handleSave} className="gap-2">
-                          <Save className="h-4 w-4" />
-                          Save Changes
-                        </Button>
-                      </>
-                    )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      disabled
+                      className="gap-2 opacity-60 cursor-not-allowed"
+                    >
+                      <Lock className="h-4 w-4" />
+                      Edit Profile
+                    </Button>
                   </div>
                 </div>
               </div>

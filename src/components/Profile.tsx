@@ -14,7 +14,7 @@ import { enhancedCachedClient } from '@/api/enhancedCachedClient';
 import { apiClient } from '@/api/client'; // For POST operations
 import { CACHE_TTL } from '@/config/cacheTTL';
 import { useToast } from '@/hooks/use-toast';
-import { User, Mail, Phone, MapPin, Calendar, Shield, Edit, Save, X, Lock, Download, FileText, CreditCard, Eye, EyeOff, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Shield, Edit, Save, X, Lock, Download, FileText, CreditCard, Eye, EyeOff, Camera, Briefcase, GraduationCap, Globe, Languages } from 'lucide-react';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 interface UserData {
   id: string;
@@ -29,6 +29,7 @@ interface UserData {
   nic: string;
   birthCertificateNo: string;
   addressLine1: string;
+  addressLine2: string;
   city: string;
   district: string;
   province: string;
@@ -38,6 +39,14 @@ interface UserData {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // Parent/Professional data
+  occupation: string;
+  workplace: string;
+  workPhone: string;
+  educationLevel: string;
+  // Account data
+  subscriptionPlan: string;
+  language: string;
 }
 const Profile = () => {
   const {
@@ -61,12 +70,21 @@ const Profile = () => {
     nic: '',
     birthCertificateNo: '',
     addressLine1: '',
+    addressLine2: '',
     city: '',
     district: '',
     province: '',
     postalCode: '',
     country: '',
-    joinDate: ''
+    joinDate: '',
+    // Parent/Professional data
+    occupation: '',
+    workplace: '',
+    workPhone: '',
+    educationLevel: '',
+    // Account data
+    subscriptionPlan: '',
+    language: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -105,6 +123,7 @@ const Profile = () => {
           nic: userData.nic || '',
           birthCertificateNo: userData.birthCertificateNo || '',
           addressLine1: userData.addressLine1 || '',
+          addressLine2: userData.addressLine2 || '',
           city: userData.city || '',
           district: userData.district || '',
           province: userData.province || '',
@@ -113,7 +132,15 @@ const Profile = () => {
           imageUrl: userData.imageUrl || '',
           isActive: userData.isActive ?? true,
           createdAt: userData.createdAt || '',
-          updatedAt: userData.updatedAt || ''
+          updatedAt: userData.updatedAt || '',
+          // Parent/Professional data
+          occupation: userData.occupation || '',
+          workplace: userData.workplace || '',
+          workPhone: userData.workPhone || '',
+          educationLevel: userData.educationLevel || '',
+          // Account data
+          subscriptionPlan: userData.subscriptionPlan || '',
+          language: userData.language || ''
         });
 
         // Update form data with API response
@@ -127,12 +154,21 @@ const Profile = () => {
           nic: userData.nic || '',
           birthCertificateNo: userData.birthCertificateNo || '',
           addressLine1: userData.addressLine1 || '',
+          addressLine2: userData.addressLine2 || '',
           city: userData.city || '',
           district: userData.district || '',
           province: userData.province || '',
           postalCode: userData.postalCode || '',
           country: userData.country || '',
-          joinDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : ''
+          joinDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : '',
+          // Parent/Professional data
+          occupation: userData.occupation || '',
+          workplace: userData.workplace || '',
+          workPhone: userData.workPhone || '',
+          educationLevel: userData.educationLevel || '',
+          // Account data
+          subscriptionPlan: userData.subscriptionPlan || '',
+          language: userData.language || ''
         });
       }
     } catch (error) {
@@ -168,12 +204,19 @@ const Profile = () => {
         nic: userData.nic || '',
         birthCertificateNo: userData.birthCertificateNo || '',
         addressLine1: userData.addressLine1 || '',
+        addressLine2: userData.addressLine2 || '',
         city: userData.city || '',
         district: userData.district || '',
         province: userData.province || '',
         postalCode: userData.postalCode || '',
         country: userData.country || '',
-        joinDate: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''
+        joinDate: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '',
+        occupation: userData.occupation || '',
+        workplace: userData.workplace || '',
+        workPhone: userData.workPhone || '',
+        educationLevel: userData.educationLevel || '',
+        subscriptionPlan: userData.subscriptionPlan || '',
+        language: userData.language || ''
       });
     }
     setIsEditing(false);
@@ -650,7 +693,7 @@ const Profile = () => {
 
                       {/* Address Line 1 */}
                       <div className="space-y-2.5 md:col-span-2">
-                        <Label htmlFor="addressLine1" className="text-sm font-semibold">Address</Label>
+                        <Label htmlFor="addressLine1" className="text-sm font-semibold">Address Line 1</Label>
                         {isEditing ? (
                           <div className="relative">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -666,6 +709,24 @@ const Profile = () => {
                           <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center gap-3">
                             <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                             <p className="font-medium">{formData.addressLine1 || 'Not set'}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Address Line 2 */}
+                      <div className="space-y-2.5 md:col-span-2">
+                        <Label htmlFor="addressLine2" className="text-sm font-semibold">Address Line 2</Label>
+                        {isEditing ? (
+                          <Input 
+                            id="addressLine2" 
+                            value={formData.addressLine2} 
+                            onChange={e => setFormData({...formData, addressLine2: e.target.value})} 
+                            placeholder="Apartment, suite, unit, etc."
+                            className="h-12 text-base border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+                          />
+                        ) : (
+                          <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center">
+                            <p className="font-medium">{formData.addressLine2 || 'Not set'}</p>
                           </div>
                         )}
                       </div>
@@ -753,6 +814,136 @@ const Profile = () => {
                             <p className="font-medium">{formData.country || 'Not set'}</p>
                           </div>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Professional Information Section */}
+                    <div className="mt-8 pt-6 border-t border-border/50">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Briefcase className="h-5 w-5 text-primary" />
+                        Professional Information
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Occupation */}
+                        <div className="space-y-2.5">
+                          <Label htmlFor="occupation" className="text-sm font-semibold">Occupation</Label>
+                          {isEditing ? (
+                            <Input 
+                              id="occupation" 
+                              value={formData.occupation} 
+                              onChange={e => setFormData({...formData, occupation: e.target.value})} 
+                              placeholder="e.g., Teacher, Engineer"
+                              className="h-12 text-base border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+                            />
+                          ) : (
+                            <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center gap-3">
+                              <Briefcase className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                              <p className="font-medium">{formData.occupation || 'Not set'}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Workplace */}
+                        <div className="space-y-2.5">
+                          <Label htmlFor="workplace" className="text-sm font-semibold">Workplace</Label>
+                          {isEditing ? (
+                            <Input 
+                              id="workplace" 
+                              value={formData.workplace} 
+                              onChange={e => setFormData({...formData, workplace: e.target.value})} 
+                              placeholder="Company or organization name"
+                              className="h-12 text-base border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+                            />
+                          ) : (
+                            <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center">
+                              <p className="font-medium">{formData.workplace || 'Not set'}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Work Phone */}
+                        <div className="space-y-2.5">
+                          <Label htmlFor="workPhone" className="text-sm font-semibold">Work Phone</Label>
+                          {isEditing ? (
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                id="workPhone" 
+                                value={formData.workPhone} 
+                                onChange={e => setFormData({...formData, workPhone: e.target.value})} 
+                                placeholder="+94XXXXXXXXX"
+                                className="h-12 text-base pl-11 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center gap-3">
+                              <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                              <p className="font-medium">{formData.workPhone || 'Not set'}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Education Level */}
+                        <div className="space-y-2.5">
+                          <Label htmlFor="educationLevel" className="text-sm font-semibold">Education Level</Label>
+                          {isEditing ? (
+                            <div className="relative">
+                              <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                id="educationLevel" 
+                                value={formData.educationLevel} 
+                                onChange={e => setFormData({...formData, educationLevel: e.target.value})} 
+                                placeholder="e.g., BSc in Computer Science"
+                                className="h-12 text-base pl-11 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center gap-3">
+                              <GraduationCap className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                              <p className="font-medium">{formData.educationLevel || 'Not set'}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Account Information Section */}
+                    <div className="mt-8 pt-6 border-t border-border/50">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        Account Information
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Subscription Plan */}
+                        <div className="space-y-2.5">
+                          <Label className="text-sm font-semibold">Subscription Plan</Label>
+                          <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 flex items-center gap-3">
+                            <CreditCard className="h-5 w-5 text-primary flex-shrink-0" />
+                            <p className="font-semibold text-primary">{formData.subscriptionPlan || 'FREE'}</p>
+                          </div>
+                        </div>
+
+                        {/* Language */}
+                        <div className="space-y-2.5">
+                          <Label htmlFor="language" className="text-sm font-semibold">Language</Label>
+                          {isEditing ? (
+                            <div className="relative">
+                              <Languages className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                id="language" 
+                                value={formData.language} 
+                                onChange={e => setFormData({...formData, language: e.target.value})} 
+                                placeholder="E for English, S for Sinhala"
+                                className="h-12 text-base pl-11 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-12 px-4 rounded-xl bg-gradient-to-r from-muted/70 to-muted/40 border border-border/50 flex items-center gap-3">
+                              <Languages className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                              <p className="font-medium">{formData.language === 'E' ? 'English' : formData.language === 'S' ? 'Sinhala' : formData.language || 'Not set'}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

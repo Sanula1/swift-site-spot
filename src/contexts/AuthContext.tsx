@@ -93,7 +93,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Fetching user institutes from backend API:', { userId, forceRefresh });
       
-      const apiInstitutes = await cachedApiClient.get<ApiInstitute[]>(
+      const apiInstitutesResponse = await cachedApiClient.get<
+        ApiInstitute[] | { data?: ApiInstitute[]; meta?: any }
+      >(
         `/users/${userId}/institutes`, 
         undefined, 
         { 
@@ -103,7 +105,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       );
       
-      console.log('Raw API institutes response:', apiInstitutes);
+      console.log('Raw API institutes response:', apiInstitutesResponse);
+
+      // The backend sometimes returns a wrapped shape: { data: [...], meta: {...} }
+      // Normalize it to a plain array for downstream mapping.
+      const apiInstitutes = Array.isArray(apiInstitutesResponse)
+        ? apiInstitutesResponse
+        : Array.isArray(apiInstitutesResponse?.data)
+          ? apiInstitutesResponse.data
+          : [];
       
       // Ensure apiInstitutes is an array and filter out any undefined/null values
       const validInstitutes = Array.isArray(apiInstitutes)

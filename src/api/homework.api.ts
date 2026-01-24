@@ -1,6 +1,18 @@
-import { cachedApiClient } from './cachedClient';
 import { enhancedCachedClient } from './enhancedCachedClient';
 import { ApiResponse } from './client';
+import { HomeworkReference } from './homeworkReferences.api';
+
+// =================== TYPES ===================
+
+export interface HomeworkSubmissionSummary {
+  id: string;
+  submissionDate: string;
+  fileUrl?: string;
+  teacherCorrectionFileUrl?: string;
+  driveViewUrl?: string;
+  remarks?: string;
+  grade?: string;
+}
 
 export interface Homework {
   id: string;
@@ -39,25 +51,43 @@ export interface Homework {
     code: string;
   };
   referenceLink?: string;
+  
+  // Included when includeReferences=true
+  references?: HomeworkReference[];
+  
+  // Student-only: included when includeSubmissions=true
+  mySubmissions?: HomeworkSubmissionSummary[];
+  hasSubmitted?: boolean;
+  
+  // Teacher/Admin: submission count (no full submissions in list)
+  submissionCount?: number;
 }
 
 export interface HomeworkCreateData {
-  instituteId: string;
-  classId: string;
-  subjectId: string;
-  teacherId: string;
   title: string;
   description: string;
-  instructions?: string;
+  classId: string;
+  subjectId: string;
   startDate?: string | null;
-  dueDate?: string | null;
+  endDate?: string | null;
+  // Legacy fields - kept for backward compatibility
+  instituteId?: string;
+  teacherId?: string;
+  instructions?: string;
   maxMarks?: number | null;
   attachmentUrl?: string | null;
-  isActive: boolean;
+  isActive?: boolean;
 }
 
-export interface HomeworkUpdateData extends Partial<HomeworkCreateData> {
-  id: string;
+export interface HomeworkUpdateData {
+  title?: string;
+  description?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  instructions?: string;
+  maxMarks?: number | null;
+  attachmentUrl?: string | null;
+  isActive?: boolean;
 }
 
 export interface HomeworkQueryParams {
@@ -73,24 +103,37 @@ export interface HomeworkQueryParams {
   isActive?: boolean;
   userId?: string;
   role?: string;
+  // New parameters for role-based data fetching
+  includeReferences?: boolean;
+  includeSubmissions?: boolean; // Only for students - DO NOT use for teachers
 }
 
+// =================== API CLASS ===================
+
 class HomeworkApi {
+  private basePath = '/institute-class-subject-homeworks';
+
   /**
-   * Get homework with enhanced caching
-   * - Automatically caches based on context (institute/class/subject)
-   * - Returns cached data immediately when navigating back
-   * - Invalidates cache when homework is created/updated/deleted
+   * Get homework list with role-based filtering
+   * 
+   * FOR STUDENTS:
+   * - Use includeReferences=true & includeSubmissions=true
+   * - Returns homework with references and own submissions in ONE call
+   * 
+   * FOR TEACHERS/ADMINS:
+   * - Use includeReferences=true only
+   * - DO NOT use includeSubmissions (use separate submission API for performance)
+   * - Returns homework with references and submissionCount
    */
   async getHomework(params?: HomeworkQueryParams, forceRefresh = false): Promise<ApiResponse<Homework[]>> {
     console.log('📚 Fetching homework with secure caching:', params, { forceRefresh });
     
     return enhancedCachedClient.get<ApiResponse<Homework[]>>(
-      '/institute-class-subject-homeworks', 
+      this.basePath, 
       params, 
       {
         forceRefresh,
-        ttl: 15, // Cache for 15 minutes
+        ttl: 15,
         useStaleWhileRevalidate: true,
         userId: params?.userId,
         instituteId: params?.instituteId,
@@ -101,10 +144,62 @@ class HomeworkApi {
     );
   }
 
-  async getHomeworkById(id: string, forceRefresh = false, context?: { instituteId?: string; classId?: string; subjectId?: string; userId?: string }): Promise<Homework> {
+  /**
+   * Get homework for students (with references and own submissions)
+   */
+  async getStudentHomework(
+    classId: string, 
+    subjectId: string, 
+    params?: Omit<HomeworkQueryParams, 'classId' | 'subjectId' | 'includeReferences' | 'includeSubmissions'>,
+    forceRefresh = false
+  ): Promise<ApiResponse<Homework[]>> {
+    console.log('📚 Fetching student homework (complete view):', { classId, subjectId });
+    
+    return this.getHomework({
+      ...params,
+      classId,
+      subjectId,
+      includeReferences: true,
+      includeSubmissions: true
+    }, forceRefresh);
+  }
+
+  /**
+   * Get homework for teachers (NO submissions - use separate API for submissions)
+   */
+  async getTeacherHomework(
+    classId: string, 
+    subjectId: string, 
+    params?: Omit<HomeworkQueryParams, 'classId' | 'subjectId' | 'includeSubmissions'>,
+    forceRefresh = false
+  ): Promise<ApiResponse<Homework[]>> {
+    console.log('📚 Fetching teacher homework (no submissions):', { classId, subjectId });
+    
+    return this.getHomework({
+      ...params,
+      classId,
+      subjectId,
+      includeReferences: true
+      // DO NOT include submissions - use separate API for performance
+    }, forceRefresh);
+  }
+
+  /**
+   * Get single homework by ID
+   */
+  async getHomeworkById(
+    id: string, 
+    forceRefresh = false, 
+    context?: { 
+      instituteId?: string; 
+      classId?: string; 
+      subjectId?: string; 
+      userId?: string 
+    }
+  ): Promise<Homework> {
     console.log('📄 Fetching homework by ID with secure caching:', id, { forceRefresh, context });
     return enhancedCachedClient.get<Homework>(
-      `/institute-class-subject-homeworks/${id}`, 
+      `${this.basePath}/${id}`, 
       undefined, 
       {
         forceRefresh,
@@ -115,10 +210,13 @@ class HomeworkApi {
     );
   }
 
+  /**
+   * Create homework (Teacher/Admin)
+   */
   async createHomework(data: HomeworkCreateData): Promise<Homework> {
     console.log('✏️ Creating homework (will invalidate cache):', data);
     return enhancedCachedClient.post<Homework>(
-      '/institute-class-subject-homeworks', 
+      this.basePath, 
       data,
       {
         instituteId: data.instituteId,
@@ -128,33 +226,37 @@ class HomeworkApi {
     );
   }
 
-  async updateHomework(id: string, data: Partial<HomeworkCreateData>): Promise<Homework> {
+  /**
+   * Update homework (Teacher who created / Admin)
+   */
+  async updateHomework(id: string, data: HomeworkUpdateData, context?: { instituteId?: string; classId?: string; subjectId?: string }): Promise<Homework> {
     console.log('📝 Updating homework (will invalidate cache):', id, data);
     return enhancedCachedClient.patch<Homework>(
-      `/institute-class-subject-homeworks/${id}`, 
+      `${this.basePath}/${id}`, 
       data,
-      {
-        instituteId: data.instituteId,
-        classId: data.classId,
-        subjectId: data.subjectId
-      }
-    );
-  }
-
-  async deleteHomework(id: string, context?: { instituteId?: string; classId?: string; subjectId?: string }): Promise<void> {
-    console.log('🗑️ Deleting homework (will invalidate cache):', id);
-    return enhancedCachedClient.delete<void>(
-      `/homework/${id}`,
       context
     );
   }
+
+  /**
+   * Delete homework (Soft delete - Teacher who created / Admin)
+   */
+  async deleteHomework(id: string, context?: { instituteId?: string; classId?: string; subjectId?: string }): Promise<void> {
+    console.log('🗑️ Deleting homework (will invalidate cache):', id);
+    return enhancedCachedClient.delete<void>(
+      `${this.basePath}/${id}`,
+      context
+    );
+  }
+
+  // =================== CACHE UTILITIES ===================
 
   /**
    * Check if homework is cached
    */
   async hasHomeworkCached(params?: HomeworkQueryParams): Promise<boolean> {
     return enhancedCachedClient.hasCache(
-      '/institute-class-subject-homeworks', 
+      this.basePath, 
       params,
       {
         userId: params?.userId,
@@ -170,7 +272,7 @@ class HomeworkApi {
    */
   async getCachedHomework(params?: HomeworkQueryParams): Promise<ApiResponse<Homework[]> | null> {
     return enhancedCachedClient.getCachedOnly<ApiResponse<Homework[]>>(
-      '/institute-class-subject-homeworks', 
+      this.basePath, 
       params,
       {
         userId: params?.userId,
@@ -186,7 +288,7 @@ class HomeworkApi {
    */
   async preloadHomework(params?: HomeworkQueryParams): Promise<void> {
     await enhancedCachedClient.preload<ApiResponse<Homework[]>>(
-      '/institute-class-subject-homeworks', 
+      this.basePath, 
       params, 
       {
         ttl: 15,
@@ -196,15 +298,6 @@ class HomeworkApi {
         subjectId: params?.subjectId
       }
     );
-  }
-
-  // Legacy method for backward compatibility
-  async getLegacyHomework(params?: HomeworkQueryParams): Promise<ApiResponse<Homework[]>> {
-    console.log('Fetching legacy homework with params:', params);
-    return cachedApiClient.get<ApiResponse<Homework[]>>('/homework', params, {
-      ttl: 15,
-      useStaleWhileRevalidate: true
-    });
   }
 }
 

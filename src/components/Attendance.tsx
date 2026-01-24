@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -11,7 +11,8 @@ import TableRow from '@mui/material/TableRow';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Users, MapPin, Calendar, Clock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RefreshCw, Users, MapPin, Calendar, Clock, ChevronLeft, ChevronRight, List, CalendarRange, PieChart, UserCheck, UserX, TrendingUp, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useRefreshWithCooldown } from '@/hooks/useRefreshWithCooldown';
@@ -19,7 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { instituteStudentsApi, StudentAttendanceRecord, StudentAttendanceResponse } from '@/api/instituteStudents.api';
 import { childAttendanceApi, ChildAttendanceRecord } from '@/api/childAttendance.api';
 import AttendanceFilters, { AttendanceFilterParams } from '@/components/AttendanceFilters';
-import { getAttendanceStatusConfig, AttendanceStatus } from '@/types/attendance.types';
+import { getAttendanceStatusConfig, AttendanceStatus, ATTENDANCE_CHART_COLORS, normalizeAttendanceSummary } from '@/types/attendance.types';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface AttendanceColumn {
   id: string;
@@ -38,6 +40,8 @@ const Attendance = () => {
   const [childAttendanceRecords, setChildAttendanceRecords] = useState<ChildAttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState('records');
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   
   // Enhanced pagination state with default of 50 and available options [25, 50, 100]
   const [page, setPage] = useState(0);
@@ -46,13 +50,13 @@ const Attendance = () => {
   const rowsPerPageOptions = [25, 50, 100];
   
   const [filters, setFilters] = useState<AttendanceFilterParams>({});
+  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
 
   // Get institute role
   const userRoleAuth = useInstituteRole();
   
   // Check permissions and get view type based on role and context
   const getPermissionInfo = () => {
-    // Use institute-specific role
     const userRole = userRoleAuth;
     
     console.log('🔍 ATTENDANCE CONTEXT DEBUG:', {
@@ -66,7 +70,6 @@ const Attendance = () => {
       selectedSubject: selectedSubject?.name
     });
     
-    // Student - No permission to view attendance
     if (userRole === 'Student') {
       return {
         hasPermission: false,
@@ -76,7 +79,6 @@ const Attendance = () => {
       };
     }
     
-    // 1. InstituteAdmin and AttendanceMarker - Institute level attendance (Institute only selected)
     if ((userRole === 'InstituteAdmin' || userRole === 'AttendanceMarker') && currentInstituteId && !currentClassId) {
       return {
         hasPermission: true,
@@ -86,7 +88,6 @@ const Attendance = () => {
       };
     }
     
-    // 2. InstituteAdmin, Teacher, and AttendanceMarker - Class attendance (Institute + Class selected)
     if ((userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && 
         currentInstituteId && currentClassId && !currentSubjectId) {
       return {
@@ -97,7 +98,6 @@ const Attendance = () => {
       };
     }
     
-    // 3. InstituteAdmin, Teacher, and AttendanceMarker - Subject attendance (Institute + Class + Subject selected)
     if ((userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && 
         currentInstituteId && currentClassId && currentSubjectId) {
       return {
@@ -120,7 +120,6 @@ const Attendance = () => {
 
   // Define columns based on view type
   const getColumns = (): AttendanceColumn[] => {
-    // For institute attendance records with new API response format
     return [
       { id: 'studentId', label: 'Student ID', minWidth: 100 },
       { id: 'studentName', label: 'Student Name', minWidth: 170 },
@@ -144,6 +143,123 @@ const Attendance = () => {
       { id: 'location', label: 'Location', minWidth: 200 },
       { id: 'markingMethod', label: 'Method', minWidth: 120 }
     ];
+  };
+
+  // Calendar helpers
+  const getCalendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDay = firstDay.getDay();
+    
+    const days: (number | null)[] = [];
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  }, [calendarMonth]);
+
+  // Daily attendance summary for calendar
+  const dailyAttendanceMap = useMemo(() => {
+    const map: Record<string, { present: number; absent: number; late: number; total: number }> = {};
+    if (studentAttendanceRecords) {
+      studentAttendanceRecords.forEach((record) => {
+        const dateKey = new Date(record.date).toISOString().split('T')[0];
+        if (!map[dateKey]) {
+          map[dateKey] = { present: 0, absent: 0, late: 0, total: 0 };
+        }
+        const status = record.status?.toLowerCase() as AttendanceStatus;
+        if (status === 'present') map[dateKey].present++;
+        else if (status === 'absent') map[dateKey].absent++;
+        else if (status === 'late') map[dateKey].late++;
+        map[dateKey].total++;
+      });
+    }
+    return map;
+  }, [studentAttendanceRecords]);
+
+  const getDayStats = (day: number) => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return dailyAttendanceMap[dateStr] || null;
+  };
+
+  // 5-day statistics for pie chart
+  const last5DaysStats = useMemo(() => {
+    const stats = { present: 0, absent: 0, late: 0 };
+    const today = new Date();
+    const last5Days: string[] = [];
+    
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      last5Days.push(date.toISOString().split('T')[0]);
+    }
+    
+    if (studentAttendanceRecords) {
+      studentAttendanceRecords.forEach((record) => {
+        const dateKey = new Date(record.date).toISOString().split('T')[0];
+        if (last5Days.includes(dateKey)) {
+          const status = record.status?.toLowerCase() as AttendanceStatus;
+          if (status === 'present') stats.present++;
+          else if (status === 'absent') stats.absent++;
+          else if (status === 'late') stats.late++;
+        }
+      });
+    }
+    
+    return stats;
+  }, [studentAttendanceRecords]);
+
+  const pieChartData = useMemo(() => {
+    const total = last5DaysStats.present + last5DaysStats.absent + last5DaysStats.late;
+    if (total === 0) return [];
+    
+    return [
+      { name: 'Present', value: last5DaysStats.present, color: ATTENDANCE_CHART_COLORS.present, percentage: ((last5DaysStats.present / total) * 100).toFixed(1) },
+      { name: 'Absent', value: last5DaysStats.absent, color: ATTENDANCE_CHART_COLORS.absent, percentage: ((last5DaysStats.absent / total) * 100).toFixed(1) },
+      { name: 'Late', value: last5DaysStats.late, color: ATTENDANCE_CHART_COLORS.late, percentage: ((last5DaysStats.late / total) * 100).toFixed(1) },
+    ].filter(item => item.value > 0);
+  }, [last5DaysStats]);
+
+  // Bar chart data for 5 days
+  const barChartData = useMemo(() => {
+    const today = new Date();
+    const data: { day: string; present: number; absent: number; late: number }[] = [];
+    
+    for (let i = 4; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      const dayStats = dailyAttendanceMap[dateKey] || { present: 0, absent: 0, late: 0 };
+      
+      data.push({
+        day: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        present: dayStats.present,
+        absent: dayStats.absent,
+        late: dayStats.late
+      });
+    }
+    
+    return data;
+  }, [dailyAttendanceMap]);
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCalendarMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
   };
 
   const handleFiltersChange = (newFilters: AttendanceFilterParams) => {
@@ -171,7 +287,6 @@ const Attendance = () => {
     setPage(0);
   };
 
-  // Enhanced data loading with proper pagination
   const loadStudentAttendanceData = useCallback(async () => {
     if (!hasPermission) return;
     
@@ -201,6 +316,7 @@ const Attendance = () => {
       if (response.success) {
         setStudentAttendanceRecords(response.data);
         setTotalRecords(response.pagination.totalRecords);
+        setAttendanceSummary(response.summary ? normalizeAttendanceSummary(response.summary) : null);
         setDataLoaded(true);
         
         toast({
@@ -220,9 +336,8 @@ const Attendance = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentInstituteId, currentClassId, currentSubjectId, viewType, hasPermission, page, rowsPerPage, filters, toast]);
+  }, [currentInstituteId, currentClassId, currentSubjectId, viewType, hasPermission, page, rowsPerPage, filters, toast, user?.id, userRoleAuth]);
 
-  // Load data when dependencies change
   useEffect(() => {
     if (hasPermission) {
       loadStudentAttendanceData();
@@ -236,6 +351,8 @@ const Attendance = () => {
     if (selectedSubject) parts.push(`Subject: ${selectedSubject.name}`);
     return parts.join(' → ') || 'No selection';
   };
+
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   if (!hasPermission) {
     return (
@@ -307,106 +424,412 @@ const Attendance = () => {
         onClearFilters={handleClearFilters}
       />
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Records</p>
-                <p className="text-2xl font-bold text-foreground">{totalRecords}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">View Type</p>
-                <p className="text-lg font-medium text-foreground capitalize">{viewType} Level</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Current Page</p>
-                <p className="text-lg font-medium text-foreground">{page + 1} of {Math.ceil(totalRecords / rowsPerPage)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tab Navigation - Pill Style with Arrows */}
+      <div className="w-full">
+        <div className="flex items-center justify-center gap-2 py-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const tabs = ['records', 'calendar', 'statistics'];
+              const currentIndex = tabs.indexOf(activeTab);
+              if (currentIndex > 0) {
+                setActiveTab(tabs[currentIndex - 1]);
+              }
+            }}
+            disabled={activeTab === 'records'}
+            className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+          >
+            <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </Button>
+
+          {/* Pill Tab Buttons */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1">
+            {[
+              { id: 'records', icon: List, label: 'Records' },
+              { id: 'calendar', icon: CalendarRange, label: 'Calendar' },
+              { id: 'statistics', icon: PieChart, label: 'Statistics' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                  ${activeTab === tab.id 
+                    ? 'bg-primary text-primary-foreground shadow-md' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }
+                `}
+              >
+                <tab.icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const tabs = ['records', 'calendar', 'statistics'];
+              const currentIndex = tabs.indexOf(activeTab);
+              if (currentIndex < tabs.length - 1) {
+                setActiveTab(tabs[currentIndex + 1]);
+              }
+            }}
+            disabled={activeTab === 'statistics'}
+            className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+          >
+            <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </Button>
+        </div>
+
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-2 pb-4">
+          {['records', 'calendar', 'statistics'].map((tab) => (
+            <div
+              key={tab}
+              className={`h-2 w-2 rounded-full transition-all ${
+                activeTab === tab ? 'bg-primary w-6' : 'bg-muted-foreground/30'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Enhanced MUI Data Table with Fixed Height */}
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ height: 600 }}> {/* Fixed height for consistent display */}
-          <Table stickyHeader aria-label="attendance table">
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ minWidth: column.minWidth }}
-                  >
-                    {column.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {displayData.length > 0 ? (
-                displayData.map((record, index) => (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={index}>
-                    {columns.map((column) => {
-                      const value = (record as any)[column.id];
-                      return (
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format ? column.format(value, record) : value}
-                        </TableCell>
-                      );
-                    })}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="hidden" />
+
+        {/* Tab 1: Records */}
+        <TabsContent value="records" className="mt-0 space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Records</p>
+                    <p className="text-2xl font-bold text-foreground">{totalRecords}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">View Type</p>
+                    <p className="text-lg font-medium text-foreground capitalize">{viewType} Level</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Clock className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Current Page</p>
+                    <p className="text-lg font-medium text-foreground">{page + 1} of {Math.ceil(totalRecords / rowsPerPage) || 1}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Data Table */}
+          <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+            <TableContainer sx={{ height: 600 }}>
+              <Table stickyHeader aria-label="attendance table">
+                <TableHead>
+                  <TableRow>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.id}
+                        align={column.align}
+                        style={{ minWidth: column.minWidth }}
+                      >
+                        {column.label}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} align="center">
-                    <div className="py-12 text-center text-muted-foreground">
-                      <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg">No attendance records found</p>
-                      <p className="text-sm">{getCurrentSelection()}</p>
+                </TableHead>
+                <TableBody>
+                  {displayData.length > 0 ? (
+                    displayData.map((record, index) => (
+                      <TableRow hover role="checkbox" tabIndex={-1} key={index}>
+                        {columns.map((column) => {
+                          const value = (record as any)[column.id];
+                          return (
+                            <TableCell key={column.id} align={column.align}>
+                              {column.format ? column.format(value, record) : value}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} align="center">
+                        <div className="py-12 text-center text-muted-foreground">
+                          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p className="text-lg">No attendance records found</p>
+                          <p className="text-sm">{getCurrentSelection()}</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={rowsPerPageOptions}
+              component="div"
+              count={totalRecords}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </Paper>
+        </TabsContent>
+
+        {/* Tab 2: Calendar View */}
+        <TabsContent value="calendar" className="mt-0">
+          <Card className="border-border/50">
+            <CardHeader className="border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <CalendarRange className="h-5 w-5 text-primary" />
+                  Daily Attendance Calendar
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" onClick={() => navigateMonth('prev')}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="font-medium min-w-[140px] text-center">
+                    {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <Button variant="outline" size="icon" onClick={() => navigateMonth('next')}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 md:p-6">
+              {/* Legend */}
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-emerald-500" />
+                  <span className="text-sm">Present</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-red-500" />
+                  <span className="text-sm">Absent</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-amber-500" />
+                  <span className="text-sm">Late</span>
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1 md:gap-2">
+                {/* Week Day Headers */}
+                {weekDays.map(day => (
+                  <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+                    {day}
+                  </div>
+                ))}
+                
+                {/* Calendar Days */}
+                {getCalendarDays.map((day, index) => {
+                  if (day === null) {
+                    return <div key={`empty-${index}`} className="aspect-square" />;
+                  }
+                  
+                  const stats = getDayStats(day);
+                  const isToday = new Date().getDate() === day && 
+                                  new Date().getMonth() === calendarMonth.getMonth() && 
+                                  new Date().getFullYear() === calendarMonth.getFullYear();
+                  
+                  return (
+                    <div 
+                      key={day}
+                      className={`
+                        aspect-square flex flex-col items-center justify-center rounded-lg text-sm
+                        transition-all duration-200 cursor-default p-1
+                        ${stats ? 'bg-muted/50' : 'bg-muted/20'}
+                        ${isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
+                      `}
+                    >
+                      <span className="font-medium mb-1">{day}</span>
+                      {stats && (
+                        <div className="flex gap-0.5 text-[10px]">
+                          {stats.present > 0 && (
+                            <span className="bg-emerald-500 text-white px-1 rounded">{stats.present}</span>
+                          )}
+                          {stats.absent > 0 && (
+                            <span className="bg-red-500 text-white px-1 rounded">{stats.absent}</span>
+                          )}
+                          {stats.late > 0 && (
+                            <span className="bg-amber-500 text-white px-1 rounded">{stats.late}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </TableCell>
-                </TableRow>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 3: Statistics View */}
+        <TabsContent value="statistics" className="mt-0 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 5-Day Pie Chart */}
+            <Card className="border-border/50">
+              <CardHeader className="border-b border-border/50">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <PieChart className="h-5 w-5 text-primary" />
+                  Last 5 Days Attendance Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 md:p-6">
+                {pieChartData.length > 0 ? (
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={pieChartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, percentage }) => `${name} ${percentage}%`}
+                          labelLine={false}
+                        >
+                          {pieChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number, name: string) => [`${value} students`, name]}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            borderColor: 'hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Legend />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                    No data available for last 5 days
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 5-Day Summary Stats */}
+            <Card className="border-border/50">
+              <CardHeader className="border-b border-border/50">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  5-Day Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 md:p-6">
+                <div className="space-y-6">
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+                      <UserCheck className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
+                      <p className="text-3xl font-bold text-emerald-600">{last5DaysStats.present}</p>
+                      <p className="text-sm text-muted-foreground">Present</p>
+                    </div>
+                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5">
+                      <UserX className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                      <p className="text-3xl font-bold text-red-600">{last5DaysStats.absent}</p>
+                      <p className="text-sm text-muted-foreground">Absent</p>
+                    </div>
+                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5">
+                      <Clock className="h-8 w-8 mx-auto mb-2 text-amber-600" />
+                      <p className="text-3xl font-bold text-amber-600">{last5DaysStats.late}</p>
+                      <p className="text-sm text-muted-foreground">Late</p>
+                    </div>
+                  </div>
+
+                  {/* Percentage Bars */}
+                  <div className="space-y-3">
+                    {pieChartData.map((item) => (
+                      <div key={item.name} className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="flex-1 text-sm font-medium">{item.name}</span>
+                        <span className="font-semibold">{item.value}</span>
+                        <span className="text-sm text-muted-foreground w-16 text-right">({item.percentage}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 5-Day Bar Chart */}
+          <Card className="border-border/50">
+            <CardHeader className="border-b border-border/50">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Daily Attendance Trend (Last 5 Days)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 md:p-6">
+              {barChartData.some(d => d.present > 0 || d.absent > 0 || d.late > 0) ? (
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="day" className="text-xs" />
+                      <YAxis />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          borderColor: 'hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="present" name="Present" fill={ATTENDANCE_CHART_COLORS.present} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="absent" name="Absent" fill={ATTENDANCE_CHART_COLORS.absent} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="late" name="Late" fill={ATTENDANCE_CHART_COLORS.late} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  No data available for last 5 days
+                </div>
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={rowsPerPageOptions}
-          component="div"
-          count={totalRecords}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

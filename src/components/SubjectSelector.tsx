@@ -337,14 +337,18 @@ const SubjectSelector = () => {
         <p className="text-gray-600 dark:text-gray-400">Please select a class first.</p>
       </div>;
   }
+  const isTuitionInstitute = selectedInstitute?.type === 'tuition_institute';
+  const subjectLabel = isTuitionInstitute ? 'Sub Class' : 'Subject';
+  const subjectLabelPlural = isTuitionInstitute ? 'Sub Classes' : 'Subject';
+
   return <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-16">
         <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Select Subject
+            Select {subjectLabelPlural}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            Choose a subject to manage lectures and attendance
+            Choose a {subjectLabel.toLowerCase()} to manage lectures and attendance
           </p>
           {selectedInstitute && <p className="text-xs sm:text-sm text-blue-600 mt-2">
               Institute: {selectedInstitute.name}
@@ -450,7 +454,7 @@ const SubjectSelector = () => {
                       onClick={() => handleSelectSubject(subject)}
                       className="select-none rounded-lg bg-blue-500 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
                     >
-                      Select Subject
+                      Select {subjectLabel}
                     </button>
                   </div>
                 </div>

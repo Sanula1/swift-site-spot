@@ -542,7 +542,8 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
               format: col.render
             }))}
             onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined}
-            onEdit={isStudent ? handleSubmitHomework : (canEdit ? handleEditHomework : undefined)}
+            onEdit={canEdit && !isStudent ? handleEditHomework : undefined}
+            customActions={customActions}
             page={page}
             rowsPerPage={rowsPerPage}
             totalCount={totalCount}
@@ -593,7 +594,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
 
       {/* Submit Dialog */}
       <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Submit Homework</DialogTitle>
           </DialogHeader>

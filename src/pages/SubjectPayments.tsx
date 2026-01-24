@@ -32,6 +32,10 @@ const SubjectPayments = () => {
     selectedSubject
   } = useAuth();
   const instituteRole = useInstituteRole();
+  
+  // Check if institute type is tuition_institute
+  const isTuitionInstitute = selectedInstitute?.type === 'tuition_institute';
+  const subjectLabel = isTuitionInstitute ? 'Sub Class' : 'Subject';
   const navigate = useNavigate();
   const {
     toast
@@ -285,10 +289,10 @@ const SubjectPayments = () => {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Subject Payments
+                {subjectLabel} Payments
               </h1>
               {selectedSubject && <p className="text-muted-foreground text-sm mt-1">
-                  Subject: <span className="font-medium text-foreground">{selectedSubject.name}</span>
+                  {subjectLabel}: <span className="font-medium text-foreground">{selectedSubject.name}</span>
                 </p>}
             </div>
           </div>
@@ -352,7 +356,7 @@ const SubjectPayments = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <CreditCard className="h-5 w-5 text-primary" />
-                {instituteRole === 'Student' ? 'My Subject Payments' : 'Subject Payment Records'}
+                {instituteRole === 'Student' ? `My ${subjectLabel} Payments` : `${subjectLabel} Payment Records`}
               </CardTitle>
               {subjectPaymentsData && <Badge variant="outline" className="text-sm">
                   {filteredPayments.length} of {subjectPaymentsData.total} total

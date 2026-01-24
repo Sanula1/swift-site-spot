@@ -7,7 +7,9 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ExternalLink, Calendar, Clock, BookOpen, User, Building, GraduationCap } from 'lucide-react';
+import { HomeworkReferencesSection } from '@/components/homework/index';
 
 interface HomeworkDetailsDialogProps {
   isOpen: boolean;
@@ -24,7 +26,7 @@ const HomeworkDetailsDialog = ({ isOpen, onClose, homework }: HomeworkDetailsDia
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -32,6 +34,7 @@ const HomeworkDetailsDialog = ({ isOpen, onClose, homework }: HomeworkDetailsDia
           </DialogTitle>
         </DialogHeader>
         
+        <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
         <div className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
@@ -178,9 +181,18 @@ const HomeworkDetailsDialog = ({ isOpen, onClose, homework }: HomeworkDetailsDia
             )}
           </div>
 
+          {/* Reference Materials Section */}
+          {homework.id && (
+            <HomeworkReferencesSection 
+              homeworkId={homework.id} 
+              initialReferences={homework.references}
+              editable={false}
+            />
+          )}
+
           {/* Timestamps */}
           <div className="border-t pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div>
                 <span className="font-medium">Created:</span>
                 <br />
@@ -194,6 +206,7 @@ const HomeworkDetailsDialog = ({ isOpen, onClose, homework }: HomeworkDetailsDia
             </div>
           </div>
         </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

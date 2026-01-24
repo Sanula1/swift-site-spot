@@ -11,6 +11,10 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 0
+    },
+    PushNotifications: {
+      // Android: presentationOptions determine how notifications appear when app is in foreground
+      presentationOptions: ['badge', 'sound', 'alert']
     }
   }
 };

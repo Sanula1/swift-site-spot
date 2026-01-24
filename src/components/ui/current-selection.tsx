@@ -39,6 +39,10 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
   const navigate = useNavigate();
   const userRole = useInstituteRole();
   
+  // Check if institute type is tuition_institute
+  const isTuitionInstitute = (institute as any)?.type === 'tuition_institute';
+  const subjectLabel = isTuitionInstitute ? 'Sub Class For' : 'Subject';
+  
   // Check if user is InstituteAdmin or Teacher
   const canVerifyStudents = ['InstituteAdmin', 'Teacher'].includes(userRole);
   
@@ -102,7 +106,7 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
             <div className="flex items-start gap-2">
               <BookOpen className="h-4 w-4 text-secondary-foreground mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Subject:</p>
+                <p className="text-xs text-muted-foreground font-medium">{subjectLabel}:</p>
                 <p className="text-sm font-medium text-foreground break-words leading-relaxed">
                   {subject.name}
                 </p>

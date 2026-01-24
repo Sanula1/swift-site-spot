@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorToaster, Toaster as Sonner } from "@/components/ui/sonner";
+import { NotificationToast } from "@/components/notifications/NotificationToast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -38,6 +39,7 @@ import ChildAttendancePage from "@/pages/ChildAttendancePage";
 import ChildTransportPage from "@/pages/ChildTransportPage";
 import CardManagement from "@/pages/CardManagement";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -84,9 +86,13 @@ const App = () => {
               <Toaster />
               <Sonner />
               <ErrorToaster />
+              <NotificationToast />
               <Routes>
                 {/* Main Routes - All handled by Index/AppContent */}
                 <Route path="/" element={<Index />} />
+
+                {/* Google OAuth Callback */}
+                <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
 
                 {/* Hierarchical Routes with Context */}
                 <Route path="/institute/:instituteId/*" element={<Index />} />

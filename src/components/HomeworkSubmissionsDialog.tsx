@@ -7,12 +7,25 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
-import { AccessControl, UserRole } from '@/utils/permissions';
+import { AccessControl } from '@/utils/permissions';
 import { homeworkSubmissionsApi, type HomeworkSubmission } from '@/api/homeworkSubmissions.api';
-import { FileText, Calendar, User, ExternalLink, RefreshCw, Lock } from 'lucide-react';
+import { 
+  FileText, 
+  Calendar, 
+  User, 
+  ExternalLink, 
+  RefreshCw, 
+  Lock, 
+  Cloud,
+  HardDrive,
+  Download,
+  CheckCircle2
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface HomeworkSubmissionsDialogProps {
   homework: any;
@@ -73,6 +86,37 @@ const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmis
     });
   };
 
+  const getFileUrl = (submission: HomeworkSubmission) => {
+    if (submission.submissionType === 'GOOGLE_DRIVE' && submission.driveFileId) {
+      return submission.driveViewUrl || `https://drive.google.com/file/d/${submission.driveFileId}/view`;
+    }
+    return submission.fileUrl;
+  };
+
+  const getSubmissionTypeIcon = (submission: HomeworkSubmission) => {
+    if (submission.submissionType === 'GOOGLE_DRIVE') {
+      return <Cloud className="h-4 w-4 text-primary" />;
+    }
+    return <HardDrive className="h-4 w-4 text-muted-foreground" />;
+  };
+
+  const getSubmissionTypeBadge = (submission: HomeworkSubmission) => {
+    if (submission.submissionType === 'GOOGLE_DRIVE') {
+      return (
+        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+          <Cloud className="h-3 w-3 mr-1" />
+          Google Drive
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="bg-muted">
+        <HardDrive className="h-3 w-3 mr-1" />
+        Uploaded
+      </Badge>
+    );
+  };
+
   // Check if user has permission to view homework submissions
   if (!AccessControl.hasPermission(userRole, 'view-homework-submissions')) {
     return (
@@ -86,7 +130,7 @@ const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmis
           </DialogHeader>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">
-              You don't have permission to view homework submissions. Only teachers and institute administrators can access this feature.
+              You don't have permission to view homework submissions.
             </p>
             <Button onClick={onClose}>Close</Button>
           </div>
@@ -101,30 +145,41 @@ const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmis
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Homework Submissions: {homework?.title}
+            Homework Submissions
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Homework Info */}
-          <div className="bg-muted/50 p-4 rounded-lg border">
-            <h3 className="font-semibold mb-2">{homework?.title}</h3>
-            <p className="text-muted-foreground mb-2">{homework?.description}</p>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              {homework?.startDate && (
-                <span>Start: {new Date(homework.startDate).toLocaleDateString()}</span>
-              )}
-              {homework?.endDate && (
-                <span>Due: {new Date(homework.endDate).toLocaleDateString()}</span>
-              )}
-            </div>
-          </div>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="py-4">
+              <h3 className="font-semibold mb-2">{homework?.title}</h3>
+              <p className="text-muted-foreground text-sm mb-2">{homework?.description}</p>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                {homework?.startDate && (
+                  <Badge variant="outline">
+                    Start: {new Date(homework.startDate).toLocaleDateString()}
+                  </Badge>
+                )}
+                {homework?.endDate && (
+                  <Badge variant="outline">
+                    Due: {new Date(homework.endDate).toLocaleDateString()}
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Refresh Button */}
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">
-              Submissions ({submissions.length})
-            </h3>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">
+                Submissions ({submissions.length})
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {submissions.filter(s => s.submissionType === 'GOOGLE_DRIVE').length} via Google Drive
+              </p>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -160,69 +215,104 @@ const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmis
           ) : (
             <div className="space-y-4">
               {submissions.map((submission) => (
-                <div key={submission.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">
-                          {submission.student?.firstName} {submission.student?.lastName}
-                        </span>
-                        <Badge variant={submission.isActive ? 'default' : 'secondary'}>
-                          {submission.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                <Card key={submission.id} className="overflow-hidden">
+                  <CardContent className="p-4 space-y-3">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {submission.student?.firstName} {submission.student?.lastName}
+                          </span>
+                          <Badge variant={submission.isActive ? 'default' : 'secondary'}>
+                            {submission.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                          {getSubmissionTypeBadge(submission)}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          Submitted: {formatDate(submission.submissionDate)}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        Submitted: {formatDate(submission.submissionDate)}
+                    </div>
+
+                    {/* Google Drive File Info */}
+                    {submission.submissionType === 'GOOGLE_DRIVE' && (
+                      <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Cloud className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {submission.driveFileName || 'Google Drive File'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {submission.driveMimeType && (
+                              <span className="mr-2">{submission.driveMimeType}</span>
+                            )}
+                            {submission.driveFileSize && (
+                              <span>
+                                {(submission.driveFileSize / 1024 / 1024).toFixed(2)} MB
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(getFileUrl(submission), '_blank')}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Open
+                        </Button>
                       </div>
-                    </div>
-                  </div>
-
-                  {submission.remarks && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-1">Teacher Notes:</h4>
-                      <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                        {submission.remarks}
-                      </p>
-                    </div>
-                  )}
-
-                  {submission.fileUrl && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Submitted File:</h4>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => window.open(submission.fileUrl, '_blank')}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View File
-                      </Button>
-                    </div>
-                  )}
-
-                  {submission.teacherCorrectionFileUrl && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Teacher Correction:</h4>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => window.open(submission.teacherCorrectionFileUrl, '_blank')}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View Correction
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="text-xs text-muted-foreground pt-2 border-t">
-                    Created: {formatDate(submission.createdAt)}
-                    {submission.updatedAt !== submission.createdAt && (
-                      <> • Updated: {formatDate(submission.updatedAt)}</>
                     )}
-                  </div>
-                </div>
+
+                    {/* Remarks */}
+                    {submission.remarks && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-1">Notes:</h4>
+                        <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                          {submission.remarks}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* File Actions */}
+                    <div className="flex flex-wrap gap-2">
+                      {submission.fileUrl && submission.submissionType !== 'GOOGLE_DRIVE' && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => window.open(submission.fileUrl, '_blank')}
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          View File
+                        </Button>
+                      )}
+
+                      {submission.teacherCorrectionFileUrl && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(submission.teacherCorrectionFileUrl, '_blank')}
+                        >
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          View Correction
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="text-xs text-muted-foreground pt-2 border-t">
+                      Created: {formatDate(submission.createdAt)}
+                      {submission.updatedAt !== submission.createdAt && (
+                        <> • Updated: {formatDate(submission.updatedAt)}</>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}

@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Save } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Save, Paperclip } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { homeworkApi } from '@/api/homework.api';
 import { Calendar } from '@/components/ui/calendar';
@@ -12,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { HomeworkReferencesSection } from '@/components/homework/index';
 
 interface UpdateHomeworkFormProps {
   homework: any;
@@ -192,6 +194,17 @@ const UpdateHomeworkForm = ({ homework, onClose, onSuccess }: UpdateHomeworkForm
           />
         </div>
       </div>
+
+      {/* Reference Materials Section */}
+      {homework.id && (
+        <div className="pt-4 border-t">
+          <HomeworkReferencesSection 
+            homeworkId={homework.id}
+            initialReferences={homework.references}
+            editable={true}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button type="button" variant="outline" onClick={onClose} disabled={loading}>

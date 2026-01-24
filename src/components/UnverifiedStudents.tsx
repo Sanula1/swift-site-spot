@@ -83,8 +83,8 @@ const UnverifiedStudents = () => {
       let endpoint = '';
       
       if (selectedSubject) {
-        // Fetch institute class subject unverified students
-        endpoint = `/institute-class-subject-students/unverified/${selectedInstitute.id}/${selectedClass.id}/${selectedSubject.id}`;
+        // Fetch institute class subject unverified students - NEW API
+        endpoint = `/institutes/${selectedInstitute.id}/classes/${selectedClass.id}/students/unverified`;
       } else {
         // Fetch institute class unverified students - NEW API with pagination
         endpoint = `/institute-classes/${selectedClass.id}/unverified-students?limit=${limit}&page=${page + 1}`;

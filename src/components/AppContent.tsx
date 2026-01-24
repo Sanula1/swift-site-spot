@@ -88,6 +88,7 @@ import ExamResults from '@/pages/ExamResults';
 import CreateExamResults from '@/pages/CreateExamResults';
 import InstituteSubjects from '@/pages/InstituteSubjects';
 import TeacherEnrollmentManagement from '@/pages/TeacherEnrollmentManagement';
+import NotificationsPage from '@/pages/NotificationsPage';
 
 interface AppContentProps {
   initialPage?: string;
@@ -540,6 +541,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <Profile />;
         case 'settings':
           return <Settings />;
+        case 'notifications':
+        case 'institute-notifications':
+          return <NotificationsPage />;
         default:
           return <Dashboard />;
       }
@@ -616,6 +620,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <SubjectPaymentSubmissions />;
         case 'my-children':
           return <MyChildren />;
+        case 'notifications':
+        case 'institute-notifications':
+          return <NotificationsPage />;
         default:
           return <Dashboard />;
       }
@@ -669,6 +676,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <ParentChildrenSelector />;
         case 'appearance':
           return <Appearance />;
+        case 'notifications':
+        case 'institute-notifications':
+          return <NotificationsPage />;
         default:
           return <ParentChildrenSelector />;
       }
@@ -770,6 +780,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <SubjectPaymentSubmissions />;
         case 'enrollment-management':
           return <TeacherEnrollmentManagement />;
+        case 'notifications':
+        case 'institute-notifications':
+          return <NotificationsPage />;
         default:
           return <Dashboard />;
       }
@@ -819,6 +832,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <InstituteProfile />;
       case 'settings':
           return <Settings />;
+      case 'notifications':
+      case 'institute-notifications':
+        return <NotificationsPage />;
         default:
           return <Dashboard />;
       }
@@ -839,7 +855,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
       'child/:childId/transport',
       'institute-payments',
       'subject-payments',
-      'my-submissions'
+      'my-submissions',
+      'notifications',
+      'institute-notifications'
     ];
     
     console.log('🔍 Student Role - Debug:', { 
@@ -983,6 +1001,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <SMS />;
       case 'sms-history':
         return <SMSHistory />;
+      case 'notifications':
+      case 'institute-notifications':
+        return <NotificationsPage />;
       case 'institute-payments':
         return <InstitutePayments />;
       case 'subject-payments':

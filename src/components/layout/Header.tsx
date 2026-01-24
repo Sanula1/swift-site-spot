@@ -73,13 +73,13 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     : (user?.imageUrl ? getImageUrl(user.imageUrl) : '');
 
   return (
-    <header className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-3 sm:px-4 py-3 sticky top-0 z-40">
+    <header className="lg:hidden bg-background border-b border-border px-3 sm:px-4 py-3 sticky top-0 z-40">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
           onClick={onMenuClick}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="p-2 hover:bg-muted"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -91,7 +91,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             alt={selectedInstitute?.shortName ? "Institute logo" : "SurakshaLMS logo"}
             className="h-8 w-8 object-contain rounded"
           />
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
+          <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">
             {selectedInstitute?.shortName || 'SurakshaLMS'}
           </h1>
         </div>
@@ -102,7 +102,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="p-1 hover:bg-gray-100 rounded-full relative group"
+                className="p-1 hover:bg-muted rounded-full relative group"
                 aria-label="User menu"
               >
                 <Avatar className="h-9 w-9 border-2 border-border transition-all group-hover:border-primary">
@@ -121,22 +121,22 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent 
               align="end" 
-              className="w-48 bg-white border border-gray-200"
+              className="w-48 bg-popover border border-border"
             >
               <DropdownMenuItem disabled className="cursor-default">
-                <span className="font-medium text-gray-900 truncate">
+                <span className="font-medium text-foreground truncate">
                   {user?.name}
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem disabled className="cursor-default">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {displayRole}
                 </span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-200" />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem 
                 onClick={handleLogout}
-                className="cursor-pointer hover:bg-gray-100"
+                className="cursor-pointer hover:bg-muted"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -145,7 +145,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
           </DropdownMenu>
         </div>
       </div>
-
     </header>
   );
 };

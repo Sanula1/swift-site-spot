@@ -34,7 +34,7 @@ interface InstituteUsersFiltersProps {
   onFiltersChange: (filters: InstituteUserFilterParams) => void;
   onApplyFilters: () => void;
   onClearFilters: () => void;
-  userType: 'STUDENT' | 'TEACHER' | 'ATTENDANCE_MARKER' | 'INSTITUTE_ADMIN' | 'INACTIVE';
+  userType: 'STUDENT' | 'TEACHER' | 'ATTENDANCE_MARKER' | 'INSTITUTE_ADMIN' | 'PENDING' | 'INACTIVE';
   isApplying?: boolean;
 }
 

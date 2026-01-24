@@ -7,6 +7,11 @@ import { FileText, CheckCircle, AlertCircle, Calendar, DollarSign, Clock, XCircl
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
+
+// Helper to get subject label based on institute type
+const getSubjectLabel = (instituteType?: string) => {
+  return instituteType === 'tuition_institute' ? 'Sub Class' : 'Subject';
+};
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -410,16 +415,18 @@ const SubjectPaymentSubmissions = () => {
       </TableContainer>
       <TablePagination rowsPerPageOptions={[25, 50, 100]} component="div" count={submissionsData?.pagination.total || 0} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
     </Paper>;
+  const subjectLabel = getSubjectLabel(selectedInstitute?.type);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Subject Payment Submissions</h1>
+          <h1 className="text-3xl font-bold">{subjectLabel} Payment Submissions</h1>
           <div className="mt-2 text-sm text-muted-foreground">
             <p><strong>Institute:</strong> {selectedInstitute.name}</p>
             <p><strong>Class:</strong> {selectedClass.name}</p>
-            <p><strong>Subject:</strong> {selectedSubject.name}</p>
+            <p><strong>{subjectLabel}:</strong> {selectedSubject.name}</p>
           </div>
         </div>
         <Button onClick={() => loadSubmissions(1, rowsPerPage, true)} disabled={loading}>

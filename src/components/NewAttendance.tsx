@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Search, Filter, Calendar, User, Clock, CheckCircle, MapPin, School, BookOpen, UserCheck, UserX, TrendingUp, LogOut, DoorOpen } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { RefreshCw, Search, Filter, Calendar, User, Clock, CheckCircle, MapPin, School, BookOpen, UserCheck, UserX, TrendingUp, LogOut, DoorOpen, Building2, GraduationCap, ChevronRight, ChevronLeft, CalendarDays, List, PieChart as PieChartIcon, CalendarRange } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { getAttendanceUrl, getBaseUrl } from '@/contexts/utils/auth.api';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+
 interface AttendanceRecord {
   attendanceId?: string;
   studentId: string;
@@ -34,6 +29,7 @@ interface AttendanceRecord {
   markingMethod: string;
   markedBy?: string;
 }
+
 interface AttendanceResponse {
   success: boolean;
   message: string;
@@ -78,6 +74,18 @@ interface AttendanceResponse {
     totalSubjects?: number;
   };
 }
+
+type AttendanceStatus = 'present' | 'absent' | 'late' | 'left' | 'left_early' | 'left_lately';
+
+const CHART_COLORS = {
+  present: '#10b981',
+  absent: '#ef4444',
+  late: '#f59e0b',
+  left: '#a855f7',
+  left_early: '#ec4899',
+  left_lately: '#6366f1',
+};
+
 const NewAttendance = () => {
   const {
     selectedInstitute,
@@ -88,15 +96,15 @@ const NewAttendance = () => {
     currentSubjectId
   } = useAuth();
   const userRole = useInstituteRole();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const [attendanceData, setAttendanceData] = useState<AttendanceResponse | null>(null);
   const [filteredRecords, setFilteredRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState('records');
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
-  // Helper function to format date as YYYY-MM-DD
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -104,7 +112,6 @@ const NewAttendance = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Calculate dynamic dates
   const getDefaultDates = () => {
     const today = new Date();
     const yesterday = new Date(today);
@@ -117,10 +124,8 @@ const NewAttendance = () => {
     };
   };
 
-  // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  // Removed occupation filter - not needed
   const [startDate, setStartDate] = useState(getDefaultDates().startDate);
   const [endDate, setEndDate] = useState(getDefaultDates().endDate);
   const [sortOrder, setSortOrder] = useState<string>('descending');
@@ -128,16 +133,14 @@ const NewAttendance = () => {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Check permissions based on role and context
   const getPermissionAndEndpoint = () => {
-    // Determine permissions purely from role and current selection
     const canViewSubject = (userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && currentInstituteId && currentClassId && currentSubjectId;
     const canViewClass = (userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && currentInstituteId && currentClassId;
     const canViewInstitute = (userRole === 'InstituteAdmin' || userRole === 'AttendanceMarker') && currentInstituteId;
 
-    // Build base URL (attendance service first, fallback to main API)
     let attendanceBaseUrl = getAttendanceUrl() || getBaseUrl() || localStorage.getItem('baseUrl2') || '';
     attendanceBaseUrl = attendanceBaseUrl.endsWith('/') ? attendanceBaseUrl.slice(0, -1) : attendanceBaseUrl;
+    
     if (canViewSubject) {
       return {
         hasPermission: true,
@@ -172,21 +175,20 @@ const NewAttendance = () => {
       title: 'Attendance Records'
     };
   };
-  const {
-    hasPermission,
-    endpoint,
-    title
-  } = getPermissionAndEndpoint();
+
+  const { hasPermission, endpoint, title } = getPermissionAndEndpoint();
+
   const getApiHeaders = () => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json' // Add this header for ngrok
+      'Content-Type': 'application/json'
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     return headers;
   };
+
   const loadAttendanceData = async () => {
     if (!hasPermission) {
       toast({
@@ -197,7 +199,6 @@ const NewAttendance = () => {
       return;
     }
 
-    // Ensure API endpoint is configured
     if (!endpoint) {
       toast({
         title: 'Configuration Required',
@@ -206,12 +207,10 @@ const NewAttendance = () => {
       });
       return;
     }
+
     setIsLoading(true);
-    console.log('Loading attendance data from API:', endpoint);
     try {
       const headers = getApiHeaders();
-
-      // Build query parameters
       const params = new URLSearchParams({
         startDate,
         endDate,
@@ -222,47 +221,29 @@ const NewAttendance = () => {
         params.append('status', statusFilter);
       }
       const fullUrl = `${endpoint}?${params.toString()}`;
-      console.log('Full API URL:', fullUrl);
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers
-      });
-      console.log('API Response Status:', response.status);
-      console.log('Response Content-Type:', response.headers.get('Content-Type'));
+      const response = await fetch(fullUrl, { method: 'GET', headers });
 
-      // Check if response is HTML (ngrok warning page)
       const contentType = response.headers.get('Content-Type') || '';
       if (contentType.includes('text/html')) {
         const htmlContent = await response.text();
-
-        // Check if it's an ngrok warning page
         if (htmlContent.includes('ngrok') && htmlContent.includes('You are about to visit')) {
-          throw new Error('Ngrok tunnel is showing a browser warning. Please visit the ngrok URL in a browser first to accept the warning, or configure ngrok to skip browser warnings.');
+          throw new Error('Ngrok tunnel is showing a browser warning.');
         }
-        throw new Error('API returned HTML instead of JSON. This might be a server configuration issue.');
+        throw new Error('API returned HTML instead of JSON.');
       }
+      
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         try {
           if (contentType.includes('application/json')) {
             const errorData = await response.json();
             errorMessage = errorData.message || JSON.stringify(errorData);
-          } else {
-            errorMessage = (await response.text()) || errorMessage;
           }
-        } catch {
-          // Use default error message if parsing fails
-        }
+        } catch { /* use default */ }
         throw new Error(`Failed to fetch attendance data: ${errorMessage}`);
       }
-      let result: AttendanceResponse;
-      try {
-        result = await response.json();
-      } catch (jsonError) {
-        console.error('Failed to parse JSON response:', jsonError);
-        throw new Error('Invalid JSON response from server. The server might be returning HTML or plain text instead of JSON.');
-      }
-      console.log('Attendance data loaded successfully:', result);
+      
+      const result: AttendanceResponse = await response.json();
       setAttendanceData(result);
       setFilteredRecords(result.data);
       setDataLoaded(true);
@@ -272,49 +253,36 @@ const NewAttendance = () => {
       });
     } catch (error) {
       console.error('Failed to load attendance data:', error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to load attendance data from server.";
-      if (errorMessage.includes('ngrok') || errorMessage.includes('browser warning')) {
-        toast({
-          title: "Ngrok Configuration Issue",
-          description: "The ngrok tunnel is showing a browser warning. Visit the ngrok URL in a browser first to accept the warning.",
-          variant: "destructive"
-        });
-      } else if (errorMessage.includes('HTML instead of JSON')) {
-        toast({
-          title: "API Configuration Error",
-          description: "The server is returning HTML instead of JSON. Check your API endpoint configuration.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Load Failed",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Load Failed",
+        description: error instanceof Error ? error.message : "Failed to load attendance data.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Load attendance data when page or rowsPerPage changes
   useEffect(() => {
     if (dataLoaded) {
       loadAttendanceData();
     }
   }, [currentPage, rowsPerPage]);
 
-  // Apply filters and sorting
   useEffect(() => {
     if (!attendanceData) return;
     let filtered = attendanceData.data;
 
-    // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(record => record.studentId.toLowerCase().includes(searchTerm.toLowerCase()) || record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || record.status.toLowerCase().includes(searchTerm.toLowerCase()) || record.className && record.className.toLowerCase().includes(searchTerm.toLowerCase()) || record.subjectName && record.subjectName.toLowerCase().includes(searchTerm.toLowerCase()));
+      filtered = filtered.filter(record => 
+        record.studentId.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        record.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (record.className && record.className.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (record.subjectName && record.subjectName.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
       const aDateStr = a.markedAt || a.date || '';
       const bDateStr = b.markedAt || b.date || '';
@@ -324,24 +292,137 @@ const NewAttendance = () => {
     });
     setFilteredRecords(filtered);
   }, [attendanceData, searchTerm, sortOrder]);
+
+  // Calendar helpers
+  const getCalendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDay = firstDay.getDay();
+    
+    const days: (number | null)[] = [];
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  }, [calendarMonth]);
+
+  const attendanceMap = useMemo(() => {
+    const map: Record<string, { status: AttendanceStatus; count: number }> = {};
+    if (attendanceData?.data) {
+      attendanceData.data.forEach((record) => {
+        const dateKey = new Date(record.date).toISOString().split('T')[0];
+        if (!map[dateKey]) {
+          map[dateKey] = { status: record.status, count: 1 };
+        } else {
+          map[dateKey].count += 1;
+        }
+      });
+    }
+    return map;
+  }, [attendanceData]);
+
+  const getDateStatus = (day: number): AttendanceStatus | null => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return attendanceMap[dateStr]?.status || null;
+  };
+
+  const getDateCount = (day: number): number => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return attendanceMap[dateStr]?.count || 0;
+  };
+
+  const getDateStatusColor = (status: AttendanceStatus | null): string => {
+    if (!status) return 'bg-muted/50 text-muted-foreground';
+    const colorMap: Record<AttendanceStatus, string> = {
+      present: 'bg-emerald-500 text-white',
+      absent: 'bg-red-500 text-white',
+      late: 'bg-amber-500 text-white',
+      left: 'bg-purple-500 text-white',
+      left_early: 'bg-pink-500 text-white',
+      left_lately: 'bg-indigo-500 text-white'
+    };
+    return colorMap[status] || 'bg-muted/50 text-muted-foreground';
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCalendarMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  // Totals for summary cards
+  const totals = useMemo(() => {
+    const records = attendanceData?.data ?? [];
+    let totalPresent = 0, totalAbsent = 0, totalLate = 0, totalLeft = 0, totalLeftEarly = 0, totalLeftLately = 0;
+
+    for (const r of records) {
+      if (r.status === 'present') totalPresent += 1;
+      else if (r.status === 'absent') totalAbsent += 1;
+      else if (r.status === 'late') totalLate += 1;
+      else if (r.status === 'left') totalLeft += 1;
+      else if (r.status === 'left_early') totalLeftEarly += 1;
+      else if (r.status === 'left_lately') totalLeftLately += 1;
+    }
+
+    const total = totalPresent + totalAbsent + totalLate + totalLeft + totalLeftEarly + totalLeftLately;
+    const attendanceRate = total > 0 ? Math.round((totalPresent / total) * 100) : 0;
+
+    return { totalPresent, totalAbsent, totalLate, totalLeft, totalLeftEarly, totalLeftLately, total, attendanceRate };
+  }, [attendanceData?.data]);
+
+  // Pie chart data
+  const pieChartData = useMemo(() => {
+    const data = [
+      { name: 'Present', value: totals.totalPresent, color: CHART_COLORS.present },
+      { name: 'Absent', value: totals.totalAbsent, color: CHART_COLORS.absent },
+      { name: 'Late', value: totals.totalLate, color: CHART_COLORS.late },
+      { name: 'Left', value: totals.totalLeft, color: CHART_COLORS.left },
+      { name: 'Left Early', value: totals.totalLeftEarly, color: CHART_COLORS.left_early },
+      { name: 'Left Late', value: totals.totalLeftLately, color: CHART_COLORS.left_lately },
+    ].filter(item => item.value > 0);
+    return data;
+  }, [totals]);
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'present':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'absent':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'late':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'left':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'left_early':
-        return 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200';
-      case 'left_lately':
-        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+      case 'present': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+      case 'absent': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      case 'late': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+      case 'left': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+      case 'left_early': return 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300';
+      case 'left_lately': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'present': return <UserCheck className="h-4 w-4" />;
+      case 'absent': return <UserX className="h-4 w-4" />;
+      case 'late': return <Clock className="h-4 w-4" />;
+      case 'left': return <LogOut className="h-4 w-4" />;
+      case 'left_early': return <DoorOpen className="h-4 w-4" />;
+      case 'left_lately': return <Clock className="h-4 w-4" />;
+      default: return <User className="h-4 w-4" />;
+    }
+  };
+
   const getCurrentSelection = () => {
     const selections = [];
     if (selectedInstitute) selections.push(`Institute: ${selectedInstitute.name}`);
@@ -349,20 +430,15 @@ const NewAttendance = () => {
     if (selectedSubject) selections.push(`Subject: ${selectedSubject.name}`);
     return selections.join(', ');
   };
+
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
+
   const getContextInfo = () => {
     if (attendanceData?.subjectInfo) {
       return `${attendanceData.subjectInfo.instituteName} > ${attendanceData.subjectInfo.className} > ${attendanceData.subjectInfo.subjectName}`;
@@ -376,509 +452,700 @@ const NewAttendance = () => {
     return getCurrentSelection();
   };
 
-  // Client-side totals (so "Late" does not get counted as "Absent")
-  const totals = React.useMemo(() => {
-    const records = attendanceData?.data ?? [];
-    let totalPresent = 0;
-    let totalAbsent = 0;
-    let totalLate = 0;
-    let totalLeft = 0;
-    let totalLeftEarly = 0;
-    let totalLeftLately = 0;
-
-    for (const r of records) {
-      if (r.status === 'present') totalPresent += 1;
-      else if (r.status === 'absent') totalAbsent += 1;
-      else if (r.status === 'late') totalLate += 1;
-      else if (r.status === 'left') totalLeft += 1;
-      else if (r.status === 'left_early') totalLeftEarly += 1;
-      else if (r.status === 'left_lately') totalLeftLately += 1;
-    }
-
-    return { totalPresent, totalAbsent, totalLate, totalLeft, totalLeftEarly, totalLeftLately };
-  }, [attendanceData?.data]);
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   // Mobile Card Component
-  const AttendanceCard = ({
-    record
-  }: {
-    record: AttendanceRecord;
-  }) => <Card className="hover:shadow-md transition-shadow duration-200">
+  const AttendanceCard = ({ record }: { record: AttendanceRecord }) => (
+    <Card className="hover:shadow-md transition-shadow duration-200 border-border/50">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-            {record.studentName}
-          </CardTitle>
-          <Badge className={getStatusColor(record.status)}>
+          <CardTitle className="text-lg font-semibold">{record.studentName}</CardTitle>
+          <Badge className={`${getStatusColor(record.status)} gap-1`}>
+            {getStatusIcon(record.status)}
             {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-blue-600" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <User className="h-4 w-4 text-primary" />
             <span>ID: {record.studentId}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-blue-600" />
-            <span>Date: {formatDate(record.date || record.markedAt || '')}</span>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Calendar className="h-4 w-4 text-primary" />
+            <span>{formatDate(record.date || record.markedAt || '')}</span>
           </div>
-          {record.instituteName && <div className="flex items-center gap-2">
-              <School className="h-4 w-4 text-blue-600" />
-              <span>Institute: {record.instituteName}</span>
-            </div>}
-          {record.location && <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-blue-600" />
-              <span>Location: {record.location}</span>
-            </div>}
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-blue-600" />
-            <span>Method: {record.markingMethod}</span>
+          {record.instituteName && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <School className="h-4 w-4 text-primary" />
+              <span>{record.instituteName}</span>
+            </div>
+          )}
+          {record.location && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span>{record.location}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <CheckCircle className="h-4 w-4 text-primary" />
+            <span>{record.markingMethod}</span>
           </div>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
+
   if (!hasPermission) {
-    return <div className="container mx-auto p-6">
-        <Card>
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-border/50">
           <CardContent className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Access Denied or Missing Selection
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Please select the required context to view attendance records:
-            </p>
-            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p><strong>Institute Admin/Attendance Marker:</strong> Select Institute only for institute-level attendance</p>
-              <p><strong>Institute Admin/Teacher/Attendance Marker:</strong> Select Institute + Class for class-level attendance</p>
-              <p><strong>Institute Admin/Teacher/Attendance Marker:</strong> Select Institute + Class + Subject for subject-level attendance</p>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              Current Selection: {getContextInfo() || 'None'}
-            </div>
+            <h3 className="text-lg font-medium mb-2">Access Denied or Missing Selection</h3>
+            <p className="text-muted-foreground mb-4">Please select the required context to view attendance records.</p>
+            <div className="mt-4 text-sm text-muted-foreground">Current Selection: {getContextInfo() || 'None'}</div>
           </CardContent>
         </Card>
-      </div>;
+      </div>
+    );
   }
+
   if (!dataLoaded) {
-    return <div className="container mx-auto p-6 space-y-6">
-        <div className="text-center py-12">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            {title}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Current Selection: {getContextInfo()}
-          </p>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            View and manage attendance records
-          </p>
-          <Button onClick={loadAttendanceData} disabled={isLoading} className="gap-2" size="lg">
-            {isLoading ? <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading Data...
-              </> : <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Load Attendance Data
-              </>}
-          </Button>
-        </div>
-      </div>;
-  }
-  return <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      {/* Modern Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-border/50 p-6">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-        <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
-                <BookOpen className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-                  {title}
-                </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  <span className="font-medium text-primary">{getContextInfo()}</span>
-                </p>
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-8 border border-primary/10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <div className="relative text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                <CalendarDays className="w-6 h-6 text-primary" />
               </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={loadAttendanceData} 
-              disabled={isLoading} 
-              variant="outline" 
-              size="sm" 
-              className="gap-2 rounded-full px-4 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              {isLoading ? 'Refreshing...' : 'Refresh'}
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{title}</h1>
+            <p className="text-muted-foreground mb-6">{getContextInfo()}</p>
+            <Button onClick={loadAttendanceData} disabled={isLoading} className="gap-2" size="lg">
+              {isLoading ? (
+                <><RefreshCw className="h-4 w-4 animate-spin" /> Loading Data...</>
+              ) : (
+                <><RefreshCw className="h-4 w-4" /> Load Attendance Data</>
+              )}
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            <Button 
-              onClick={() => setShowFilters(!showFilters)} 
-              variant={showFilters ? "default" : "outline"}
-              size="sm" 
-              className="gap-2 rounded-full px-4"
+  return (
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
+      {/* Modern Header with Context Breadcrumb */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-8 border border-primary/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                <CalendarDays className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+              </div>
+            </div>
+            
+            {/* Context Breadcrumb */}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {selectedInstitute && (
+                <Badge variant="outline" className="bg-background/60 backdrop-blur-sm border-border/50 gap-1.5 py-1.5 px-3">
+                  <Building2 className="h-3.5 w-3.5 text-primary" />
+                  {selectedInstitute.name}
+                </Badge>
+              )}
+              {selectedClass && (
+                <>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <Badge variant="outline" className="bg-background/60 backdrop-blur-sm border-border/50 gap-1.5 py-1.5 px-3">
+                    <GraduationCap className="h-3.5 w-3.5 text-primary" />
+                    {selectedClass.name}
+                  </Badge>
+                </>
+              )}
+              {selectedSubject && (
+                <>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <Badge variant="outline" className="bg-background/60 backdrop-blur-sm border-border/50 gap-1.5 py-1.5 px-3">
+                    <BookOpen className="h-3.5 w-3.5 text-primary" />
+                    {selectedSubject.name}
+                  </Badge>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
             >
               <Filter className="h-4 w-4" />
               Filters
             </Button>
+            <Button 
+              onClick={loadAttendanceData} 
+              disabled={isLoading}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Modern Filters Panel */}
+      {/* Filters Panel */}
       {showFilters && (
-        <Card className="card-glass border-border/50 shadow-premium rounded-xl overflow-hidden">
-          <CardContent className="p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-              {/* Date range */}
-              <div className="lg:col-span-3 space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">From</p>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9 rounded-lg border-border/50 bg-background/50 focus:border-primary text-sm"
-                />
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Calendar className="h-5 w-5 text-primary" />
+              Filters & Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Start Date</label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-background" />
               </div>
-
-              <div className="lg:col-span-3 space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">To</p>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9 rounded-lg border-border/50 bg-background/50 focus:border-primary text-sm"
-                />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">End Date</label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-background" />
               </div>
-
-              {/* Search */}
-              <div className="lg:col-span-4 space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Search</p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Student name / ID"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-9 rounded-lg border-border/50 bg-background/50 focus:border-primary text-sm"
-                  />
+                  <Input placeholder="Name or ID" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 bg-background" />
                 </div>
               </div>
-
-              {/* Status */}
-              <div className="lg:col-span-2 space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Status</p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-9 rounded-lg border-border/50 bg-background/50 text-sm">
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="present">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-success" />
-                        Present
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="absent">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-destructive" />
-                        Absent
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="late">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-warning" />
-                        Late
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="left">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-purple-500" />
-                        Left
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="left_early">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-pink-500" />
-                        Left Early
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="left_lately">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                        Left Late
-                      </span>
-                    </SelectItem>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="late">Late</SelectItem>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="left_early">Left Early</SelectItem>
+                    <SelectItem value="left_lately">Left Late</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Sort */}
-              <div className="lg:col-span-3 space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Sort</p>
-                <Select value={sortOrder} onValueChange={setSortOrder}>
-                  <SelectTrigger className="h-9 rounded-lg border-border/50 bg-background/50 text-sm">
-                    <Clock className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    <SelectValue placeholder="Sort" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Records/Page</label>
+                <Select value={rowsPerPage.toString()} onValueChange={(v) => setRowsPerPage(Number(v))}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="descending">Newest first</SelectItem>
-                    <SelectItem value="ascending">Oldest first</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Actions */}
-              <div className="lg:col-span-9 flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  onClick={() => {
-                    const d = getDefaultDates();
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setSortOrder('descending');
-                    setStartDate(d.startDate);
-                    setEndDate(d.endDate);
-                    setCurrentPage(1);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="h-9 rounded-lg"
-                >
-                  Clear
-                </Button>
-                <Button
-                  onClick={loadAttendanceData}
-                  disabled={isLoading}
-                  size="sm"
-                  className="h-9 rounded-lg gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Apply filters
-                </Button>
-              </div>
+              <Button onClick={loadAttendanceData} disabled={isLoading} className="gap-2">
+                <Calendar className="h-4 w-4" />
+                Apply
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Summary Cards */}
-      {attendanceData && (
-        <section aria-label="Attendance totals" className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {/* Present */}
-            <Card className="card-premium hover-lift">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground">Present</p>
-                    <p className="mt-1 text-2xl font-bold text-success">{totals.totalPresent}</p>
+      {/* Tab Navigation - Arrow Style */}
+      <div className="w-full">
+        <div className="flex items-center justify-center gap-4 py-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const tabs = ['records', 'calendar', 'statistics'];
+              const currentIndex = tabs.indexOf(activeTab);
+              if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1]);
+            }}
+            disabled={activeTab === 'records'}
+            className="h-10 w-10 rounded-full bg-muted/50 hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          <div className="flex items-center gap-2">
+            {[
+              { id: 'records', icon: List, label: 'Records' },
+              { id: 'calendar', icon: CalendarRange, label: 'Calendar' },
+              { id: 'statistics', icon: PieChartIcon, label: 'Statistics' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300
+                  ${activeTab === tab.id
+                    ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                  }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                <span className="text-sm font-medium hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const tabs = ['records', 'calendar', 'statistics'];
+              const currentIndex = tabs.indexOf(activeTab);
+              if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);
+            }}
+            disabled={activeTab === 'statistics'}
+            className="h-10 w-10 rounded-full bg-muted/50 hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'records' && (
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Present</p>
+                    <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{totals.totalPresent}</p>
                   </div>
-                  <div className="shrink-0 rounded-lg bg-success/10 border border-success/20 p-2">
-                    <UserCheck className="h-4 w-4 text-success" />
+                  <div className="p-3 rounded-xl bg-emerald-500/10">
+                    <UserCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </div>
+                {totals.total > 0 && (
+                  <div className="mt-3 h-1.5 bg-emerald-500/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${(totals.totalPresent / totals.total) * 100}%` }} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Absent */}
-            <Card className="card-premium hover-lift">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground">Absent</p>
-                    <p className="mt-1 text-2xl font-bold text-destructive">{totals.totalAbsent}</p>
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-red-500/10 to-red-500/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Absent</p>
+                    <p className="text-3xl font-bold text-red-600 dark:text-red-400">{totals.totalAbsent}</p>
                   </div>
-                  <div className="shrink-0 rounded-lg bg-destructive/10 border border-destructive/20 p-2">
-                    <UserX className="h-4 w-4 text-destructive" />
+                  <div className="p-3 rounded-xl bg-red-500/10">
+                    <UserX className="h-6 w-6 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
+                {totals.total > 0 && (
+                  <div className="mt-3 h-1.5 bg-red-500/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500 rounded-full transition-all duration-500" style={{ width: `${(totals.totalAbsent / totals.total) * 100}%` }} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Late */}
-            <Card className="card-premium hover-lift">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground">Late</p>
-                    <p className="mt-1 text-2xl font-bold text-warning">{totals.totalLate}</p>
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 to-amber-500/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Late</p>
+                    <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{totals.totalLate}</p>
                   </div>
-                  <div className="shrink-0 rounded-lg bg-warning/10 border border-warning/20 p-2">
-                    <Clock className="h-4 w-4 text-warning" />
+                  <div className="p-3 rounded-xl bg-amber-500/10">
+                    <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                   </div>
                 </div>
+                {totals.total > 0 && (
+                  <div className="mt-3 h-1.5 bg-amber-500/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${(totals.totalLate / totals.total) * 100}%` }} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Left */}
-            <Card className="card-premium hover-lift">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground">Left</p>
-                    <p className="mt-1 text-2xl font-bold text-purple-600">{totals.totalLeft}</p>
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 to-purple-500/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Left</p>
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totals.totalLeft}</p>
                   </div>
-                  <div className="shrink-0 rounded-lg bg-purple-500/10 border border-purple-500/20 p-2">
-                    <LogOut className="h-4 w-4 text-purple-600" />
+                  <div className="p-3 rounded-xl bg-purple-500/10">
+                    <LogOut className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
+                {totals.total > 0 && (
+                  <div className="mt-3 h-1.5 bg-purple-500/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-500 rounded-full transition-all duration-500" style={{ width: `${(totals.totalLeft / totals.total) * 100}%` }} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Left Early */}
-            <Card className="card-premium hover-lift">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground">Left Early</p>
-                    <p className="mt-1 text-2xl font-bold text-pink-600">{totals.totalLeftEarly}</p>
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-pink-500/10 to-pink-500/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Left Early</p>
+                    <p className="text-3xl font-bold text-pink-600 dark:text-pink-400">{totals.totalLeftEarly}</p>
                   </div>
-                  <div className="shrink-0 rounded-lg bg-pink-500/10 border border-pink-500/20 p-2">
-                    <DoorOpen className="h-4 w-4 text-pink-600" />
+                  <div className="p-3 rounded-xl bg-pink-500/10">
+                    <DoorOpen className="h-6 w-6 text-pink-600 dark:text-pink-400" />
                   </div>
                 </div>
+                {totals.total > 0 && (
+                  <div className="mt-3 h-1.5 bg-pink-500/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-pink-500 rounded-full transition-all duration-500" style={{ width: `${(totals.totalLeftEarly / totals.total) * 100}%` }} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Left Late */}
-            <Card className="card-premium hover-lift">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground">Left Late</p>
-                    <p className="mt-1 text-2xl font-bold text-indigo-600">{totals.totalLeftLately}</p>
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-indigo-500/10 to-indigo-500/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Left Late</p>
+                    <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{totals.totalLeftLately}</p>
                   </div>
-                  <div className="shrink-0 rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-2">
-                    <Clock className="h-4 w-4 text-indigo-600" />
+                  <div className="p-3 rounded-xl bg-indigo-500/10">
+                    <Clock className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                   </div>
+                </div>
+                {totals.total > 0 && (
+                  <div className="mt-3 h-1.5 bg-indigo-500/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${(totals.totalLeftLately / totals.total) * 100}%` }} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 to-primary/5">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardContent className="relative pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Rate</p>
+                    <p className="text-3xl font-bold text-primary">{totals.attendanceRate}%</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="mt-3 h-1.5 bg-primary/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${totals.attendanceRate}%` }} />
                 </div>
               </CardContent>
             </Card>
           </div>
-        </section>
+
+          {/* Records Table */}
+          <Card className="border-border/50">
+            <CardHeader className="border-b border-border/50">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <CardTitle className="text-lg font-semibold">Attendance Records</CardTitle>
+                {attendanceData?.pagination && (
+                  <p className="text-sm text-muted-foreground">
+                    Page {attendanceData.pagination.currentPage} of {attendanceData.pagination.totalPages}
+                    <span className="hidden sm:inline"> • {attendanceData.pagination.totalRecords} total</span>
+                  </p>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                  <span className="text-muted-foreground">Loading attendance...</span>
+                </div>
+              ) : filteredRecords.length > 0 ? (
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                          <TableHead className="font-semibold">Student</TableHead>
+                          <TableHead className="font-semibold">Date & Time</TableHead>
+                          <TableHead className="font-semibold">Status</TableHead>
+                          <TableHead className="font-semibold">Institute</TableHead>
+                          <TableHead className="font-semibold hidden lg:table-cell">Location</TableHead>
+                          <TableHead className="font-semibold hidden lg:table-cell">Method</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRecords.map((record, index) => (
+                          <TableRow key={record.attendanceId || index} className="group hover:bg-muted/30 transition-colors">
+                            <TableCell className="py-4">
+                              <div>
+                                <p className="font-medium">{record.studentName}</p>
+                                <p className="text-xs text-muted-foreground">{record.studentId}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium text-sm">{formatDate(record.date)}</p>
+                                <p className="text-xs text-muted-foreground">{formatTime(record.date)}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`${getStatusColor(record.status)} gap-1.5 font-medium`}>
+                                {getStatusIcon(record.status)}
+                                {record.status.charAt(0).toUpperCase() + record.status.slice(1).replace('_', ' ')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-sm">{record.instituteName || '-'}</p>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <p className="text-sm text-muted-foreground">{record.location || '-'}</p>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <p className="text-sm text-muted-foreground">{record.markingMethod}</p>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="md:hidden p-4 space-y-4">
+                    {filteredRecords.map((record, index) => (
+                      <AttendanceCard key={record.attendanceId || index} record={record} />
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {attendanceData?.pagination && attendanceData.pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-4 border-t border-border/50">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" /> Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {currentPage} of {attendanceData.pagination.totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(attendanceData.pagination.totalPages, prev + 1))}
+                        disabled={currentPage === attendanceData.pagination.totalPages}
+                      >
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <h3 className="text-lg font-medium mb-2">No attendance records found</h3>
+                  <p className="text-muted-foreground">No records available for the current selection.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
+      {/* Calendar View */}
+      {activeTab === 'calendar' && (
+        <Card className="border-border/50">
+          <CardHeader className="border-b border-border/50">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                Attendance Calendar
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={() => navigateMonth('prev')} className="h-8 w-8">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="min-w-[140px] text-center font-medium">
+                  {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </span>
+                <Button variant="outline" size="icon" onClick={() => navigateMonth('next')} className="h-8 w-8">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            {/* Week header */}
+            <div className="grid grid-cols-7 gap-2 mb-4">
+              {weekDays.map((day) => (
+                <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
 
-      {/* Records Summary */}
+            {/* Calendar days */}
+            <div className="grid grid-cols-7 gap-2">
+              {getCalendarDays.map((day, index) => {
+                if (day === null) {
+                  return <div key={`empty-${index}`} className="aspect-square" />;
+                }
+                const status = getDateStatus(day);
+                const count = getDateCount(day);
+                return (
+                  <div
+                    key={day}
+                    className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all ${getDateStatusColor(status)}`}
+                  >
+                    <span>{day}</span>
+                    {count > 0 && <span className="text-xs opacity-75">{count}</span>}
+                  </div>
+                );
+              })}
+            </div>
 
-      {/* Desktop Table View */}
-      <div className="hidden md:block">
-        <Paper sx={{
-        width: '100%',
-        overflow: 'hidden'
-      }}>
-          <TableContainer sx={{
-          minHeight: 600,
-          maxHeight: 'calc(100vh - 400px)'
-        }}>
-            <Table stickyHeader aria-label="attendance records table">
-              <TableHead>
-                <TableRow>
-                  <TableCell style={{
-                  minWidth: 120,
-                  fontWeight: 600
-                }}>Student ID</TableCell>
-                  <TableCell style={{
-                  minWidth: 170,
-                  fontWeight: 600
-                }}>Student Name</TableCell>
-                  <TableCell style={{
-                  minWidth: 150,
-                  fontWeight: 600
-                }}>Institute Name</TableCell>
-                  <TableCell style={{
-                  minWidth: 120,
-                  fontWeight: 600
-                }}>Date</TableCell>
-                  <TableCell style={{
-                  minWidth: 100,
-                  fontWeight: 600
-                }}>Status</TableCell>
-                  <TableCell style={{
-                  minWidth: 200,
-                  fontWeight: 600
-                }}>Location</TableCell>
-                  <TableCell style={{
-                  minWidth: 150,
-                  fontWeight: 600
-                }}>Marking Method</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredRecords.length === 0 ? <TableRow>
-                    <TableCell colSpan={7} align="center" style={{
-                  padding: '48px'
-                }}>
-                      <div>
-                        <h3 style={{
-                      fontSize: '1.125rem',
-                      fontWeight: 500,
-                      marginBottom: '8px'
-                    }}>
-                          No attendance records found
-                        </h3>
-                        <p style={{
-                      color: '#6b7280'
-                    }}>
-                          No attendance records are available for the current selection.
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow> : filteredRecords.map((record, index) => <TableRow hover role="checkbox" tabIndex={-1} key={record.attendanceId || index}>
-                      <TableCell style={{
-                  fontWeight: 500
-                }}>{record.studentId}</TableCell>
-                      <TableCell>{record.studentName}</TableCell>
-                      <TableCell>{record.instituteName || '-'}</TableCell>
-                      <TableCell>{formatDate(record.date || record.markedAt || '')}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(record.status)}>
-                          {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{record.location || '-'}</TableCell>
-                      <TableCell>{record.markingMethod}</TableCell>
-                    </TableRow>)}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination 
-            rowsPerPageOptions={[25, 50, 100]} 
-            component="div" 
-            count={attendanceData?.pagination.totalRecords || 0} 
-            rowsPerPage={rowsPerPage} 
-            page={currentPage - 1} 
-            onPageChange={(event, newPage) => setCurrentPage(newPage + 1)} 
-            onRowsPerPageChange={(event) => {
-              setRowsPerPage(parseInt(event.target.value, 10));
-              setCurrentPage(1); // Reset to first page when changing rows per page
-            }} 
-          />
-        </Paper>
-      </div>
+            {/* Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-6 border-t border-border/50">
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-emerald-500" /><span className="text-xs text-muted-foreground">Present</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-red-500" /><span className="text-xs text-muted-foreground">Absent</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-amber-500" /><span className="text-xs text-muted-foreground">Late</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-purple-500" /><span className="text-xs text-muted-foreground">Left</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-pink-500" /><span className="text-xs text-muted-foreground">Left Early</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-indigo-500" /><span className="text-xs text-muted-foreground">Left Late</span></div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Mobile Cards View */}
-      <div className="md:hidden">
-        {filteredRecords.length === 0 ? <Card>
-            <CardContent className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No attendance records found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                No attendance records are available for the current selection.
-              </p>
+      {/* Statistics View */}
+      {activeTab === 'statistics' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pie Chart */}
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChartIcon className="h-5 w-5 text-primary" />
+                Attendance Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pieChartData.length > 0 ? (
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPie>
+                      <Pie
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  No data available for chart
+                </div>
+              )}
             </CardContent>
-          </Card> : <div className="space-y-4">
-            {filteredRecords.map((record, index) => <AttendanceCard key={index} record={record} />)}
-          </div>}
-      </div>
-    </div>;
+          </Card>
+
+          {/* Summary Statistics */}
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Summary Statistics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <p className="text-sm text-muted-foreground">Total Records</p>
+                  <p className="text-2xl font-bold">{totals.total}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <p className="text-sm text-muted-foreground">Attendance Rate</p>
+                  <p className="text-2xl font-bold text-primary">{totals.attendanceRate}%</p>
+                </div>
+                <div className="p-4 rounded-lg bg-emerald-500/10">
+                  <p className="text-sm text-muted-foreground">Present</p>
+                  <p className="text-2xl font-bold text-emerald-600">{totals.totalPresent}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-red-500/10">
+                  <p className="text-sm text-muted-foreground">Absent</p>
+                  <p className="text-2xl font-bold text-red-600">{totals.totalAbsent}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-amber-500/10">
+                  <p className="text-sm text-muted-foreground">Late</p>
+                  <p className="text-2xl font-bold text-amber-600">{totals.totalLate}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-purple-500/10">
+                  <p className="text-sm text-muted-foreground">Left</p>
+                  <p className="text-2xl font-bold text-purple-600">{totals.totalLeft}</p>
+                </div>
+              </div>
+
+              {attendanceData?.pagination && (
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground mb-2">Data Range</p>
+                  <p className="text-sm font-medium">
+                    {startDate} to {endDate}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {attendanceData.pagination.totalRecords} records across {attendanceData.pagination.totalPages} pages
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default NewAttendance;

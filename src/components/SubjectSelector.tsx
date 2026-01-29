@@ -341,28 +341,28 @@ const SubjectSelector = () => {
   const subjectLabel = isTuitionInstitute ? 'Sub Class' : 'Subject';
   const subjectLabelPlural = isTuitionInstitute ? 'Sub Classes' : 'Subject';
 
-  return <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-16">
+  return <div className="space-y-4 sm:space-y-6 p-2 sm:p-3 md:p-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6 sm:mb-16">
         <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
             Select {subjectLabelPlural}
           </h1>
-          <p className="text-sm sm:text-base text-gray-600">
+          <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400">
             Choose a {subjectLabel.toLowerCase()} to manage lectures and attendance
           </p>
-          {selectedInstitute && <p className="text-xs sm:text-sm text-blue-600 mt-2">
+          {selectedInstitute && <p className="text-[10px] sm:text-xs md:text-sm text-blue-600 mt-1 sm:mt-2">
               Institute: {selectedInstitute.name}
             </p>}
-          {selectedClass && <p className="text-xs sm:text-sm text-green-600 mt-1">
+          {selectedClass && <p className="text-[10px] sm:text-xs md:text-sm text-green-600 mt-0.5 sm:mt-1">
               Class: {selectedClass.name}
             </p>}
         </div>
-        <Button onClick={() => fetchSubjectsByRole(currentPage, pageSize, true)} disabled={isLoading} variant="outline" size="sm" className="w-full sm:w-auto">
+        <Button onClick={() => fetchSubjectsByRole(currentPage, pageSize, true)} disabled={isLoading} variant="outline" size="sm" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
           {isLoading ? <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
               <span className="hidden sm:inline">Loading...</span>
             </> : <>
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
               <span className="hidden sm:inline">Refresh</span>
             </>}
         </Button>
@@ -373,17 +373,17 @@ const SubjectSelector = () => {
             No subjects found for this class
           </p>
         </div> : <div className="max-h-[600px] overflow-y-auto">
-          <div className={`grid grid-cols-1 md:grid-cols-2 ${sidebarCollapsed ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 md:gap-6 p-2 md:p-4 mb-16`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${sidebarCollapsed ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 sm:gap-4 md:gap-6 p-1 sm:p-2 md:p-4 mb-6 sm:mb-16`}>
             {subjectsData.map(subject => {
               const showMore = expandedSubjectId === subject.id;
               
               return (
                 <div 
                   key={subject.id} 
-                  className="relative flex w-full flex-col rounded-xl bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+                  className="relative flex w-full flex-col rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg"
                 >
-                  {/* Subject Image - Gradient Header with -mt-6 offset */}
-                  <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
+                  {/* Subject Image - Responsive Gradient Header */}
+                  <div className="relative mx-2 sm:mx-4 -mt-3 sm:-mt-6 h-20 sm:h-40 overflow-hidden rounded-lg sm:rounded-xl bg-clip-border text-white shadow-md sm:shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
                     {subject.imgUrl ? (
                       <img 
                         src={getImageUrl(subject.imgUrl)} 
@@ -392,69 +392,56 @@ const SubjectSelector = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                        <BookOpen className="w-16 h-16 text-white" />
+                        <BookOpen className="w-8 h-8 sm:w-16 sm:h-16 text-white" />
                       </div>
                     )}
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-3 sm:p-6">
                     {/* Subject Name */}
-                    <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased">
+                    <h5 className="mb-1 sm:mb-2 block font-sans text-sm sm:text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased line-clamp-2">
                       {subject.name}
                     </h5>
 
                     {/* Subject Code and Category */}
-                    <div className="flex items-center justify-start gap-2 mb-4">
-                      <Badge variant={subject.category === 'Core' ? 'default' : 'secondary'} className="text-xs">
+                    <div className="flex items-center justify-start gap-1.5 sm:gap-2 mb-2 sm:mb-4 flex-wrap">
+                      <Badge variant={subject.category === 'Core' ? 'default' : 'secondary'} className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
                         {subject.category}
                       </Badge>
                     </div>
 
                     {/* Additional Info - Shown when Read More is clicked */}
                     {showMore && (
-                      <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-300 space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                      <div className="mb-2 sm:mb-4 animate-in fade-in slide-in-from-top-2 duration-300 space-y-1 sm:space-y-2 border-t border-gray-200 dark:border-gray-700 pt-2 sm:pt-3">
+                        <div className="text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
                           <span className="font-semibold">Code:</span> {subject.code}
                         </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300">
-                          <span className="font-semibold">Description:</span> {subject.description || 'No description available'}
+                        <div className="text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+                          <span className="font-semibold">Description:</span> {subject.description || 'N/A'}
                         </div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-semibold">Credits:</span>
-                          <span>{subject.creditHours}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-semibold">Type:</span>
-                          <span>{subject.subjectType}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-semibold">Basket:</span>
-                          <span>{subject.basketCategory}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-semibold">Status:</span>
-                          <Badge variant={subject.isActive ? 'default' : 'secondary'} className="text-xs">
-                            {subject.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </div>
+                        {subject.creditHours > 0 && (
+                          <div className="text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Credits:</span> {subject.creditHours}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="p-6 pt-0 space-y-2">
+                  {/* Action Buttons - Responsive */}
+                  <div className="px-3 sm:px-6 pb-3 sm:pb-6 pt-0 space-y-1.5 sm:space-y-2">
                     <button
                       onClick={() => setExpandedSubjectId(showMore ? null : subject.id)}
-                      className="select-none rounded-lg bg-gray-100 dark:bg-gray-700 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 dark:text-white shadow-md transition-all hover:shadow-lg focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
+                      className="select-none rounded-md sm:rounded-lg bg-gray-100 dark:bg-gray-700 py-2 sm:py-3 px-4 sm:px-6 w-full text-center font-sans text-[10px] sm:text-xs font-bold uppercase text-gray-900 dark:text-white shadow-sm sm:shadow-md transition-all hover:shadow-md"
                     >
-                      {showMore ? 'Hide Details' : 'Read More'}
+                      {showMore ? 'Hide' : 'More'}
                     </button>
                     
                     <button 
                       onClick={() => handleSelectSubject(subject)}
-                      className="select-none rounded-lg bg-blue-500 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
+                      className="select-none rounded-md sm:rounded-lg bg-blue-500 py-2 sm:py-3 px-4 sm:px-6 w-full text-center font-sans text-[10px] sm:text-xs font-bold uppercase text-white shadow-sm sm:shadow-md shadow-blue-500/20 transition-all hover:shadow-md hover:shadow-blue-500/40"
                     >
-                      Select {subjectLabel}
+                      Select
                     </button>
                   </div>
                 </div>
@@ -462,45 +449,40 @@ const SubjectSelector = () => {
             })}
           </div>
 
-          {/* Pagination - Always show when data is loaded */}
+          {/* Pagination - Responsive */}
           {dataLoaded && totalPages > 0 && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mt-6 pb-4 px-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handlePageChange(currentPage - 1)} 
-                disabled={currentPage <= 1 || isLoading}
-                className="w-full sm:w-auto"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mt-4 sm:mt-6 pb-4 px-2 sm:px-4">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)} 
+                  disabled={currentPage <= 1 || isLoading}
+                  className="h-8 text-xs"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline ml-1">Prev</span>
+                </Button>
+                
+                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {currentPage}/{totalPages}
+                </span>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)} 
+                  disabled={currentPage >= totalPages || isLoading}
+                  className="h-8 text-xs"
+                >
+                  <span className="hidden sm:inline mr-1">Next</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
               
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Page {currentPage} of {totalPages} ({totalItems} total)
+              <span className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400">
+                {totalItems} total
               </span>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handlePageChange(currentPage + 1)} 
-                disabled={currentPage >= totalPages || isLoading}
-                className="w-full sm:w-auto"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-              
-              <select 
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-background text-foreground w-full sm:w-auto"
-                disabled={isLoading}
-              >
-                <option value={10}>10 per page</option>
-                <option value={50}>50 per page</option>
-                <option value={100}>100 per page</option>
-              </select>
             </div>
           )}
         </div>}

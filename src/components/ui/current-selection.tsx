@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Building, BookOpen, Truck, ChevronLeft, UserCheck, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CurrentSelectionProps {
   institute?: {
@@ -37,7 +38,9 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
   showNavigation = true
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const userRole = useInstituteRole();
+  const { setSelectedClass, setSelectedSubject, setSelectedInstitute } = useAuth();
   
   // Check if institute type is tuition_institute
   const isTuitionInstitute = (institute as any)?.type === 'tuition_institute';
@@ -48,6 +51,39 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
   
   if (!institute && !selectedClass && !subject && !transport) return null;
 
+  // Determine context-aware back navigation
+  const handleContextBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    const path = location.pathname;
+    
+    // If we have subject selected, go back to class context (subject selection)
+    if (subject && selectedClass && institute) {
+      setSelectedSubject(null);
+      navigate(`/institute/${institute.id}/class/${selectedClass.id}/select-subject`);
+      return;
+    }
+    
+    // If we have class selected, go back to institute context (class selection)
+    if (selectedClass && institute) {
+      setSelectedClass(null);
+      navigate(`/institute/${institute.id}/select-class`);
+      return;
+    }
+    
+    // If we have institute selected, go back to institute selection
+    if (institute) {
+      setSelectedInstitute(null);
+      navigate('/select-institute');
+      return;
+    }
+
+    // Default: go back in history
+    navigate(-1);
+  };
 
   const handleVerifyStudentsClick = () => {
     if (institute && selectedClass) {
@@ -58,32 +94,41 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
     }
   };
 
+  // Get back button label based on current context
+  const getBackLabel = () => {
+    if (subject && selectedClass) return 'Back to Subject Selection';
+    if (selectedClass) return 'Back to Class Selection';
+    if (institute) return 'Back to Institute Selection';
+    return 'Back';
+  };
+
   return (
     <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         {/* Header with back button */}
-        <div className="flex items-center gap-2 mb-3">
-          {onBack && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 shrink-0"
-              onClick={onBack}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
-          <p className="text-sm font-medium text-foreground">Current Selection</p>
+        <div className="flex items-center gap-2 mb-2 sm:mb-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
+            onClick={handleContextBack}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-foreground">Current Selection</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{getBackLabel()}</p>
+          </div>
         </div>
         
         {/* Selection Details */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {institute && (
             <div className="flex items-start gap-2">
-              <Building className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <Building className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Institute:</p>
-                <p className="text-sm font-medium text-foreground break-words leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Institute:</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground break-words leading-relaxed line-clamp-2">
                   {institute.name}
                 </p>
               </div>
@@ -92,10 +137,10 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
           
           {selectedClass && (
             <div className="flex items-start gap-2">
-              <BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Class:</p>
-                <p className="text-sm font-medium text-foreground break-words leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Class:</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground break-words leading-relaxed line-clamp-2">
                   {selectedClass.name}
                 </p>
               </div>
@@ -104,10 +149,10 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
           
           {subject && (
             <div className="flex items-start gap-2">
-              <BookOpen className="h-4 w-4 text-secondary-foreground mt-0.5 shrink-0" />
+              <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-secondary-foreground mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">{subjectLabel}:</p>
-                <p className="text-sm font-medium text-foreground break-words leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">{subjectLabel}:</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground break-words leading-relaxed line-clamp-2">
                   {subject.name}
                 </p>
               </div>
@@ -116,10 +161,10 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
           
           {transport && (
             <div className="flex items-start gap-2">
-              <Truck className="h-4 w-4 text-secondary-foreground mt-0.5 shrink-0" />
+              <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-secondary-foreground mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Transport:</p>
-                <p className="text-sm font-medium text-foreground break-words leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Transport:</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground break-words leading-relaxed line-clamp-2">
                   {transport.vehicleModel}
                 </p>
               </div>
@@ -129,9 +174,9 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
           {/* Role Badge */}
           {userRole && (
             <div className="flex items-center gap-2 pt-1">
-              <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-              <Badge variant="outline" className="text-xs">
-                Role: {userRole}
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+              <Badge variant="outline" className="text-[10px] sm:text-xs">
+                {userRole}
               </Badge>
             </div>
           )}
@@ -140,16 +185,16 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
         {/* Navigation Links for InstituteAdmin and Teacher */}
         {showNavigation && canVerifyStudents && institute && selectedClass && (
           <>
-            <Separator className="my-4" />
+            <Separator className="my-3 sm:my-4" />
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium mb-2">Quick Actions</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mb-1 sm:mb-2">Quick Actions</p>
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start gap-2 text-left"
+                className="w-full justify-start gap-2 text-left h-8 sm:h-9 text-xs sm:text-sm"
                 onClick={handleVerifyStudentsClick}
               >
-                <UserCheck className="h-4 w-4 text-primary" />
+                <UserCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                 <span>Verify Students</span>
               </Button>
             </div>

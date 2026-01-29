@@ -222,12 +222,12 @@ const InstituteSelector = ({
       navigateToPage('select-class');
     }
   };
-  return <div className="space-y-6">
-      <div className="text-center mb-16">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+  return <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+      <div className="text-center mb-6 sm:mb-16">
+        <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
           Select Institute
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Choose an institute to continue to your dashboard
         </p>
       </div>
@@ -248,22 +248,22 @@ const InstituteSelector = ({
         </div>}
 
       {institutes.length > 0 && <>
-          <div className="flex justify-between items-center mb-16">
-            <h2 className="text-xl font-semibold text-gray-900">
+          <div className="flex justify-between items-center mb-6 sm:mb-16">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-900 dark:text-white">
               Your Institutes ({institutes.length})
             </h2>
-            <Button onClick={handleLoadInstitutes} variant="outline" size="sm" disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+            <Button onClick={handleLoadInstitutes} variant="outline" size="sm" disabled={isLoading} className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+              <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
           </div>
 
-          <div className={`grid grid-cols-1 md:grid-cols-2 ${sidebarCollapsed ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-x-6 gap-y-16 mb-16`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${sidebarCollapsed ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 sm:gap-x-6 sm:gap-y-16 mb-8 sm:mb-16`}>
             {institutes.map(institute => {
           const showSocial = expandedInstituteId === institute.id;
           return <div key={institute.id} className="relative flex w-full flex-col rounded-xl bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-                  {/* Institute Image - Gradient Header with -mt-6 offset */}
-                  <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
+                  {/* Institute Image - Gradient Header with responsive sizing */}
+                  <div className="relative mx-2 sm:mx-4 -mt-3 sm:-mt-6 h-24 sm:h-40 overflow-hidden rounded-lg sm:rounded-xl bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
                     {(institute.imageUrl || institute.logoUrl) ? (
                       <img 
                         src={resolveImageUrl(institute.imageUrl || institute.logoUrl)} 
@@ -275,20 +275,20 @@ const InstituteSelector = ({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                        <Building className="w-16 h-16 text-white" />
+                        <Building className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
                       </div>
                     )}
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-3 sm:p-6">
                     {/* Institute Name */}
-                    <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased">
+                    <h5 className="mb-1 sm:mb-2 block font-sans text-base sm:text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased line-clamp-2">
                       {institute.name}
                     </h5>
                     
                     {/* Institute Type & Status */}
-                    <div className="flex items-center justify-start gap-2 mb-4">
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex items-center justify-start gap-1.5 sm:gap-2 mb-2 sm:mb-4 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
                         {institute.type}
                       </Badge>
                       {institute.isActive && <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-xs">

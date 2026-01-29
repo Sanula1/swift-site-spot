@@ -663,19 +663,14 @@ const NewAttendance = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <label className="text-sm font-medium">Sort Order</label>
+                <Select value={sortOrder} onValueChange={setSortOrder}>
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="All" />
+                    <SelectValue placeholder="Descending" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="present">Present</SelectItem>
-                    <SelectItem value="absent">Absent</SelectItem>
-                    <SelectItem value="late">Late</SelectItem>
-                    <SelectItem value="left">Left</SelectItem>
-                    <SelectItem value="left_early">Left Early</SelectItem>
-                    <SelectItem value="left_lately">Left Late</SelectItem>
+                    <SelectItem value="descending">Newest First</SelectItem>
+                    <SelectItem value="ascending">Oldest First</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1015,37 +1010,61 @@ const NewAttendance = () => {
       {/* Calendar View */}
       {activeTab === 'calendar' && (
         <Card className="border-border/50">
-          <CardHeader className="border-b border-border/50">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                Attendance Calendar
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => navigateMonth('prev')} className="h-8 w-8">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="min-w-[140px] text-center font-medium">
-                  {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </span>
-                <Button variant="outline" size="icon" onClick={() => navigateMonth('next')} className="h-8 w-8">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+          <CardHeader className="border-b border-border/50 pb-4">
+            <div className="flex flex-col gap-4">
+              {/* Calendar Navigation */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  <span className="hidden sm:inline">Attendance Calendar</span>
+                  <span className="sm:hidden">Calendar</span>
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" onClick={() => navigateMonth('prev')} className="h-8 w-8">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-[100px] sm:min-w-[140px] text-center font-medium text-sm sm:text-base">
+                    {calendarMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                  <Button variant="outline" size="icon" onClick={() => navigateMonth('next')} className="h-8 w-8">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Status Filter - Moved to Calendar */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filter Status:</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px] bg-background h-9">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="late">Late</SelectItem>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="left_early">Left Early</SelectItem>
+                    <SelectItem value="left_lately">Left Late</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
-            {/* Week header */}
-            <div className="grid grid-cols-7 gap-2 mb-4">
+          <CardContent className="p-3 sm:p-6">
+            {/* Week header - Responsive */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-4">
               {weekDays.map((day) => (
-                <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
-                  {day}
+                <div key={day} className="text-center text-xs sm:text-sm font-medium text-muted-foreground py-1 sm:py-2">
+                  <span className="hidden sm:inline">{day}</span>
+                  <span className="sm:hidden">{day.charAt(0)}</span>
                 </div>
               ))}
             </div>
 
-            {/* Calendar days */}
-            <div className="grid grid-cols-7 gap-2">
+            {/* Calendar days - Responsive */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
               {getCalendarDays.map((day, index) => {
                 if (day === null) {
                   return <div key={`empty-${index}`} className="aspect-square" />;
@@ -1055,23 +1074,23 @@ const NewAttendance = () => {
                 return (
                   <div
                     key={day}
-                    className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all ${getDateStatusColor(status)}`}
+                    className={`aspect-square rounded-md sm:rounded-lg flex flex-col items-center justify-center text-xs sm:text-sm font-medium transition-all ${getDateStatusColor(status)}`}
                   >
                     <span>{day}</span>
-                    {count > 0 && <span className="text-xs opacity-75">{count}</span>}
+                    {count > 0 && <span className="text-[10px] sm:text-xs opacity-75">{count}</span>}
                   </div>
                 );
               })}
             </div>
 
-            {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-6 border-t border-border/50">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-emerald-500" /><span className="text-xs text-muted-foreground">Present</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-red-500" /><span className="text-xs text-muted-foreground">Absent</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-amber-500" /><span className="text-xs text-muted-foreground">Late</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-purple-500" /><span className="text-xs text-muted-foreground">Left</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-pink-500" /><span className="text-xs text-muted-foreground">Left Early</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-indigo-500" /><span className="text-xs text-muted-foreground">Left Late</span></div>
+            {/* Legend - Responsive Grid */}
+            <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center justify-center gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border/50">
+              <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-emerald-500" /><span className="text-[10px] sm:text-xs text-muted-foreground">Present</span></div>
+              <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-red-500" /><span className="text-[10px] sm:text-xs text-muted-foreground">Absent</span></div>
+              <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-amber-500" /><span className="text-[10px] sm:text-xs text-muted-foreground">Late</span></div>
+              <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-purple-500" /><span className="text-[10px] sm:text-xs text-muted-foreground">Left</span></div>
+              <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-pink-500" /><span className="text-[10px] sm:text-xs text-muted-foreground">Early</span></div>
+              <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-indigo-500" /><span className="text-[10px] sm:text-xs text-muted-foreground">Late Exit</span></div>
             </div>
           </CardContent>
         </Card>

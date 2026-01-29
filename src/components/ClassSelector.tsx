@@ -750,12 +750,12 @@ const ClassSelector = () => {
             {searchTerm || gradeFilter !== 'all' || specialtyFilter !== 'all' || classTypeFilter !== 'all' || academicYearFilter !== 'all' || statusFilter !== 'all' ? 'No classes match your current filters.' : 'No enrolled classes found.'}
           </p>
         </div> : <>
-          {/* Mobile View Content - Material Tailwind Cards */}
+          {/* Mobile View Content - Compact Material Tailwind Cards */}
           <div className="md:hidden">
-            <div className="grid grid-cols-1 gap-12 p-4">
-              {filteredClasses.map(classItem => <div key={classItem.id} className="relative flex w-full flex-col rounded-xl bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-                  {/* Class Image - Gradient Header with -mt-6 offset */}
-                  <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
+            <div className="grid grid-cols-1 gap-6 px-2">
+              {filteredClasses.map(classItem => <div key={classItem.id} className="relative flex w-full flex-col rounded-lg bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg">
+                  {/* Class Image - Smaller Gradient Header */}
+                  <div className="relative mx-2 -mt-3 h-20 overflow-hidden rounded-lg bg-clip-border text-white shadow-md shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
                     {classItem.imageUrl ? (
                       <img 
                         src={getImageUrl(classItem.imageUrl)} 
@@ -767,44 +767,39 @@ const ClassSelector = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                        <School className="w-16 h-16 text-white" />
+                        <School className="w-8 h-8 text-white" />
                       </div>
                     )}
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-3">
                     {/* Class Name */}
-                    <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased">
+                    <h5 className="mb-1 block font-sans text-base font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased line-clamp-1">
                       {classItem.name}
                     </h5>
+                    
+                    {/* Compact Info */}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                      {classItem.specialty} • {classItem.academicYear}
+                    </p>
 
                     {/* Additional Details - Shown when Read More is clicked */}
                     {expandedIds[classItem.id] && (
-                      <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Code:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.code}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Description:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.description}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Academic Year:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.academicYear}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Type:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.specialty || classItem.classType}</span>
-                          </div>
+                      <div className="mb-2 animate-in fade-in slide-in-from-top-2 duration-300 space-y-1.5 border-t border-gray-200 dark:border-gray-700 pt-2">
+                        <div className="text-xs">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">Code:</span>
+                          <span className="text-gray-600 dark:text-gray-400 ml-1">{classItem.code}</span>
+                        </div>
+                        <div className="text-xs">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">Type:</span>
+                          <span className="text-gray-600 dark:text-gray-400 ml-1">{classItem.classType}</span>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="p-6 pt-0 space-y-2">
+                  {/* Action Buttons - Compact */}
+                  <div className="px-3 pb-3 space-y-1.5">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -813,16 +808,16 @@ const ClassSelector = () => {
                           [classItem.id]: !prev[classItem.id]
                         }));
                       }}
-                      className="select-none rounded-lg bg-gray-100 dark:bg-gray-700 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 dark:text-white shadow-md transition-all hover:shadow-lg focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
+                      className="select-none rounded-md bg-gray-100 dark:bg-gray-700 py-2 px-4 w-full text-center font-sans text-[10px] font-bold uppercase text-gray-900 dark:text-white shadow-sm transition-all hover:shadow-md"
                     >
-                      {expandedIds[classItem.id] ? 'Hide Details' : 'Read More'}
+                      {expandedIds[classItem.id] ? 'Hide' : 'More'}
                     </button>
                     
                     {/* Show Select button only for verified classes (or non-student roles) */}
                     {classItem.isVerified === false ? (
-                      <div className="select-none rounded-lg bg-amber-100 dark:bg-amber-900/30 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
-                        <Clock className="h-4 w-4 inline-block mr-2" />
-                        Pending Verification
+                      <div className="select-none rounded-md bg-amber-100 dark:bg-amber-900/30 py-2 px-4 w-full text-center font-sans text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
+                        <Clock className="h-3 w-3 inline-block mr-1" />
+                        Pending
                       </div>
                     ) : (
                       <button 
@@ -830,9 +825,9 @@ const ClassSelector = () => {
                           e.stopPropagation();
                           handleSelectClass(classItem);
                         }}
-                        className="select-none rounded-lg bg-blue-500 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
+                        className="select-none rounded-md bg-blue-500 py-2 px-4 w-full text-center font-sans text-[10px] font-bold uppercase text-white shadow-sm shadow-blue-500/20 transition-all hover:shadow-md hover:shadow-blue-500/40"
                       >
-                        Select Class
+                        Select
                       </button>
                     )}
                   </div>

@@ -33,9 +33,10 @@ const ChildAttendancePage = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [attendanceData, setAttendanceData] = useState<ChildAttendanceResponse | null>(null);
-  const today = new Date();
-  const [startDate, setStartDate] = useState(format(subDays(today, 1), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(addDays(today, 1), 'yyyy-MM-dd'));
+  const getYesterday = () => format(subDays(new Date(), 1), 'yyyy-MM-dd');
+  const getTomorrow = () => format(addDays(new Date(), 1), 'yyyy-MM-dd');
+  const [startDate, setStartDate] = useState(getYesterday());
+  const [endDate, setEndDate] = useState(getTomorrow());
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showFilters, setShowFilters] = useState(false);

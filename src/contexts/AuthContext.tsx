@@ -10,7 +10,7 @@ import {
   LoginCredentials, 
   AuthContextType 
 } from './types/auth.types';
-import { loginUser, validateToken, logoutUser } from './utils/auth.api';
+import { loginUser, validateToken, logoutUser, getAccessTokenAsync } from './utils/auth.api';
 import { mapUserData } from './utils/user.utils';
 import { Institute as ApiInstitute } from '@/api/institute.api';
 import { cachedApiClient } from '@/api/cachedClient';
@@ -384,7 +384,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('🔐 INITIALIZING AUTHENTICATION...');
       console.log('🔐 ========================================');
       
-      const token = localStorage.getItem('access_token');
+      const token = await getAccessTokenAsync();
       console.log('🔑 Token check:', {
         tokenExists: !!token,
         tokenLength: token?.length || 0,

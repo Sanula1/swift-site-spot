@@ -23,7 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
-import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { getBaseUrl, getAccessTokenAsync } from '@/contexts/utils/auth.api';
 import { uploadWithSignedUrl } from '@/utils/signedUploadHelper';
 
 interface PaymentFormData {
@@ -197,10 +197,11 @@ const CreatePayment = () => {
 
       // Step 3: Submit payment data as JSON
       setUploadMessage('Submitting payment...');
+      const token = await getAccessTokenAsync();
       const response = await fetch(`${baseUrl}/payment`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(paymentData)

@@ -45,19 +45,36 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     : user?.role;
 
   const [instituteAvatarUrl, setInstituteAvatarUrl] = useState<string>('');
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
   React.useEffect(() => {
     const load = async () => {
+      // Prevent concurrent calls
+      if (isLoadingAvatar) return;
+      
       try {
-        if (!selectedInstitute?.id) { setInstituteAvatarUrl(''); return; }
+        if (!selectedInstitute?.id) { 
+          setInstituteAvatarUrl(''); 
+          return; 
+        }
+        
+        setIsLoadingAvatar(true);
         const resp = await enhancedCachedClient.get<any>(
           `/institute-users/institute/${selectedInstitute.id}/me`,
           {},
-          { ttl: 60, forceRefresh: false, userId: selectedInstitute.id }
+          { ttl: 300, forceRefresh: false, userId: selectedInstitute.id }
         );
         setInstituteAvatarUrl(resp?.instituteUserImageUrl || '');
-      } catch (err) {
+      } catch (err: any) {
+        // On rate limit or error, just keep existing avatar or clear it
+        console.warn('Failed to load institute avatar:', err?.message);
+        if (err?.message?.includes('Too many requests')) {
+          // Don't retry on rate limit, keep whatever we had
+          return;
+        }
         setInstituteAvatarUrl('');
+      } finally {
+        setIsLoadingAvatar(false);
       }
     };
     load();
@@ -73,7 +90,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     : (user?.imageUrl ? getImageUrl(user.imageUrl) : '');
 
   return (
-    <header className="lg:hidden bg-background border-b border-border px-3 sm:px-4 py-3 sticky top-0 z-40">
+    <header className="lg:hidden bg-background border-b border-border px-3 sm:px-4 py-3 sticky top-0 z-40 pt-safe-top">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"

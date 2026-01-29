@@ -578,39 +578,26 @@ const Students = () => {
           );
         }
         
-        // InstituteStudent structure with View button
+        // InstituteStudent structure - show badges only (no View button)
         return (
-          <div className="flex items-center gap-2">
-            <div className="space-y-1">
-              {student.fatherId && (
-                <Badge variant="outline" className="text-xs">
-                  Father
-                </Badge>
-              )}
-              {student.motherId && (
-                <Badge variant="outline" className="text-xs">
-                  Mother
-                </Badge>
-              )}
-              {student.guardianId && (
-                <Badge variant="outline" className="text-xs">
-                  Guardian
-                </Badge>
-              )}
-              {!student.fatherId && !student.motherId && !student.guardianId && (
-                <span className="text-sm text-muted-foreground">N/A</span>
-              )}
-            </div>
-            {student.father && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setParentDetailsDialog({ open: true, parent: student.father })}
-                className="h-7 px-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 hover:from-blue-500/10 hover:to-purple-500/10 border-primary/20 hover:border-primary/40 transition-all"
-              >
-                <Eye className="h-3 w-3 mr-1 text-primary" />
-                <span className="text-xs">View</span>
-              </Button>
+          <div className="space-y-1">
+            {student.fatherId && (
+              <Badge variant="outline" className="text-xs">
+                Father
+              </Badge>
+            )}
+            {student.motherId && (
+              <Badge variant="outline" className="text-xs">
+                Mother
+              </Badge>
+            )}
+            {student.guardianId && (
+              <Badge variant="outline" className="text-xs">
+                Guardian
+              </Badge>
+            )}
+            {!student.fatherId && !student.motherId && !student.guardianId && (
+              <span className="text-sm text-muted-foreground">N/A</span>
             )}
           </div>
         );

@@ -112,26 +112,43 @@ const NewAttendance = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const shiftInputDate = (inputDate: string, days: number): string => {
+    // Use midday to avoid timezone edge cases that can shift dates.
+    const d = new Date(`${inputDate}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return formatDateForInput(d);
+  };
+
   const getDefaultDates = () => {
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const fiveDaysAgo = new Date(today);
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4); // 5 days including today
     return {
-      startDate: formatDateForInput(yesterday),
-      endDate: formatDateForInput(tomorrow)
+      startDate: formatDateForInput(fiveDaysAgo),
+      endDate: formatDateForInput(today)
     };
   };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [startDate, setStartDate] = useState(getDefaultDates().startDate);
-  const [endDate, setEndDate] = useState(getDefaultDates().endDate);
+  const [startDate, setStartDate] = useState(() => getDefaultDates().startDate);
+  const [endDate, setEndDate] = useState(() => getDefaultDates().endDate);
   const [sortOrder, setSortOrder] = useState<string>('descending');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [showFilters, setShowFilters] = useState(false);
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    if (value) setEndDate(shiftInputDate(value, 4)); // always keep 5-day range
+    setCurrentPage(1);
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    if (value) setStartDate(shiftInputDate(value, -4)); // always keep 5-day range
+    setCurrentPage(1);
+  };
 
   const getPermissionAndEndpoint = () => {
     const canViewSubject = (userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && currentInstituteId && currentClassId && currentSubjectId;
@@ -622,11 +639,21 @@ const NewAttendance = () => {
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Start Date</label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-background" />
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  className="bg-background"
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">End Date</label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-background" />
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  className="bg-background"
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
@@ -1136,7 +1163,7 @@ const NewAttendance = () => {
                     {startDate} to {endDate}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {attendanceData.pagination.totalRecords} records across {attendanceData.pagination.totalPages} pages
+                    {attendanceData.pagination.totalRecords} records across {Math.max(1, attendanceData.pagination.totalPages)} pages
                   </p>
                 </div>
               )}

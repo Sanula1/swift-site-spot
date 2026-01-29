@@ -104,7 +104,9 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'view-profile',
     'edit-profile',
     'view-appearance',
-    'view-transport'
+    'view-transport',
+    'view-payments',
+    'view-submissions'
   ],
   Parent: [
     'view-dashboard',
@@ -118,7 +120,9 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'view-profile',
     'edit-profile',
     'view-appearance',
-    'view-transport'
+    'view-transport',
+    'view-payments',
+    'view-submissions'
   ],
   Teacher: [
     'view-dashboard',
@@ -162,7 +166,9 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'view-profile',
     'edit-profile',
     'view-appearance',
-    'view-transport'
+    'view-transport',
+    'view-payments',
+    'view-submissions'
   ],
   AttendanceMarker: [
     'view-dashboard',
@@ -248,7 +254,9 @@ const rolePermissions: Record<UserRole, Permission[]> = {
   'view-appearance',
   'view-organizations',
   'view-transport',
-  'manage-transport'
+  'manage-transport',
+  'view-payments',
+  'view-submissions'
   ],
   OrganizationManager: [
     'view-dashboard',

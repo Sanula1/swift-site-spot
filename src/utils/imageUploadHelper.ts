@@ -1,4 +1,4 @@
-import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { getBaseUrl, getAccessTokenAsync } from '@/contexts/utils/auth.api';
 
 export interface SignedUrlResponse {
   success: boolean;
@@ -21,7 +21,12 @@ export const getSignedUrl = async (
   contentType: string,
   fileSize: number
 ): Promise<SignedUrlResponse> => {
-  const token = localStorage.getItem('access_token');
+  const token = await getAccessTokenAsync();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+  
   const params = new URLSearchParams({
     folder,
     fileName,
@@ -129,7 +134,11 @@ export const uploadToSignedUrl = async (
 };
 
 export const verifyAndPublish = async (relativePath: string): Promise<void> => {
-  const token = localStorage.getItem('access_token');
+  const token = await getAccessTokenAsync();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
   
   console.log('📤 Verifying and publishing:', { relativePath });
   

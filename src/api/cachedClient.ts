@@ -1,6 +1,6 @@
 
 import { apiCache } from '@/utils/apiCache';
-import { getBaseUrl, getBaseUrl2, getApiHeaders, refreshAccessToken } from '@/contexts/utils/auth.api';
+import { getBaseUrl, getBaseUrl2, getApiHeadersAsync, refreshAccessToken, getCredentialsMode, getOrgAccessTokenAsync, removeOrgAccessTokenAsync, isNativePlatform, tokenStorageService } from '@/contexts/utils/auth.api';
 
 export interface CachedRequestOptions {
   ttl?: number;
@@ -22,9 +22,35 @@ class CachedApiClient {
   private readonly COOLDOWN_PERIOD = 1000; // 1 second between identical requests
   private isRefreshing = false;
   private refreshPromise: Promise<void> | null = null;
+  
+  // Global rate limit tracking
+  private rateLimitedUntil: number = 0;
+  private readonly RATE_LIMIT_BACKOFF = 60000; // 60 seconds default backoff
 
   constructor() {
     this.baseUrl = getBaseUrl();
+  }
+
+  /**
+   * Check if we're globally rate limited
+   */
+  private isRateLimited(): boolean {
+    if (Date.now() < this.rateLimitedUntil) {
+      return true;
+    }
+    if (this.rateLimitedUntil > 0) {
+      this.rateLimitedUntil = 0;
+    }
+    return false;
+  }
+
+  /**
+   * Set global rate limit (called when 429 error received)
+   */
+  private setRateLimited(retryAfterSeconds?: number): void {
+    const backoffMs = (retryAfterSeconds || 60) * 1000;
+    this.rateLimitedUntil = Date.now() + backoffMs;
+    console.warn(`🛑 CachedClient: Rate limited! Pausing requests for ${backoffMs / 1000}s`);
   }
 
   /**
@@ -51,11 +77,17 @@ class CachedApiClient {
       } catch (error) {
         console.error('❌ Token refresh failed:', error);
         
-        // Clear all auth data
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
+        // Clear all auth data using platform-aware storage
+        await tokenStorageService.clearAll();
+        
+        if (!isNativePlatform()) {
+          // Web: Also clear legacy localStorage keys
+          localStorage.removeItem('token');
+          localStorage.removeItem('authToken');
+        }
+        
         if (this.useBaseUrl2) {
-          localStorage.removeItem('org_access_token');
+          await removeOrgAccessTokenAsync();
         }
         
         // Redirect to login page
@@ -107,11 +139,11 @@ class CachedApiClient {
     console.log(`Switched to ${use ? 'baseUrl2' : 'baseUrl'}:`, this.baseUrl);
   }
 
-  private getHeaders(): Record<string, string> {
-    const headers = getApiHeaders();
+  private async getHeaders(): Promise<Record<string, string>> {
+    const headers = await getApiHeadersAsync();
     
     if (this.useBaseUrl2) {
-      const orgToken = localStorage.getItem('org_access_token');
+      const orgToken = await getOrgAccessTokenAsync();
       if (orgToken) {
         headers['Authorization'] = `Bearer ${orgToken}`;
       }
@@ -141,6 +173,23 @@ class CachedApiClient {
       role: options.role,
       forceRefresh 
     });
+    
+    // Check global rate limit FIRST
+    if (this.isRateLimited()) {
+      console.log('🛑 Rate limited - checking cache for:', endpoint);
+      try {
+        const cachedData = await apiCache.getCache<T>(endpoint, params, { 
+          ttl: ttl * 10, // Accept older cache during rate limit
+          forceRefresh: false, 
+          ...options 
+        });
+        if (cachedData !== null) {
+          console.log('✅ Returning cached data during rate limit:', endpoint);
+          return cachedData;
+        }
+      } catch (e) {}
+      throw new Error('Rate limited - please wait before making more requests');
+    }
     
     // Try to get from cache first (unless forcing refresh)
     if (!forceRefresh) {
@@ -237,15 +286,32 @@ class CachedApiClient {
     });
 
     try {
+      const headers = await this.getHeaders();
+      const credentials = getCredentialsMode();
+      
       const response = await fetch(url.toString(), {
         method: 'GET',
-        headers: this.getHeaders(),
-        credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+        headers,
+        credentials // Platform-aware: 'include' for web, 'omit' for mobile
       });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
         console.error(`API Error ${response.status}:`, errorText);
+        
+        // Handle 429 - Rate Limited
+        if (response.status === 429) {
+          let retryAfter = 60;
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.details?.retryAfter) {
+              const match = errorJson.details.retryAfter.match(/(\d+)/);
+              if (match) retryAfter = parseInt(match[1], 10);
+            }
+          } catch {}
+          this.setRateLimited(retryAfter);
+          throw new Error('Too many requests. Please try again later.');
+        }
         
         // Handle 401 - Try to refresh token
         if (response.status === 401) {
@@ -254,10 +320,11 @@ class CachedApiClient {
           if (refreshed) {
             // Retry the request with new token
             console.log('🔁 Retrying request with new token...');
+            const retryHeaders = await this.getHeaders();
             const retryResponse = await fetch(url.toString(), {
               method: 'GET',
-              headers: this.getHeaders(),
-              credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+              headers: retryHeaders,
+              credentials // Platform-aware: 'include' for web, 'omit' for mobile
             });
             
             if (!retryResponse.ok) {
@@ -351,11 +418,14 @@ class CachedApiClient {
     
     console.log('POST Request:', url, data);
     
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+    
     const response = await fetch(url, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     if (!response.ok) {
@@ -368,11 +438,12 @@ class CachedApiClient {
         
         if (refreshed) {
           console.log('🔁 Retrying POST request with new token...');
+          const retryHeaders = await this.getHeaders();
           const retryResponse = await fetch(url, {
             method: 'POST',
-            headers: this.getHeaders(),
+            headers: retryHeaders,
             body: data ? JSON.stringify(data) : undefined,
-            credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+            credentials // Platform-aware: 'include' for web, 'omit' for mobile
           });
           
           if (!retryResponse.ok) {
@@ -424,11 +495,14 @@ class CachedApiClient {
     
     console.log('PUT Request:', url, data);
     
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+    
     const response = await fetch(url, {
       method: 'PUT',
-      headers: this.getHeaders(),
+      headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     if (!response.ok) {
@@ -441,11 +515,12 @@ class CachedApiClient {
         
         if (refreshed) {
           console.log('🔁 Retrying PUT request with new token...');
+          const retryHeaders = await this.getHeaders();
           const retryResponse = await fetch(url, {
             method: 'PUT',
-            headers: this.getHeaders(),
+            headers: retryHeaders,
             body: data ? JSON.stringify(data) : undefined,
-            credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+            credentials // Platform-aware: 'include' for web, 'omit' for mobile
           });
           
           if (!retryResponse.ok) {
@@ -497,11 +572,14 @@ class CachedApiClient {
     
     console.log('PATCH Request:', url, data);
     
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+    
     const response = await fetch(url, {
       method: 'PATCH',
-      headers: this.getHeaders(),
+      headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     if (!response.ok) {
@@ -514,11 +592,12 @@ class CachedApiClient {
         
         if (refreshed) {
           console.log('🔁 Retrying PATCH request with new token...');
+          const retryHeaders = await this.getHeaders();
           const retryResponse = await fetch(url, {
             method: 'PATCH',
-            headers: this.getHeaders(),
+            headers: retryHeaders,
             body: data ? JSON.stringify(data) : undefined,
-            credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+            credentials // Platform-aware: 'include' for web, 'omit' for mobile
           });
           
           if (!retryResponse.ok) {
@@ -570,10 +649,13 @@ class CachedApiClient {
     
     console.log('DELETE Request:', url);
     
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+    
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: this.getHeaders(),
-      credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+      headers,
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     if (!response.ok) {
@@ -586,10 +668,11 @@ class CachedApiClient {
         
         if (refreshed) {
           console.log('🔁 Retrying DELETE request with new token...');
+          const retryHeaders = await this.getHeaders();
           const retryResponse = await fetch(url, {
             method: 'DELETE',
-            headers: this.getHeaders(),
-            credentials: 'include' // CRITICAL: Send httpOnly refresh token cookie
+            headers: retryHeaders,
+            credentials // Platform-aware: 'include' for web, 'omit' for mobile
           });
           
           if (!retryResponse.ok) {

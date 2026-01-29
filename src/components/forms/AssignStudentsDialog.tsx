@@ -76,11 +76,11 @@ const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
         assignData
       );
       
-      if (result && result.success) {
-        const successCount = result.success.length;
-        const failedCount = result.failed.length;
+      if (result && (result.success !== undefined || result.failed !== undefined)) {
+        const successCount = result.success?.length || 0;
+        const failedCount = result.failed?.length || 0;
         
-        if (failedCount === 0) {
+        if (failedCount === 0 && successCount > 0) {
           toast({
             title: "Success!",
             description: `Successfully assigned ${successCount} student(s) to ${selectedClass.name}`
@@ -90,22 +90,36 @@ const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
           onOpenChange(false);
           setUserIds([]);
           setCurrentUserId('');
-        } else if (successCount > 0) {
+        } else if (successCount > 0 && failedCount > 0) {
+          // Partial success - show failed reasons
+          const failedReasons = result.failed?.map((f: any) => f.reason).join('; ') || 'Unknown error';
           toast({
             title: "Partial Success",
-            description: `${successCount} students assigned successfully, ${failedCount} failed`,
+            description: `${successCount} assigned, ${failedCount} failed: ${failedReasons}`,
           });
           
           onAssignmentComplete();
           onOpenChange(false);
           setUserIds([]);
           setCurrentUserId('');
-        } else {
+        } else if (failedCount > 0) {
+          // All failed - show the specific failure reasons
+          const failedReasons = result.failed?.map((f: any) => `${f.studentUserId}: ${f.reason}`).join('\n') || 'Unknown error';
           toast({
             title: "Assignment Failed",
-            description: "Failed to assign all users to the class",
+            description: failedReasons,
             variant: "destructive"
           });
+        } else {
+          toast({
+            title: "Assignment Complete",
+            description: "Users have been assigned to the class"
+          });
+          
+          onAssignmentComplete();
+          onOpenChange(false);
+          setUserIds([]);
+          setCurrentUserId('');
         }
       } else {
         toast({

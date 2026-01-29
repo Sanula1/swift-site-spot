@@ -785,20 +785,20 @@ const InstituteUsers = () => {
 
       {/* Tabs for Views: Users, Pending, Inactive */}
       <Tabs value={activeView} onValueChange={value => setActiveView(value as ViewType)}>
-        {/* Mobile: Horizontal scrollable tabs */}
+        {/* Mobile: Horizontal scrollable tabs - Always show names */}
         <div className="lg:hidden overflow-x-auto">
-          <TabsList className="inline-flex h-auto w-auto gap-2 p-1.5 bg-background border rounded-lg">
-            <TabsTrigger value="USERS" className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2">
-              <Users className="h-4 w-4" />
-              {activeView === 'USERS' && <span className="text-sm">Users</span>}
+          <TabsList className="inline-flex h-auto w-full gap-1 p-1 bg-muted/50 border rounded-lg">
+            <TabsTrigger value="USERS" className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap text-xs sm:text-sm">
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>Users</span>
             </TabsTrigger>
-            <TabsTrigger value="PENDING" className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2">
-              <Clock className="h-4 w-4" />
-              {activeView === 'PENDING' && <span className="text-sm">Pending</span>}
+            <TabsTrigger value="PENDING" className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap text-xs sm:text-sm">
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>Pending</span>
             </TabsTrigger>
-            <TabsTrigger value="INACTIVE" className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2">
-              <UserX className="h-4 w-4" />
-              {activeView === 'INACTIVE' && <span className="text-sm">Inactive</span>}
+            <TabsTrigger value="INACTIVE" className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap text-xs sm:text-sm">
+              <UserX className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>Inactive</span>
             </TabsTrigger>
           </TabsList>
         </div>

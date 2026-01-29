@@ -285,18 +285,9 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
       const baseUrl = getBaseUrl();
       const headers = getApiHeaders();
       
-      // Build subjects array with per-subject enrollment settings
-      const subjectsWithEnrollment = selectedSubjectIds.map(subjectId => {
-        const enrollment = getSubjectEnrollment(subjectId);
-        return {
-          subjectId,
-          enrollmentEnabled: enrollment.enabled,
-          enrollmentKey: enrollment.enabled && enrollment.key ? enrollment.key : undefined
-        };
-      });
-
+      // API expects subjectIds as array of strings
       const requestBody = {
-        subjects: subjectsWithEnrollment,
+        subjectIds: selectedSubjectIds,
         defaultTeacherId: defaultTeacherId || user?.id || undefined
       };
 

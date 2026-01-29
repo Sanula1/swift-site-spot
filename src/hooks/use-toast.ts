@@ -179,11 +179,11 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // Auto-dismiss attendance alerts after 2 seconds
+  // Auto-dismiss attendance alerts after 3 seconds
   if (props.isAttendanceAlert) {
     setTimeout(() => {
       dismiss()
-    }, 2000)
+    }, 3000)
   }
 
   // Auto-dismiss success messages after 1.5 seconds

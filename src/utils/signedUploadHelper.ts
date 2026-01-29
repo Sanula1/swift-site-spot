@@ -1,4 +1,4 @@
-import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { getBaseUrl, getAccessTokenAsync } from '@/contexts/utils/auth.api';
 
 export type UploadFolder = 
   | 'profile-images'
@@ -121,7 +121,7 @@ export async function uploadWithSignedUrl(
   onProgress?: (message: string, progress: number) => void
 ): Promise<string> {
   const baseUrl = getBaseUrl();
-  const token = localStorage.getItem('access_token');
+  const token = await getAccessTokenAsync();
 
   if (!token) {
     throw new Error('No authentication token found');

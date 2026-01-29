@@ -1,4 +1,5 @@
 import { enhancedCachedClient } from './enhancedCachedClient';
+import { getAccessTokenAsync, getBaseUrl, getCredentialsMode } from '@/contexts/utils/auth.api';
 
 // Subject Types - plain strings (no enums)
 // 12 options: MAIN, BASKET, COMMON, GRADE_6TO9_BASKET, 
@@ -174,8 +175,13 @@ export const subjectsApi = {
 
   // Create a new subject (JSON body)
   create: async (data: CreateSubjectDto): Promise<Subject> => {
-    const token = localStorage.getItem('access_token');
-    const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lmsapi.suraksha.lk';
+    const token = await getAccessTokenAsync();
+    const baseUrl = getBaseUrl();
+    const credentials = getCredentialsMode();
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
     
     const response = await fetch(`${baseUrl}/subjects`, {
       method: 'POST',
@@ -183,7 +189,8 @@ export const subjectsApi = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      credentials
     });
 
     if (!response.ok) {

@@ -219,7 +219,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           },
           {
             id: 'select-subject',
-            label: 'Select Subject',
+            label: isTuitionInstitute ? 'Select Sub Class' : 'Select Subject',
             icon: BookOpen,
             permission: 'view-subjects',
             alwaysShow: false
@@ -427,14 +427,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: UserCheck,
             permission: 'view-students',
             alwaysShow: false
-          },
-          {
-            id: 'subject-payments',
-            label: `${subjectLabel} Payments`,
-            icon: CreditCard,
-            permission: 'view-payments',
-            alwaysShow: false
           }
+          // Note: subject-payments is now shown in the Payments section via getPaymentItems()
         ];
       }
       // Return empty for any other Teacher states
@@ -627,14 +621,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: BookOpen,
             permission: 'view-subjects',
             alwaysShow: false
-          },
-          {
-            id: 'subject-payments',
-            label: `${subjectLabel} Payments`,
-            icon: CreditCard,
-            permission: 'view-payments',
-            alwaysShow: false
           }
+          // Note: subject-payments is now shown in the Payments section via getPaymentItems()
         ];
       }
       // Return empty for any other InstituteAdmin states
@@ -1807,6 +1795,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         flex flex-col h-screen
         overflow-hidden
+        pt-safe-top pb-safe-bottom
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">

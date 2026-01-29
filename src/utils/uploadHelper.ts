@@ -1,4 +1,4 @@
-import { getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';
+import { getBaseUrl, getApiHeaders, getAccessTokenAsync } from '@/contexts/utils/auth.api';
 
 export interface SignedUrlResponse {
   success: boolean;
@@ -65,11 +65,16 @@ const MAX_FILE_SIZES: Record<UploadFolder, number> = {
 
 export class FileUploader {
   private baseUrl: string;
-  private token: string | null;
 
   constructor() {
     this.baseUrl = getBaseUrl();
-    this.token = localStorage.getItem('access_token');
+  }
+  
+  /**
+   * Get current access token (platform-aware)
+   */
+  private async getToken(): Promise<string | null> {
+    return await getAccessTokenAsync();
   }
 
   /**
@@ -103,7 +108,8 @@ export class FileUploader {
    * Get signed URL from backend
    */
   private async getSignedUrl(file: File, folder: UploadFolder): Promise<SignedUrlResponse> {
-    if (!this.token) {
+    const token = await this.getToken();
+    if (!token) {
       throw new Error('No authentication token found');
     }
 
@@ -121,7 +127,7 @@ export class FileUploader {
     const response = await fetch(`${this.baseUrl}/upload/get-signed-url?${params}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -255,14 +261,15 @@ export class FileUploader {
    * Verify and publish the uploaded file
    */
   private async verifyAndPublish(relativePath: string): Promise<VerifyPublishResponse> {
-    if (!this.token) {
+    const token = await this.getToken();
+    if (!token) {
       throw new Error('No authentication token found');
     }
 
     const response = await fetch(`${this.baseUrl}/upload/verify-and-publish`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ relativePath })

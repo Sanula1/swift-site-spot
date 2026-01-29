@@ -3,9 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { ErrorToaster, Toaster as Sonner } from "@/components/ui/sonner";
 import { NotificationToast } from "@/components/notifications/NotificationToast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { useCapacitorConnection } from "@/hooks/useCapacitorConnection";
+import CapacitorConnectionError from "@/components/CapacitorConnectionError";
+import AppLoadingScreen from "@/components/AppLoadingScreen";
 import Index from "./pages/Index";
 import QRAttendance from "@/components/QRAttendance";
 import RfidAttendance from "@/pages/RFIDAttendance";
@@ -41,7 +46,16 @@ import CardManagement from "@/pages/CardManagement";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // MUI Theme with Inter font
 const muiTheme = createTheme({
@@ -68,12 +82,54 @@ const muiTheme = createTheme({
 });
 
 const App = () => {
+  const { isOnline, isLoading, retry } = useCapacitorConnection();
+
   useEffect(() => {
     // Force light mode
     const root = document.documentElement;
     root.classList.remove('dark');
     root.classList.add('light');
     localStorage.setItem('theme', 'light');
+    
+    // Hide splash screen after app is ready
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+        setTimeout(() => {
+          SplashScreen.hide();
+        }, 500);
+      });
+    }
+  }, []);
+
+  // Show connection error page only when definitively offline (not during loading)
+  if (Capacitor.isNativePlatform() && !isLoading && !isOnline) {
+    return <CapacitorConnectionError onRetry={retry} />;
+  }
+
+  // Handle Android back button
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      let listenerHandle: any = null;
+      
+      const setupListener = async () => {
+        listenerHandle = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+          if (canGoBack) {
+            window.history.back();
+          } else {
+            // If at root, exit the app
+            CapacitorApp.exitApp();
+          }
+        });
+      };
+      
+      setupListener();
+
+      return () => {
+        if (listenerHandle) {
+          listenerHandle.remove();
+        }
+      };
+    }
   }, []);
 
   return (

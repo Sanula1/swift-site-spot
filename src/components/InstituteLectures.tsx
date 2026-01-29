@@ -210,21 +210,22 @@ const InstituteLectures = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Institute Lectures</h1>
-          <p className="text-muted-foreground">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      {/* Header - Mobile Optimized */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold truncate">Institute Lectures</h1>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
             View all lectures available in {selectedInstitute.name}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 shrink-0">
           {isInstituteAdmin && (
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2 flex-1 sm:flex-none" size="sm">
                   <Plus className="h-4 w-4" />
-                  Create Lecture
+                  <span className="hidden xs:inline">Create</span> Lecture
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -235,8 +236,8 @@ const InstituteLectures = () => {
               </DialogContent>
             </Dialog>
           )}
-          <Button onClick={() => fetchLectures(page, true)} disabled={loading}>
-            {loading ? 'Loading...' : 'Refresh Lectures'}
+          <Button onClick={() => fetchLectures(page, true)} disabled={loading} variant="outline" size="sm" className="flex-1 sm:flex-none">
+            {loading ? 'Loading...' : 'Refresh'}
           </Button>
         </div>
       </div>
@@ -253,60 +254,77 @@ const InstituteLectures = () => {
         </div>
       ) : (
         <>
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {lectures.map((lecture) => (
-              <Card key={lecture.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">{lecture.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{lecture.description}</p>
+              <Card key={lecture.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                <CardHeader className="p-3 sm:p-4 md:p-6 pb-2 sm:pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg line-clamp-2">{lecture.title}</CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{lecture.description}</p>
                       {lecture.subject && (
-                        <p className="text-sm font-medium text-primary">Subject: {lecture.subject}</p>
+                        <p className="text-xs sm:text-sm font-medium text-primary">Subject: {lecture.subject}</p>
                       )}
                     </div>
-                    <Badge className={getStatusColor(lecture.status)}>
+                    <Badge className={`${getStatusColor(lecture.status)} shrink-0 self-start`}>
                       {lecture.status.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Start: {formatDateTime(lecture.startTime)}</span>
+                <CardContent className="p-3 sm:p-4 md:p-6 pt-0 space-y-3 sm:space-y-4">
+                  {/* Lecture Details Grid - Mobile Optimized */}
+                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs block">Start</span>
+                        <span className="font-medium truncate block">{formatDateTime(lecture.startTime)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>End: {formatDateTime(lecture.endTime)}</span>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs block">End</span>
+                        <span className="font-medium truncate block">{formatDateTime(lecture.endTime)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Video className="h-4 w-4 text-muted-foreground" />
-                      <span className={getTypeColor(lecture.lectureType)}>
-                        Type: {lecture.lectureType === 'online' ? 'Online' : 'Physical'}
-                      </span>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                      <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs block">Type</span>
+                        <span className={`font-medium ${getTypeColor(lecture.lectureType)}`}>
+                          {lecture.lectureType === 'online' ? 'Online' : 'Physical'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>Max Participants: {lecture.maxParticipants}</span>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                      <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs block">Participants</span>
+                        <span className="font-medium">{lecture.maxParticipants}</span>
+                      </div>
                     </div>
                     {lecture.venue && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>Venue: {lecture.venue}</span>
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 xs:col-span-2">
+                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-muted-foreground text-[10px] sm:text-xs block">Venue</span>
+                          <span className="font-medium truncate block">{lecture.venue}</span>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  {/* Action Buttons - Mobile Optimized */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
                     {lecture.status === 'scheduled' && lecture.meetingLink && (
                       <Button
                         size="sm"
                         onClick={() => handleJoinLecture(lecture)}
-                        className="gap-2"
+                        className="gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm"
                       >
-                        <ExternalLink className="h-4 w-4" />
-                        Join Lecture
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Join
                       </Button>
                     )}
                     {lecture.recordingUrl && (
@@ -314,10 +332,10 @@ const InstituteLectures = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleViewRecording(lecture)}
-                        className="gap-2"
+                        className="gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm"
                       >
-                        <Play className="h-4 w-4" />
-                        View Recording
+                        <Play className="h-3.5 w-3.5" />
+                        Recording
                       </Button>
                     )}
                     {isInstituteAdmin && (
@@ -326,19 +344,19 @@ const InstituteLectures = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => handleUpdateClick(lecture)}
-                          className="gap-2"
+                          className="gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm"
                         >
-                          <Edit className="h-4 w-4" />
-                          Update
+                          <Edit className="h-3.5 w-3.5" />
+                          <span className="hidden xs:inline">Update</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteClick(lecture)}
-                          className="gap-2"
+                          className="gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm"
                         >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="hidden xs:inline">Delete</span>
                         </Button>
                       </>
                     )}

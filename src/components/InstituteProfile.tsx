@@ -42,9 +42,19 @@ const InstituteProfile = () => {
   const { toast } = useToast();
   const [profileData, setProfileData] = useState<InstituteProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    loadProfileData();
+    // Only load once per institute change, prevent duplicate calls
+    if (!hasLoaded && currentInstituteId) {
+      setHasLoaded(true);
+      loadProfileData();
+    }
+  }, [currentInstituteId, hasLoaded]);
+  
+  // Reset hasLoaded when institute changes
+  useEffect(() => {
+    setHasLoaded(false);
   }, [currentInstituteId]);
 
   const loadProfileData = async () => {
@@ -72,11 +82,14 @@ const InstituteProfile = () => {
       setProfileData(response);
     } catch (error: any) {
       console.error('Error fetching institute profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load institute profile data.",
-        variant: "destructive"
-      });
+      // Don't show toast for rate limit errors - they're handled globally
+      if (!error?.message?.includes('Rate limited') && !error?.message?.includes('Too many requests')) {
+        toast({
+          title: "Error",
+          description: "Failed to load institute profile data.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }

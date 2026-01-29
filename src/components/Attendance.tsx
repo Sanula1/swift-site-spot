@@ -49,7 +49,18 @@ const Attendance = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const rowsPerPageOptions = [25, 50, 100];
   
-  const [filters, setFilters] = useState<AttendanceFilterParams>({});
+  // Calculate default 5-day date range dynamically
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const fiveDaysAgo = new Date(today);
+    fiveDaysAgo.setDate(today.getDate() - 4); // 5 days including today
+    return {
+      startDate: fiveDaysAgo.toISOString().split('T')[0],
+      endDate: today.toISOString().split('T')[0]
+    };
+  };
+  
+  const [filters, setFilters] = useState<AttendanceFilterParams>(() => getDefaultDateRange());
   const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
 
   // Get institute role
@@ -273,7 +284,7 @@ const Attendance = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters({});
+    setFilters(getDefaultDateRange()); // Reset to default 5-day range
     setPage(0);
     loadStudentAttendanceData();
   };
@@ -393,6 +404,18 @@ const Attendance = () => {
           <p className="text-sm text-muted-foreground mt-1">
             Current Selection: <span className="font-medium text-foreground">{getCurrentSelection()}</span>
           </p>
+          {/* Dynamic Data Range Display */}
+          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              <CalendarRange className="h-3 w-3 mr-1" />
+              {filters.startDate && filters.endDate 
+                ? `${filters.startDate} to ${filters.endDate}`
+                : 'No date range selected'}
+            </Badge>
+            <Badge variant="secondary">
+              {totalRecords} {totalRecords === 1 ? 'record' : 'records'} across {Math.ceil(totalRecords / rowsPerPage) || 1} {Math.ceil(totalRecords / rowsPerPage) === 1 ? 'page' : 'pages'}
+            </Badge>
+          </div>
         </div>
 
         <Button
@@ -608,16 +631,16 @@ const Attendance = () => {
         <TabsContent value="calendar" className="mt-0">
           <Card className="border-border/50">
             <CardHeader className="border-b border-border/50">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <CalendarRange className="h-5 w-5 text-primary" />
-                  Daily Attendance Calendar
+                  Attendance Calendar
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" onClick={() => navigateMonth('prev')}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="font-medium min-w-[140px] text-center">
+                  <span className="font-medium min-w-[140px] text-center text-sm sm:text-base">
                     {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </span>
                   <Button variant="outline" size="icon" onClick={() => navigateMonth('next')}>
@@ -626,29 +649,60 @@ const Attendance = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              {/* Legend */}
-              <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-emerald-500" />
-                  <span className="text-sm">Present</span>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              {/* Status Legend with Counts - Mobile Optimized */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-6">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Present</span>
+                    <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{last5DaysStats.present}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-red-500" />
-                  <span className="text-sm">Absent</span>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-red-700 dark:text-red-400">Absent</span>
+                    <span className="text-sm font-bold text-red-800 dark:text-red-300">{last5DaysStats.absent}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-amber-500" />
-                  <span className="text-sm">Late</span>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Late</span>
+                    <span className="text-sm font-bold text-amber-800 dark:text-amber-300">{last5DaysStats.late}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-orange-700 dark:text-orange-400">Left</span>
+                    <span className="text-sm font-bold text-orange-800 dark:text-orange-300">0</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-purple-700 dark:text-purple-400">Left Early</span>
+                    <span className="text-sm font-bold text-purple-800 dark:text-purple-300">0</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800">
+                  <div className="w-3 h-3 rounded-full bg-pink-500" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-pink-700 dark:text-pink-400">Left Late</span>
+                    <span className="text-sm font-bold text-pink-800 dark:text-pink-300">0</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-1 md:gap-2">
+              {/* Calendar Grid - Responsive */}
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2">
                 {/* Week Day Headers */}
                 {weekDays.map(day => (
-                  <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
-                    {day}
+                  <div key={day} className="text-center text-[10px] sm:text-xs md:text-sm font-medium text-muted-foreground py-1 sm:py-2">
+                    <span className="hidden sm:inline">{day}</span>
+                    <span className="sm:hidden">{day.charAt(0)}</span>
                   </div>
                 ))}
                 
@@ -667,23 +721,23 @@ const Attendance = () => {
                     <div 
                       key={day}
                       className={`
-                        aspect-square flex flex-col items-center justify-center rounded-lg text-sm
-                        transition-all duration-200 cursor-default p-1
+                        aspect-square flex flex-col items-center justify-center rounded-md sm:rounded-lg text-xs sm:text-sm
+                        transition-all duration-200 cursor-default p-0.5 sm:p-1
                         ${stats ? 'bg-muted/50' : 'bg-muted/20'}
-                        ${isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
+                        ${isToday ? 'ring-2 ring-primary ring-offset-1 sm:ring-offset-2 ring-offset-background' : ''}
                       `}
                     >
-                      <span className="font-medium mb-1">{day}</span>
+                      <span className="font-medium text-[10px] sm:text-xs md:text-sm mb-0.5">{day}</span>
                       {stats && (
-                        <div className="flex gap-0.5 text-[10px]">
+                        <div className="flex flex-wrap gap-0.5 justify-center text-[8px] sm:text-[10px]">
                           {stats.present > 0 && (
-                            <span className="bg-emerald-500 text-white px-1 rounded">{stats.present}</span>
+                            <span className="bg-emerald-500 text-white px-0.5 sm:px-1 rounded text-[6px] sm:text-[8px] md:text-[10px]">{stats.present}</span>
                           )}
                           {stats.absent > 0 && (
-                            <span className="bg-red-500 text-white px-1 rounded">{stats.absent}</span>
+                            <span className="bg-red-500 text-white px-0.5 sm:px-1 rounded text-[6px] sm:text-[8px] md:text-[10px]">{stats.absent}</span>
                           )}
                           {stats.late > 0 && (
-                            <span className="bg-amber-500 text-white px-1 rounded">{stats.late}</span>
+                            <span className="bg-amber-500 text-white px-0.5 sm:px-1 rounded text-[6px] sm:text-[8px] md:text-[10px]">{stats.late}</span>
                           )}
                         </div>
                       )}

@@ -279,60 +279,58 @@ const SubjectPayments = () => {
     minWidth: 200
   }];
   return <PageContainer className="h-full">
-      {/* Header Section */}
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+      {/* Header Section - Mobile Optimized */}
+      <div className="flex flex-col space-y-3 sm:space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-2 sm:gap-4 min-w-0">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0 p-2 sm:p-2.5" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Back</span>
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground truncate">
                 {subjectLabel} Payments
               </h1>
-              {selectedSubject && <p className="text-muted-foreground text-sm mt-1">
+              {selectedSubject && <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
                   {subjectLabel}: <span className="font-medium text-foreground">{selectedSubject.name}</span>
                 </p>}
             </div>
           </div>
-          {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <Button onClick={() => setCreatePaymentDialogOpen(true)} className="shrink-0" disabled={!selectedInstitute || !selectedClass || !selectedSubject}>
-              <Plus className="h-4 w-4 mr-2" />
+          {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <Button onClick={() => setCreatePaymentDialogOpen(true)} className="shrink-0 w-full sm:w-auto" size="sm" disabled={!selectedInstitute || !selectedClass || !selectedSubject}>
+              <Plus className="h-4 w-4 mr-1.5" />
               Create Payment
             </Button>}
         </div>
       </div>
 
-      {/* Subject Info Card */}
+      {/* Subject Info Card - Mobile Optimized */}
       {selectedSubject && <Card className="border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <BookOpen className="h-5 w-5 text-primary" />
-              {selectedSubject.name}
+          <CardHeader className="p-3 sm:p-4 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-foreground text-sm sm:text-base">
+              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              <span className="truncate">{selectedSubject.name}</span>
             </CardTitle>
-            {selectedClass && <p className="text-muted-foreground text-sm">
+            {selectedClass && <p className="text-muted-foreground text-xs sm:text-sm mt-1 truncate">
                 Class: {selectedClass.name} | Institute: {selectedInstitute?.name}
               </p>}
           </CardHeader>
         </Card>}
 
-      {/* Search and Actions */}
+      {/* Search and Actions - Mobile Optimized */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-3 sm:p-4 md:pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="flex-1 min-w-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by title, amount, or priority..." className="pl-10 w-full" value={searchQuery} onChange={e => handleSearch(e.target.value)} />
+                <Input placeholder="Search payments..." className="pl-9 sm:pl-10 w-full text-sm" value={searchQuery} onChange={e => handleSearch(e.target.value)} />
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Button variant="outline" onClick={() => loadSubjectPayments(page, rowsPerPage, true)} disabled={loading || !selectedInstitute || !selectedClass || !selectedSubject} size="sm">
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Refreshing...' : 'Refresh'}
+              <Button variant="outline" onClick={() => loadSubjectPayments(page, rowsPerPage, true)} disabled={loading || !selectedInstitute || !selectedClass || !selectedSubject} size="sm" className="flex-1 sm:flex-none">
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="ml-1.5 sm:ml-2">{loading ? 'Loading...' : 'Refresh'}</span>
               </Button>
-              {instituteRole === 'Student'}
-              
             </div>
           </div>
         </CardContent>

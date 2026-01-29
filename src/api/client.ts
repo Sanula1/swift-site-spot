@@ -1,4 +1,4 @@
-import { getBaseUrl, getBaseUrl2, getApiHeaders, refreshAccessToken } from '@/contexts/utils/auth.api';
+import { getBaseUrl, getBaseUrl2, getApiHeadersAsync, refreshAccessToken, getCredentialsMode, getOrgAccessTokenAsync, removeOrgAccessTokenAsync, isNativePlatform, tokenStorageService } from '@/contexts/utils/auth.api';
 
 export interface ApiResponse<T = any> {
   data?: T;
@@ -36,12 +36,12 @@ class ApiClient {
     return this.useBaseUrl2 ? getBaseUrl2() : getBaseUrl();
   }
 
-  private getHeaders(): Record<string, string> {
-    const headers = getApiHeaders();
+  private async getHeaders(): Promise<Record<string, string>> {
+    const headers = await getApiHeadersAsync();
 
     // Add organization-specific token if using baseUrl2
     if (this.useBaseUrl2) {
-      const orgToken = localStorage.getItem('org_access_token');
+      const orgToken = await getOrgAccessTokenAsync();
       if (orgToken) {
         headers['Authorization'] = `Bearer ${orgToken}`;
       }
@@ -74,13 +74,17 @@ class ApiClient {
       } catch (error) {
         console.error('❌ Token refresh failed:', error);
 
-        // Clear all auth data
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
-        localStorage.removeItem('token');
-        localStorage.removeItem('authToken');
+        // Clear all auth data using platform-aware storage
+        await tokenStorageService.clearAll();
+        
+        if (!isNativePlatform()) {
+          // Web: Also clear legacy localStorage keys
+          localStorage.removeItem('token');
+          localStorage.removeItem('authToken');
+        }
+        
         if (this.useBaseUrl2) {
-          localStorage.removeItem('org_access_token');
+          await removeOrgAccessTokenAsync();
         }
 
         // Redirect to login page
@@ -217,13 +221,16 @@ class ApiClient {
       });
     }
 
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+
     console.log('GET Request:', url.toString());
-    console.log('Request Headers:', this.getHeaders());
+    console.log('Request Headers:', headers);
 
     const makeRequest = () => fetch(url.toString(), {
       method: 'GET',
-      headers: this.getHeaders(),
-      credentials: 'include' // Send cookies (refresh token)
+      headers,
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     const response = await makeRequest();
@@ -236,8 +243,10 @@ class ApiClient {
 
     console.log('POST Request:', url, data);
 
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+
     const makeRequest = () => {
-      const headers = this.getHeaders();
       let body: any;
 
       // Handle FormData differently - don't stringify it and don't set Content-Type
@@ -256,7 +265,7 @@ class ApiClient {
         method: 'POST',
         headers,
         body,
-        credentials: 'include' // Send cookies (refresh token)
+        credentials // Platform-aware: 'include' for web, 'omit' for mobile
       });
     };
 
@@ -268,14 +277,17 @@ class ApiClient {
     const baseUrl = this.getCurrentBaseUrl();
     const url = `${baseUrl}${endpoint}`;
 
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+
     console.log('PUT Request:', url, data);
-    console.log('Request Headers:', this.getHeaders());
+    console.log('Request Headers:', headers);
 
     const makeRequest = () => fetch(url, {
       method: 'PUT',
-      headers: this.getHeaders(),
+      headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: 'include' // Send cookies (refresh token)
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     const response = await makeRequest();
@@ -286,14 +298,17 @@ class ApiClient {
     const baseUrl = this.getCurrentBaseUrl();
     const url = `${baseUrl}${endpoint}`;
 
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+
     console.log('PATCH Request:', url, data);
-    console.log('Request Headers:', this.getHeaders());
+    console.log('Request Headers:', headers);
 
     const makeRequest = () => fetch(url, {
       method: 'PATCH',
-      headers: this.getHeaders(),
+      headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: 'include' // Send cookies (refresh token)
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     const response = await makeRequest();
@@ -304,13 +319,16 @@ class ApiClient {
     const baseUrl = this.getCurrentBaseUrl();
     const url = `${baseUrl}${endpoint}`;
 
+    const headers = await this.getHeaders();
+    const credentials = getCredentialsMode();
+
     console.log('DELETE Request:', url);
-    console.log('Request Headers:', this.getHeaders());
+    console.log('Request Headers:', headers);
 
     const makeRequest = () => fetch(url, {
       method: 'DELETE',
-      headers: this.getHeaders(),
-      credentials: 'include' // Send cookies (refresh token)
+      headers,
+      credentials // Platform-aware: 'include' for web, 'omit' for mobile
     });
 
     const response = await makeRequest();

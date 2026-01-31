@@ -611,46 +611,40 @@ const Login = ({
     setConfirmPassword('');
     setShowFirstLogin(true);
   };
-  return <div className="min-h-screen flex flex-col md:flex-row">
+  return <div className="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
       {/* Top Illustration - Mobile Only */}
-      <div className="block md:hidden w-full relative h-48 sm:h-56">
+      <div className="block md:hidden w-full relative h-32 sm:h-40">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5" />
         <img src={loginIllustration} alt="AI-powered education illustration" className="absolute inset-0 w-full h-full object-cover mix-blend-multiply" loading="lazy" onError={e => {
         (e.currentTarget as HTMLImageElement).style.display = 'none';
       }} />
-        <div className="absolute inset-0 flex items-center justify-center p-4">
-          
-        </div>
       </div>
 
       {/* Left Side - Form */}
-      <div className="w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-background -mt-8 md:mt-0 rounded-t-[3rem] md:rounded-none relative z-10">
-        <div className="w-full max-w-2xl space-y-4 md:space-y-6">
+      <div className="w-full md:w-1/2 lg:w-2/5 flex items-start md:items-center justify-center px-4 py-4 sm:p-6 md:p-8 bg-background -mt-6 md:mt-0 rounded-t-[2rem] md:rounded-none relative z-10 min-h-0 md:min-h-screen">
+        <div className="w-full max-w-md space-y-3 md:space-y-6">
           {/* Logo and Header */}
-          <div className="space-y-1 text-center">
-            <div className="flex flex-col items-center justify-center mb-4 md:mb-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-transparent mb-2">
+          <div className="space-y-0.5 text-center">
+            <div className="flex flex-col items-center justify-center mb-2 md:mb-6">
+              <div className="w-14 h-14 md:w-24 md:h-24 rounded-lg overflow-hidden bg-transparent mb-1">
                 <img src={surakshaLogo} alt="SurakshaLMS logo" className="w-full h-full object-contain" loading="lazy" />
               </div>
-              <span className="text-3xl md:text-4xl font-bold text-foreground">SurakshaLMS</span>
+              <span className="text-2xl md:text-4xl font-bold text-foreground">SurakshaLMS</span>
             </div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">Welcome back</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Please enter your details</p>
+            <h1 className="text-lg md:text-2xl font-bold text-foreground">Welcome back</h1>
+            <p className="text-xs text-muted-foreground">Please enter your details</p>
           </div>
 
-          {/* Login Mode Toggle */}
-          
-
           {/* Main Login/First Login/Forgot Password Card */}
-          <Card className="border-border">
-            <CardContent className="pt-12 px-8 pb-12">
+          <Card className="border-border shadow-sm">
+            <CardContent className="pt-4 px-4 pb-4 md:pt-8 md:px-8 md:pb-8">
             {/* Regular Login Form */}
-            {loginStep === 'login' && <form onSubmit={handleLogin} className="space-y-6">
+            {loginStep === 'login' && <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
                 {/* Role Selection - Only show for mock login */}
-                {!useApiLogin && <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
+                {!useApiLogin && <div className="space-y-1.5">
+                    <Label htmlFor="role" className="text-sm">Role</Label>
                     <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 md:h-11">
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -665,273 +659,263 @@ const Login = ({
                   </div>}
 
                 {/* Identifier Input */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="identifier" className="text-sm font-medium text-foreground">Email, Phone, ID or Birth Certificate</Label>
-                  <Input id="identifier" type="text" placeholder="Enter email, phone, system ID, or birth certificate" value={identifier} onChange={e => setIdentifier(e.target.value)} required className="h-11" />
+                  <Input id="identifier" type="text" placeholder="Enter email, phone, ID..." value={identifier} onChange={e => setIdentifier(e.target.value)} required className="h-10 md:h-11 text-base" autoComplete="username" autoCapitalize="none" autoCorrect="off" />
                 </div>
 
                 {/* Password Input */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
                   <div className="relative">
-                    <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required className="h-11" />
-                    <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required className="h-10 md:h-11 text-base pr-12" autoComplete="current-password" />
+                    <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-manipulation" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
                     </Button>
                   </div>
                 </div>
 
                 {/* Remember me and Forgot Password */}
-                {useApiLogin && <div className="flex items-center justify-between">
+                {useApiLogin && <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="remember" className="rounded border-border" />
-                    <label htmlFor="remember" className="text-sm text-foreground cursor-pointer">
-                      Remember for 30 days
+                    <input type="checkbox" id="remember" className="rounded border-border w-4 h-4" />
+                    <label htmlFor="remember" className="text-xs md:text-sm text-foreground cursor-pointer">
+                      Remember me
                     </label>
                   </div>
-                  <Button type="button" variant="link" onClick={startForgotPassword} className="text-sm text-primary hover:text-primary/80 p-0 h-auto">
-                    Forgot password
+                  <Button type="button" variant="link" onClick={startForgotPassword} className="text-xs md:text-sm text-primary hover:text-primary/80 p-0 h-auto">
+                    Forgot password?
                   </Button>
                 </div>}
 
                 {/* Error Message */}
-                {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {error && <div className="text-xs md:text-sm text-destructive bg-destructive/10 p-2.5 md:p-3 rounded-md">
                     {error}
                   </div>}
 
                 {/* Login Button */}
-                <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                <Button type="submit" className="w-full h-10 md:h-11 text-base touch-manipulation active:scale-[0.98] transition-transform" disabled={isLoading}>
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
 
                 {/* First Time Login Link */}
-                {useApiLogin && <div className="text-center">
-                    <span className="text-sm text-muted-foreground">Don't have an account? </span>
-                    <Button type="button" variant="link" onClick={startFirstLogin} className="text-sm text-primary hover:text-primary/80 p-0 h-auto">
+                {useApiLogin && <div className="text-center pt-1">
+                    <span className="text-xs md:text-sm text-muted-foreground">Don't have an account? </span>
+                    <Button type="button" variant="link" onClick={startFirstLogin} className="text-xs md:text-sm text-primary hover:text-primary/80 p-0 h-auto">
                       Sign up
                     </Button>
                   </div>}
               </form>}
 
             {/* First Login Email Form */}
-            {loginStep === 'first-login-email' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstLoginIdentifier">Email, Phone, ID or Birth Certificate</Label>
-                    <Input id="firstLoginIdentifier" type="text" placeholder="Enter email, phone, system ID, or birth certificate" value={identifier} onChange={e => setIdentifier(e.target.value)} required />
+            {loginStep === 'first-login-email' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-3 md:space-y-4">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="firstLoginIdentifier" className="text-sm">Email, Phone, ID or Birth Certificate</Label>
+                    <Input id="firstLoginIdentifier" type="text" placeholder="Enter email, phone, ID..." value={identifier} onChange={e => setIdentifier(e.target.value)} required className="h-10 md:h-11 text-base" autoComplete="username" autoCapitalize="none" />
                   </div>
 
-                  <div className="text-sm text-muted-foreground bg-primary/10 p-3 rounded-lg">
-                    We'll send a 6-digit verification code to your registered email address to help you set up your password.
+                  <div className="text-xs md:text-sm text-muted-foreground bg-primary/10 p-2.5 md:p-3 rounded-lg">
+                    We'll send a 6-digit verification code to your registered email address.
                   </div>
 
-                  {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error && <div className="text-xs md:text-sm text-destructive bg-destructive/10 p-2.5 rounded-md">
                       {error}
                     </div>}
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-10 md:h-11 text-base touch-manipulation" disabled={isLoading}>
                     {isLoading ? 'Sending Code...' : 'Send Verification Code'}
                   </Button>
 
-                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
+                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full h-9 md:h-10 touch-manipulation">
                     Back to Login
                   </Button>
                 </div>
               </form>}
 
             {/* First Login OTP Verification */}
-            {loginStep === 'first-login-otp' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-4">
-                <div className="space-y-4">
+            {loginStep === 'first-login-otp' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-3 md:space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       We sent a 6-digit code to your registered email address
                     </p>
                   </div>
                   
-                  <div className="flex justify-center">
-                    <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
+                  <div className="flex justify-center py-2">
+                    <InputOTP maxLength={6} value={otp} onChange={setOtp} className="gap-1.5 md:gap-2">
+                      <InputOTPGroup className="gap-1.5 md:gap-2">
+                        <InputOTPSlot index={0} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                        <InputOTPSlot index={1} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                        <InputOTPSlot index={2} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                        <InputOTPSlot index={3} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                        <InputOTPSlot index={4} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                        <InputOTPSlot index={5} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
 
-                  {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md text-center">
+                  {error && <div className="text-xs md:text-sm text-destructive bg-destructive/10 p-2.5 rounded-md text-center">
                       {error}
                     </div>}
 
-                  <Button type="submit" className="w-full" disabled={isLoading || otp.length !== 6}>
+                  <Button type="submit" className="w-full h-10 md:h-11 text-base touch-manipulation" disabled={isLoading || otp.length !== 6}>
                     {isLoading ? 'Verifying...' : 'Verify Code'}
                   </Button>
 
                   <div className="text-center">
-                    {otpTimer > 0 ? <p className="text-sm text-muted-foreground">
+                    {otpTimer > 0 ? <p className="text-xs md:text-sm text-muted-foreground">
                         Resend code in {otpTimer}s
-                      </p> : <Button type="button" variant="ghost" onClick={resendFirstLoginOTP} disabled={isLoading}>
+                      </p> : <Button type="button" variant="ghost" onClick={resendFirstLoginOTP} disabled={isLoading} className="h-9 touch-manipulation">
                         Resend Code
                       </Button>}
                   </div>
 
-                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
+                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full h-9 md:h-10 touch-manipulation">
                     Back to Login
                   </Button>
                 </div>
               </form>}
 
             {/* First Login Password Setup */}
-            {loginStep === 'first-login-password' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newFirstPassword">New Password</Label>
+            {loginStep === 'first-login-password' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-3 md:space-y-4">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newFirstPassword" className="text-sm">New Password</Label>
                     <div className="relative">
-                      <Input id="newFirstPassword" type={showNewPassword ? 'text' : 'password'} placeholder="Enter your new password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowNewPassword(!showNewPassword)}>
-                        {showNewPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                      <Input id="newFirstPassword" type={showNewPassword ? 'text' : 'password'} placeholder="Enter your new password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="h-10 md:h-11 text-base pr-12" autoComplete="new-password" />
+                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-manipulation" onClick={() => setShowNewPassword(!showNewPassword)}>
+                        {showNewPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
                       </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmFirstPassword">Confirm Password</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmFirstPassword" className="text-sm">Confirm Password</Label>
                     <div className="relative">
-                      <Input id="confirmFirstPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                      <Input id="confirmFirstPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="h-10 md:h-11 text-base pr-12" autoComplete="new-password" />
+                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-manipulation" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
                       </Button>
                     </div>
                   </div>
 
-                  
-
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p><strong>Password Requirements:</strong></p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Minimum 8 characters</li>
-                      <li>At least one uppercase letter (A-Z)</li>
-                      <li>At least one lowercase letter (a-z)</li>
-                      <li>At least one number (0-9)</li>
-                      <li>At least one special character (@$!%*?&)</li>
+                  <div className="text-[10px] md:text-xs text-muted-foreground space-y-0.5 bg-muted/50 p-2 rounded-md">
+                    <p className="font-medium">Password Requirements:</p>
+                    <ul className="list-disc list-inside space-y-0.5 ml-1">
+                      <li>8+ chars, uppercase, lowercase, number, special (@$!%*?&)</li>
                     </ul>
                   </div>
 
-                  {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error && <div className="text-xs md:text-sm text-destructive bg-destructive/10 p-2.5 rounded-md">
                       {error}
                     </div>}
 
-                  <Button type="submit" className="w-full" disabled={isLoading || !newPassword || !confirmPassword}>
+                  <Button type="submit" className="w-full h-10 md:h-11 text-base touch-manipulation" disabled={isLoading || !newPassword || !confirmPassword}>
                     {isLoading ? 'Setting Password...' : 'Set Password'}
                   </Button>
 
-                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
+                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full h-9 md:h-10 touch-manipulation">
                     Back to Login
                   </Button>
                 </div>
               </form>}
 
             {/* Forgot Password Form */}
-            {loginStep === 'forgot-password' && <form onSubmit={handleForgotPasswordFlow} className="space-y-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="resetIdentifier">Email, Phone, ID or Birth Certificate</Label>
-                    <Input id="resetIdentifier" type="text" placeholder="Enter email, phone, system ID, or birth certificate" value={identifier} onChange={e => setIdentifier(e.target.value)} required />
+            {loginStep === 'forgot-password' && <form onSubmit={handleForgotPasswordFlow} className="space-y-3 md:space-y-4">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="resetIdentifier" className="text-sm">Email, Phone, ID or Birth Certificate</Label>
+                    <Input id="resetIdentifier" type="text" placeholder="Enter email, phone, ID..." value={identifier} onChange={e => setIdentifier(e.target.value)} required className="h-10 md:h-11 text-base" autoComplete="username" autoCapitalize="none" />
                   </div>
 
-                  <div className="text-sm text-muted-foreground bg-primary/10 p-3 rounded-lg">
-                    We'll send a 6-digit reset code to your registered email address.
+                  <div className="text-xs md:text-sm text-muted-foreground bg-primary/10 p-2.5 md:p-3 rounded-lg">
+                    We'll send a 6-digit reset code to your registered email.
                   </div>
 
-                  {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error && <div className="text-xs md:text-sm text-destructive bg-destructive/10 p-2.5 rounded-md">
                       {error}
                     </div>}
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-10 md:h-11 text-base touch-manipulation" disabled={isLoading}>
                     {isLoading ? 'Sending Reset Code...' : 'Send Reset Code'}
                   </Button>
 
-                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
+                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full h-9 md:h-10 touch-manipulation">
                     Back to Login
                   </Button>
                 </div>
               </form>}
 
             {/* Reset Password Form */}
-            {loginStep === 'reset-password' && <form onSubmit={handleForgotPasswordFlow} className="space-y-4">
-                <div className="space-y-4">
-                  <div className="text-center mb-4">
-                    <p className="text-sm text-muted-foreground">
-                      We sent a 6-digit reset code to your registered email address
+            {loginStep === 'reset-password' && <form onSubmit={handleForgotPasswordFlow} className="space-y-3 md:space-y-4">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="text-center">
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      We sent a 6-digit reset code to your registered email
                     </p>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="resetOtp">Reset Code (OTP)</Label>
-                    <div className="flex justify-center">
-                      <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                        <InputOTPGroup>
-                          <InputOTPSlot index={0} />
-                          <InputOTPSlot index={1} />
-                          <InputOTPSlot index={2} />
-                          <InputOTPSlot index={3} />
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="resetOtp" className="text-sm">Reset Code (OTP)</Label>
+                    <div className="flex justify-center py-2">
+                      <InputOTP maxLength={6} value={otp} onChange={setOtp} className="gap-1.5 md:gap-2">
+                        <InputOTPGroup className="gap-1.5 md:gap-2">
+                          <InputOTPSlot index={0} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                          <InputOTPSlot index={1} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                          <InputOTPSlot index={2} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                          <InputOTPSlot index={3} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                          <InputOTPSlot index={4} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
+                          <InputOTPSlot index={5} className="w-10 h-12 md:w-12 md:h-14 text-lg md:text-xl" />
                         </InputOTPGroup>
                       </InputOTP>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="newResetPassword">New Password</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newResetPassword" className="text-sm">New Password</Label>
                     <div className="relative">
-                      <Input id="newResetPassword" type={showNewPassword ? 'text' : 'password'} placeholder="Enter your new password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowNewPassword(!showNewPassword)}>
-                        {showNewPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                      <Input id="newResetPassword" type={showNewPassword ? 'text' : 'password'} placeholder="Enter your new password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="h-10 md:h-11 text-base pr-12" autoComplete="new-password" />
+                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-manipulation" onClick={() => setShowNewPassword(!showNewPassword)}>
+                        {showNewPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
                       </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmResetPassword">Confirm Password</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmResetPassword" className="text-sm">Confirm Password</Label>
                     <div className="relative">
-                      <Input id="confirmResetPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                      <Input id="confirmResetPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="h-10 md:h-11 text-base pr-12" autoComplete="new-password" />
+                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-manipulation" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
                       </Button>
                     </div>
                   </div>
 
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p><strong>Password Requirements:</strong></p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Minimum 8 characters</li>
-                      <li>At least one uppercase letter (A-Z)</li>
-                      <li>At least one lowercase letter (a-z)</li>
-                      <li>At least one number (0-9)</li>
-                      <li>At least one special character (@$!%*?&)</li>
+                  <div className="text-[10px] md:text-xs text-muted-foreground space-y-0.5 bg-muted/50 p-2 rounded-md">
+                    <p className="font-medium">Password Requirements:</p>
+                    <ul className="list-disc list-inside space-y-0.5 ml-1">
+                      <li>8+ chars, uppercase, lowercase, number, special (@$!%*?&)</li>
                     </ul>
                   </div>
 
-                  {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error && <div className="text-xs md:text-sm text-destructive bg-destructive/10 p-2.5 rounded-md">
                       {error}
                     </div>}
 
-                  <Button type="submit" className="w-full" disabled={isLoading || otp.length !== 6 || !newPassword || !confirmPassword}>
+                  <Button type="submit" className="w-full h-10 md:h-11 text-base touch-manipulation" disabled={isLoading || otp.length !== 6 || !newPassword || !confirmPassword}>
                     {isLoading ? 'Resetting Password...' : 'Reset Password'}
                   </Button>
 
                   <div className="text-center">
-                    {otpTimer > 0 ? <p className="text-sm text-muted-foreground">
+                    {otpTimer > 0 ? <p className="text-xs md:text-sm text-muted-foreground">
                         Resend code in {otpTimer}s
-                      </p> : <Button type="button" variant="ghost" onClick={resendForgotPasswordOtp} disabled={isLoading} className="text-sm">
+                      </p> : <Button type="button" variant="ghost" onClick={resendForgotPasswordOtp} disabled={isLoading} className="text-xs md:text-sm h-9 touch-manipulation">
                         Resend Reset Code
                       </Button>}
                   </div>
 
-                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
+                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full h-9 md:h-10 touch-manipulation">
                     Back to Login
                   </Button>
                 </div>

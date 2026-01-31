@@ -68,10 +68,16 @@ export const useAppNavigation = () => {
       'my-children': '/my-children',
       // Child routes (support both legacy and new keys)
       'child-dashboard': '/child/:childId/dashboard',
+      'child-select-institute': '/child/:childId/select-institute',
+      'child-select-class': '/child/:childId/select-class',
+      'child-select-subject': '/child/:childId/select-subject',
+      'child-homework': '/child/:childId/homework',
+      'child-lectures': '/child/:childId/lectures',
+      'child-exams': '/child/:childId/exams',
       'child-results-page': '/child/:childId/results',
       'child-attendance-page': '/child/:childId/attendance',
       'child-transport': '/child/:childId/transport',
-      // Sidebar keys
+      // Legacy sidebar keys
       'child-results': '/child/:childId/results',
       'child-attendance': '/child/:childId/attendance'
     };

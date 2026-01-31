@@ -278,20 +278,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: CreditCard,
             permission: 'view-payments',
             alwaysShow: false
-          },
-          {
-            id: 'subject-submissions',
-            label: `${subjectLabel} Submissions`,
-            icon: FileText,
-            permission: 'view-submissions',
-            alwaysShow: false
-          },
-          {
-            id: 'homework-submissions',
-            label: 'Homework Submissions',
-            icon: Notebook,
-            permission: 'view-homework',
-            alwaysShow: false
           }
          ];
       }
@@ -1221,28 +1207,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     
     return [
       {
-        id: 'child-results',
-        label: 'Results',
-        icon: Award,
+        id: 'select-institute',
+        label: 'Select Institute',
+        icon: Building2,
         permission: 'view-profile',
         alwaysShow: true,
-        path: `/child/${childId}/results`
-      },
-      {
-        id: 'child-attendance',
-        label: 'Attendance',
-        icon: UserCheck,
-        permission: 'view-profile',
-        alwaysShow: true,
-        path: `/child/${childId}/attendance`
-      },
-      {
-        id: 'child-transport',
-        label: 'Transport',
-        icon: Truck,
-        permission: 'view-profile',
-        alwaysShow: true,
-        path: `/child/${childId}/transport`
+        path: `/child/${childId}/select-institute`
       }
     ];
   };
@@ -1876,7 +1846,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Subject:</span> <span className="ml-1 truncate">{selectedSubject.name}</span></div>
                 )}
                 {selectedChild && (
-                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Child:</span> <span className="ml-1 truncate">{(selectedChild as any).name || (selectedChild.user ? `${selectedChild.user.firstName} ${selectedChild.user.lastName}` : 'Unknown Child')}</span></div>
+                  <div className="text-blue-600 dark:text-blue-400">
+                    <span className="font-medium">Child:</span>
+                    <span className="ml-1 text-sm font-semibold break-words whitespace-normal leading-snug">
+                      {selectedChild?.user?.nameWithInitials ||
+                        [selectedChild?.user?.firstName, selectedChild?.user?.lastName].filter(Boolean).join(' ') ||
+                        `#${selectedChild.id}`}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -1887,7 +1864,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <ScrollArea className="flex-1 px-2 sm:px-3 py-3 sm:py-4">
           <div className="space-y-2">
             {selectedChild ? (
-              <SidebarSection title="Child Sections" items={childItemsDisplay} />
+              <SidebarSection title="Select Institute" items={childItemsDisplay} />
             ) : currentPage === 'transport-attendance' ? (
               /* Show ONLY attendance section for transport attendance page */
               <SidebarSection title="Attendance" items={[

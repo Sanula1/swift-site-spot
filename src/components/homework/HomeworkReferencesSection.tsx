@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, RefreshCw, Loader2, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
@@ -122,57 +121,75 @@ const HomeworkReferencesSection: React.FC<HomeworkReferencesSectionProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Paperclip className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">Reference Materials</CardTitle>
-            {summary && summary.total > 0 && (
-              <Badge variant="secondary">{summary.total}</Badge>
-            )}
-          </div>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Paperclip className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Reference Materials</span>
+          {summary && summary.total > 0 && (
+            <Badge variant="secondary" className="text-xs h-5">{summary.total}</Badge>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchReferences}
+            disabled={isLoading}
+            className="h-7 w-7 p-0"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
           
-          <div className="flex items-center gap-2">
+          {canEdit && (
             <Button
-              variant="ghost"
               size="sm"
-              onClick={fetchReferences}
-              disabled={isLoading}
+              onClick={() => setIsAddDialogOpen(true)}
+              className="h-7 text-xs px-2"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
-            
+          )}
+        </div>
+      </div>
+
+      {/* Summary badges */}
+      {summary && summary.total > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {Object.entries(summary.byType)
+            .filter(([_, count]) => count > 0)
+            .map(([type, count]) => (
+              <Badge key={type} variant="outline" className="text-[10px] h-5 px-1.5">
+                {type}: {count}
+              </Badge>
+            ))}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="rounded-lg border bg-muted/30 p-2">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : references.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <Paperclip className="h-8 w-8 text-muted-foreground/50 mb-2" />
+            <p className="text-xs text-muted-foreground">No reference materials</p>
             {canEdit && (
               <Button
+                variant="link"
                 size="sm"
                 onClick={() => setIsAddDialogOpen(true)}
+                className="text-xs h-6 mt-1"
               >
-                <Plus className="h-4 w-4 mr-1" />
-                Add
+                <Plus className="h-3 w-3 mr-1" />
+                Add first reference
               </Button>
             )}
-          </div>
-        </div>
-
-        {/* Summary badges */}
-        {summary && summary.total > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {Object.entries(summary.byType)
-              .filter(([_, count]) => count > 0)
-              .map(([type, count]) => (
-                <Badge key={type} variant="outline" className="text-xs">
-                  {type}: {count}
-                </Badge>
-              ))}
-          </div>
-        )}
-      </CardHeader>
-
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <HomeworkReferenceList
@@ -182,7 +199,7 @@ const HomeworkReferencesSection: React.FC<HomeworkReferencesSectionProps> = ({
             onReorder={handleReorder}
           />
         )}
-      </CardContent>
+      </div>
 
       {/* Add Reference Dialog */}
       <AddReferenceDialog
@@ -191,7 +208,7 @@ const HomeworkReferencesSection: React.FC<HomeworkReferencesSectionProps> = ({
         homeworkId={homeworkId}
         onSuccess={handleAddSuccess}
       />
-    </Card>
+    </div>
   );
 };
 

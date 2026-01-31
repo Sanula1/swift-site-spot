@@ -130,7 +130,15 @@ export type {
   TransportEnrollmentsResponse
 } from './transport.api';
 
-// User Card API
+// Structured Lectures API
+export { structuredLecturesApi } from './structuredLectures.api';
+export type {
+  StructuredLecture,
+  CreateStructuredLectureDto,
+  UpdateStructuredLectureDto,
+  StructuredLecturesResponse,
+  StructuredLectureFilterParams
+} from './structuredLectures.api';
 export { userCardApi } from './userCard.api';
 export type {
   Card,

@@ -119,7 +119,7 @@ const mockUsers = [{
 interface LoginProps {
   onLogin: (user: any) => void;
   loginFunction: (credentials: {
-    email: string;
+    identifier: string;
     password: string;
   }) => Promise<void>;
 }
@@ -128,7 +128,7 @@ const Login = ({
   onLogin,
   loginFunction
 }: LoginProps) => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [baseUrl, setBaseUrl] = useState(() => {
     const stored = getBaseUrl();
@@ -244,20 +244,20 @@ const Login = ({
   };
 
   // New First Login API Functions
-  const initiateFirstLoginAPI = async (email: string) => {
+  const initiateFirstLoginAPI = async (identifierValue: string) => {
     try {
       const response = await fetch(`${baseUrl}/auth/initiate`, {
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email
+          identifier: identifierValue
         })
       });
       const data = await response.json();
       if (response.ok && data.success) {
         toast({
           title: "OTP Sent",
-          description: "Please check your email for the verification code."
+          description: "Please check your registered email for the verification code."
         });
         setLoginStep('first-login-otp');
         startOtpTimer();
@@ -271,14 +271,14 @@ const Login = ({
       return false;
     }
   };
-  const verifyFirstLoginOTP = async (email: string, otp: string) => {
+  const verifyFirstLoginOTP = async (identifierValue: string, otpCode: string) => {
     try {
       const response = await fetch(`${baseUrl}/auth/verify-otp`, {
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email,
-          otp
+          identifier: identifierValue,
+          otp: otpCode
         })
       });
       const data = await response.json();
@@ -304,12 +304,18 @@ const Login = ({
       setError('Passwords do not match');
       return false;
     }
+    // Password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      setError('Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)');
+      return false;
+    }
     try {
       const response = await fetch(`${baseUrl}/auth/set-password`, {
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email,
+          identifier,
           verificationToken,
           password: newPassword,
           confirmPassword,
@@ -320,7 +326,7 @@ const Login = ({
       if (response.ok && data.success) {
         toast({
           title: "Password Set Successfully",
-          description: "You can now login with your email and password."
+          description: "You can now login with your credentials."
         });
 
         // Reset to login step and clear form
@@ -347,14 +353,14 @@ const Login = ({
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email
+          identifier
         })
       });
       const data = await response.json();
       if (response.ok && data.success) {
         toast({
           title: "OTP Resent",
-          description: "Please check your email for the new verification code."
+          description: "Please check your registered email for the new verification code."
         });
         setOtp('');
         startOtpTimer();
@@ -378,20 +384,20 @@ const Login = ({
     setNewPassword('');
     setConfirmPassword('');
   };
-  const initiateForgotPassword = async (email: string) => {
+  const initiateForgotPassword = async (identifierValue: string) => {
     try {
       const response = await fetch(`${baseUrl}/auth/forgot-password`, {
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email
+          identifier: identifierValue
         })
       });
       const data = await response.json();
       if (response.ok && data.success) {
         toast({
           title: "Reset Code Sent",
-          description: data.message || `Password reset code sent to your email. Expires in ${data.data?.expiresInMinutes || 15} minutes.`
+          description: data.message || `Password reset code sent to your registered email. Expires in ${data.data?.expiresInMinutes || 15} minutes.`
         });
         setLoginStep('reset-password');
         startOtpTimer();
@@ -410,12 +416,18 @@ const Login = ({
       setError('Passwords do not match');
       return false;
     }
+    // Password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      setError('Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)');
+      return false;
+    }
     try {
       const response = await fetch(`${baseUrl}/auth/reset-password`, {
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email,
+          identifier,
           otp,
           newPassword,
           confirmPassword
@@ -451,14 +463,14 @@ const Login = ({
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          email
+          identifier
         })
       });
       const data = await response.json();
       if (response.ok && data.success) {
         toast({
           title: "Reset Code Resent",
-          description: "Please check your email for the new reset code."
+          description: "Please check your registered email for the new reset code."
         });
         setOtp('');
         startOtpTimer();
@@ -478,7 +490,7 @@ const Login = ({
     setIsLoading(true);
     try {
       if (loginStep === 'forgot-password') {
-        await initiateForgotPassword(email);
+        await initiateForgotPassword(identifier);
       } else if (loginStep === 'reset-password') {
         const success = await resetPassword();
         if (success) {
@@ -498,7 +510,7 @@ const Login = ({
   const handleQuickLogin = (role: UserRole) => {
     const user = mockUsers.find(u => u.role === role);
     if (user) {
-      setEmail(user.email);
+      setIdentifier(user.email);
       setPassword(user.password);
       setSelectedRole(role);
     }
@@ -517,14 +529,14 @@ const Login = ({
     try {
       if (useApiLogin) {
         console.log('Attempting API login with credentials:', {
-          email,
+          identifier,
           password: '***'
         });
         console.log('Using base URL:', baseUrl);
 
         // Use the passed login function from AuthContext
         await loginFunction({
-          email,
+          identifier,
           password
         });
         toast({
@@ -532,8 +544,8 @@ const Login = ({
           description: "Logged in successfully"
         });
       } else {
-        // Handle mock login
-        const user = await handleMockLogin(email, password, selectedRole);
+        // Handle mock login - use identifier as email for mock login
+        const user = await handleMockLogin(identifier, password, selectedRole);
         toast({
           title: "Success",
           description: `Logged in successfully as ${user.role}`
@@ -561,9 +573,9 @@ const Login = ({
     setIsLoading(true);
     try {
       if (loginStep === 'first-login-email') {
-        await initiateFirstLoginAPI(email);
+        await initiateFirstLoginAPI(identifier);
       } else if (loginStep === 'first-login-otp') {
-        await verifyFirstLoginOTP(email, otp);
+        await verifyFirstLoginOTP(identifier, otp);
       } else if (loginStep === 'first-login-password') {
         const success = await setFirstLoginPassword();
         if (success) {
@@ -652,10 +664,10 @@ const Login = ({
                     </Select>
                   </div>}
 
-                {/* Email Input */}
+                {/* Identifier Input */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-foreground">Email address</Label>
-                  <Input id="email" type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} required className="h-11" />
+                  <Label htmlFor="identifier" className="text-sm font-medium text-foreground">Email, Phone, ID or Birth Certificate</Label>
+                  <Input id="identifier" type="text" placeholder="Enter email, phone, system ID, or birth certificate" value={identifier} onChange={e => setIdentifier(e.target.value)} required className="h-11" />
                 </div>
 
                 {/* Password Input */}
@@ -705,12 +717,12 @@ const Login = ({
             {loginStep === 'first-login-email' && <form onSubmit={handleFirstLoginAPIFlow} className="space-y-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstLoginEmail">Email Address</Label>
-                    <Input id="firstLoginEmail" type="email" placeholder="Enter your email address" value={email} onChange={e => setEmail(e.target.value)} required />
+                    <Label htmlFor="firstLoginIdentifier">Email, Phone, ID or Birth Certificate</Label>
+                    <Input id="firstLoginIdentifier" type="text" placeholder="Enter email, phone, system ID, or birth certificate" value={identifier} onChange={e => setIdentifier(e.target.value)} required />
                   </div>
 
                   <div className="text-sm text-muted-foreground bg-primary/10 p-3 rounded-lg">
-                    We'll send a 6-digit verification code to your email address to help you set up your password.
+                    We'll send a 6-digit verification code to your registered email address to help you set up your password.
                   </div>
 
                   {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
@@ -732,7 +744,7 @@ const Login = ({
                 <div className="space-y-4">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">
-                      We sent a 6-digit code to <strong>{email}</strong>
+                      We sent a 6-digit code to your registered email address
                     </p>
                   </div>
                   
@@ -825,12 +837,12 @@ const Login = ({
             {loginStep === 'forgot-password' && <form onSubmit={handleForgotPasswordFlow} className="space-y-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="resetEmail">Email Address</Label>
-                    <Input id="resetEmail" type="email" placeholder="Enter your email address" value={email} onChange={e => setEmail(e.target.value)} required />
+                    <Label htmlFor="resetIdentifier">Email, Phone, ID or Birth Certificate</Label>
+                    <Input id="resetIdentifier" type="text" placeholder="Enter email, phone, system ID, or birth certificate" value={identifier} onChange={e => setIdentifier(e.target.value)} required />
                   </div>
 
                   <div className="text-sm text-muted-foreground bg-primary/10 p-3 rounded-lg">
-                    We'll send a 6-digit reset code to your email address.
+                    We'll send a 6-digit reset code to your registered email address.
                   </div>
 
                   {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
@@ -852,7 +864,7 @@ const Login = ({
                 <div className="space-y-4">
                   <div className="text-center mb-4">
                     <p className="text-sm text-muted-foreground">
-                      We sent a 6-digit reset code to <strong>{email}</strong>
+                      We sent a 6-digit reset code to your registered email address
                     </p>
                   </div>
                   

@@ -109,7 +109,7 @@ export const loginUser = async (credentials: LoginCredentials): Promise<ApiRespo
   const isMobile = isNativePlatform();
   const platform = isMobile ? '📱' : '🌐';
 
-  console.log(`${platform} Login attempt:`, { email: credentials.email });
+  console.log(`${platform} Login attempt:`, { identifier: credentials.identifier });
 
   // Mobile uses different endpoint that returns refresh_token in response body
   // Web uses endpoint that sets refresh_token as HTTP-only cookie
@@ -122,7 +122,8 @@ export const loginUser = async (credentials: LoginCredentials): Promise<ApiRespo
     },
     credentials: isMobile ? 'omit' : 'include', // Web: Include cookies for refresh token; Mobile: No cookies
     body: JSON.stringify({
-      ...credentials,
+      identifier: credentials.identifier,
+      password: credentials.password,
       ...(isMobile && { deviceId: await tokenStorageService.getDeviceId() })
     })
   });

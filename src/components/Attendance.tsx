@@ -570,17 +570,26 @@ const Attendance = () => {
             </Card>
           </div>
 
-          {/* Data Table */}
-          <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-            <TableContainer sx={{ height: 600 }}>
-              <Table stickyHeader aria-label="attendance table">
+          {/* Data Table - Full Page Height */}
+          <Paper sx={{ width: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 400px)', minHeight: '400px' }}>
+            <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
+              <Table stickyHeader aria-label="attendance table" sx={{ minWidth: 650 }}>
                 <TableHead>
                   <TableRow>
                     {columns.map((column) => (
                       <TableCell
                         key={column.id}
                         align={column.align}
-                        style={{ minWidth: column.minWidth }}
+                        sx={{ 
+                          minWidth: column.minWidth,
+                          fontWeight: 'bold',
+                          backgroundColor: 'hsl(var(--muted))',
+                          color: 'hsl(var(--foreground))',
+                          borderBottom: '2px solid hsl(var(--border))',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px 6px', sm: '12px 16px' },
+                          whiteSpace: 'nowrap'
+                        }}
                       >
                         {column.label}
                       </TableCell>
@@ -590,11 +599,30 @@ const Attendance = () => {
                 <TableBody>
                   {displayData.length > 0 ? (
                     displayData.map((record, index) => (
-                      <TableRow hover role="checkbox" tabIndex={-1} key={index}>
+                      <TableRow 
+                        hover 
+                        role="checkbox" 
+                        tabIndex={-1} 
+                        key={index}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'hsl(var(--muted) / 0.5)'
+                          }
+                        }}
+                      >
                         {columns.map((column) => {
                           const value = (record as any)[column.id];
                           return (
-                            <TableCell key={column.id} align={column.align}>
+                            <TableCell 
+                              key={column.id} 
+                              align={column.align}
+                              sx={{
+                                fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                                padding: { xs: '6px 4px', sm: '12px 16px' },
+                                borderBottom: '1px solid hsl(var(--border))',
+                                color: 'hsl(var(--foreground))'
+                              }}
+                            >
                               {column.format ? column.format(value, record) : value}
                             </TableCell>
                           );
@@ -603,11 +631,11 @@ const Attendance = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={columns.length} align="center">
-                        <div className="py-12 text-center text-muted-foreground">
-                          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg">No attendance records found</p>
-                          <p className="text-sm">{getCurrentSelection()}</p>
+                      <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
+                        <div className="py-8 text-center text-muted-foreground">
+                          <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-50" />
+                          <p className="text-base sm:text-lg">No attendance records found</p>
+                          <p className="text-xs sm:text-sm mt-1">{getCurrentSelection()}</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -623,6 +651,18 @@ const Attendance = () => {
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                borderTop: '1px solid hsl(var(--border))',
+                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                  fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                },
+                '.MuiTablePagination-select': {
+                  fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                },
+                '.MuiTablePagination-actions': {
+                  marginLeft: { xs: '4px', sm: '20px' }
+                }
+              }}
             />
           </Paper>
         </TabsContent>

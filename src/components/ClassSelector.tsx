@@ -7,6 +7,7 @@ import { DataCardView } from '@/components/ui/data-card-view';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
 import { School, Users, BookOpen, Clock, RefreshCw, User, Search, Filter, Image, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { instituteClassesApi, type EnrollClassData } from '@/api/instituteClasses.api';
+import ChildCurrentSelection from '@/components/ChildCurrentSelection';
+
 const enrollFormSchema = z.object({
   classId: z.string().min(1, 'Class ID is required'),
   enrollmentCode: z.string().min(1, 'Enrollment code is required')
@@ -135,8 +138,11 @@ const ClassSelector = () => {
     user,
     selectedInstitute,
     setSelectedClass,
-    currentInstituteId
+    currentInstituteId,
+    isViewingAsParent,
+    selectedChild
   } = useAuth();
+  const navigate = useNavigate();
   const {
     toast
   } = useToast();
@@ -453,6 +459,14 @@ const ClassSelector = () => {
       grade: 0,
       specialty: classData.specialty || 'General'
     });
+
+    // When parent is viewing child's data, navigate to child's subject selection
+    if (isViewingAsParent && selectedChild) {
+      console.log('Parent viewing child - navigating to child subject selection');
+      navigate(`/child/${selectedChild.id}/select-subject`);
+      return;
+    }
+
     const shouldNavigateToSubject =
       effectiveRole === 'AttendanceMarker' ||
       effectiveRole === 'Teacher' ||
@@ -594,35 +608,37 @@ const ClassSelector = () => {
     console.log('Manual load requested');
     fetchClassesByRole(1, pageSize, false);
   };
-  return <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 mb-16">
+  return <div className="space-y-2 sm:space-y-3 p-1 sm:p-2 md:p-3">
+      {/* Show Current Child Selection for Parent flow */}
+      {isViewingAsParent && <ChildCurrentSelection className="mb-3" />}
+      
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1.5 sm:gap-2 mb-2 sm:mb-4">
         <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-sm sm:text-base md:text-lg font-semibold text-foreground mb-0.5">
             Select Class
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Choose a class to manage lectures and attendance
           </p>
-          {selectedInstitute && <p className="text-xs sm:text-sm text-blue-600 mt-2">
+          {selectedInstitute && <p className="text-[9px] sm:text-[10px] text-primary mt-0.5">
               Institute: {selectedInstitute.name}
             </p>}
-          {effectiveRole === 'Student' && <Button onClick={handleOpenEnrollDialog} variant="default" size="sm" className="mt-3 w-full sm:w-auto">
-              <School className="h-4 w-4 mr-2" />
-              Enroll Class
+          {effectiveRole === 'Student' && <Button onClick={handleOpenEnrollDialog} variant="default" size="sm" className="mt-1.5 w-full sm:w-auto h-6 sm:h-7 text-[10px] sm:text-xs">
+              <School className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+              Enroll
             </Button>}
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button onClick={() => setShowFilters(!showFilters)} variant="outline" size="sm" className="flex-1 sm:flex-none">
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
+        <div className="flex gap-1 sm:gap-1.5 w-full sm:w-auto">
+          <Button onClick={() => setShowFilters(!showFilters)} variant="outline" size="sm" className="flex-1 sm:flex-none h-6 sm:h-7 text-[10px] sm:text-xs px-1.5 sm:px-2">
+            <Filter className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+            <span className="hidden xs:inline">Filters</span>
           </Button>
-          <Button onClick={handleRefreshClick} disabled={isLoading} variant="outline" size="sm" className="flex-1 sm:flex-none">
+          <Button onClick={handleRefreshClick} disabled={isLoading} variant="outline" size="sm" className="flex-1 sm:flex-none h-6 sm:h-7 text-[10px] sm:text-xs px-1.5 sm:px-2">
             {isLoading ? <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
+                <RefreshCw className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 animate-spin" />
               </> : <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                <RefreshCw className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+                <span className="hidden sm:inline">Refresh</span>
               </>}
           </Button>
         </div>
@@ -630,26 +646,26 @@ const ClassSelector = () => {
 
       {/* Filters */}
       {dataLoaded && showFilters && <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Filter className="h-5 w-5" />
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
+              <Filter className="h-4 w-4" />
               Filter Classes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="search">Search</Label>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+              <div className="col-span-2 sm:col-span-1 space-y-1">
+                <Label htmlFor="search" className="text-xs">Search</Label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input id="search" placeholder="Search classes..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+                  <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <Input id="search" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 h-8 text-xs" />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="grade">Grade</Label>
+              <div className="space-y-1">
+                <Label htmlFor="grade" className="text-xs">Grade</Label>
                 <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="All Grades" />
                   </SelectTrigger>
                   <SelectContent>
@@ -657,34 +673,34 @@ const ClassSelector = () => {
                     {Array.from({
                   length: 13
                 }, (_, i) => i).map(grade => <SelectItem key={grade} value={grade.toString()}>
-                        {grade === 0 ? 'Kindergarten' : `Grade ${grade}`}
+                        {grade === 0 ? 'KG' : `G${grade}`}
                       </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="specialty">Specialty</Label>
+              <div className="space-y-1">
+                <Label htmlFor="specialty" className="text-xs">Specialty</Label>
                 <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Specialties" />
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Specialties</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     <SelectItem value="science">Science</SelectItem>
                     <SelectItem value="commerce">Commerce</SelectItem>
                     <SelectItem value="arts">Arts</SelectItem>
-                    <SelectItem value="mathematics">Mathematics</SelectItem>
-                    <SelectItem value="technology">Technology</SelectItem>
+                    <SelectItem value="mathematics">Maths</SelectItem>
+                    <SelectItem value="technology">Tech</SelectItem>
                     <SelectItem value="general">General</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="classType">Class Type</Label>
+              <div className="space-y-1">
+                <Label htmlFor="classType" className="text-xs">Type</Label>
                 <Select value={classTypeFilter} onValueChange={setClassTypeFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
@@ -697,10 +713,10 @@ const ClassSelector = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="academicYear">Academic Year</Label>
+              <div className="space-y-1">
+                <Label htmlFor="academicYear" className="text-xs">Year</Label>
                 <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="All Years" />
                   </SelectTrigger>
                   <SelectContent>
@@ -712,10 +728,10 @@ const ClassSelector = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              <div className="space-y-1">
+                <Label htmlFor="status" className="text-xs">Status</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -745,243 +761,159 @@ const ClassSelector = () => {
           </CardContent>
         </Card>}
 
-      {filteredClasses.length === 0 && !isLoading ? <div className="text-center py-8 sm:py-12 px-4">
-          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+      {filteredClasses.length === 0 && !isLoading ? <div className="text-center py-10">
+          <p className="text-muted-foreground">
             {searchTerm || gradeFilter !== 'all' || specialtyFilter !== 'all' || classTypeFilter !== 'all' || academicYearFilter !== 'all' || statusFilter !== 'all' ? 'No classes match your current filters.' : 'No enrolled classes found.'}
           </p>
         </div> : <>
-          {/* Mobile View Content - Compact Material Tailwind Cards */}
-          <div className="md:hidden">
-            <div className="grid grid-cols-1 gap-6 px-2">
-              {filteredClasses.map(classItem => <div key={classItem.id} className="relative flex w-full flex-col rounded-lg bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg">
-                  {/* Class Image - Smaller Gradient Header */}
-                  <div className="relative mx-2 -mt-3 h-20 overflow-hidden rounded-lg bg-clip-border text-white shadow-md shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
-                    {classItem.imageUrl ? (
-                      <img 
-                        src={getImageUrl(classItem.imageUrl)} 
-                        alt={classItem.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                        <School className="w-8 h-8 text-white" />
-                      </div>
-                    )}
+          {/* Unified Card View - Same size on all devices */}
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 ${sidebarCollapsed ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-x-3 gap-y-8 sm:gap-x-4 sm:gap-y-10 pt-3 md:pt-6 mb-8`}
+          >
+            {filteredClasses.map(classItem => (
+              <div key={classItem.id} className="relative flex w-full flex-col rounded-lg bg-card bg-clip-border text-card-foreground shadow-sm hover:shadow-md transition-all duration-300">
+                {/* Verification Status Banner for Students */}
+                {effectiveRole === 'Student' && classItem.isVerified === false && (
+                  <div className="absolute top-0 left-0 right-0 z-10 bg-amber-500/90 text-white text-[10px] font-medium py-0.5 px-2 rounded-t-lg text-center">
+                    ⏳ Pending Verification
+                  </div>
+                )}
+                
+                {/* Class Image - Gradient Header */}
+                <div className={`relative mx-3 ${effectiveRole === 'Student' && classItem.isVerified === false ? 'mt-2' : '-mt-5'} h-28 overflow-hidden rounded-lg bg-clip-border text-white shadow-md shadow-primary/30 bg-gradient-to-r from-primary to-primary/80`}>
+                  {classItem.imageUrl ? (
+                    <img 
+                      src={getImageUrl(classItem.imageUrl)} 
+                      alt={classItem.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-primary to-primary/80">
+                      <School className="w-8 h-8 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4">
+                  {/* Class Name */}
+                  <h5 className="mb-1.5 block font-sans text-sm font-semibold leading-snug tracking-normal text-foreground antialiased line-clamp-2">
+                    {classItem.name}
+                  </h5>
+                  
+                  {/* Info badges */}
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {classItem.specialty}
+                    </Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {classItem.academicYear}
+                    </Badge>
                   </div>
 
-                  <div className="p-3">
-                    {/* Class Name */}
-                    <h5 className="mb-1 block font-sans text-base font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased line-clamp-1">
-                      {classItem.name}
-                    </h5>
-                    
-                    {/* Compact Info */}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                      {classItem.specialty} • {classItem.academicYear}
-                    </p>
+                  {/* Description */}
+                  <p className="block font-sans text-xs font-light leading-relaxed text-muted-foreground antialiased line-clamp-2">
+                    {classItem.description || `${classItem.classType} class`}
+                  </p>
 
-                    {/* Additional Details - Shown when Read More is clicked */}
-                    {expandedIds[classItem.id] && (
-                      <div className="mb-2 animate-in fade-in slide-in-from-top-2 duration-300 space-y-1.5 border-t border-gray-200 dark:border-gray-700 pt-2">
-                        <div className="text-xs">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Code:</span>
-                          <span className="text-gray-600 dark:text-gray-400 ml-1">{classItem.code}</span>
-                        </div>
-                        <div className="text-xs">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Type:</span>
-                          <span className="text-gray-600 dark:text-gray-400 ml-1">{classItem.classType}</span>
-                        </div>
+                  {/* Additional Details - Shown when Read More is clicked */}
+                  {expandedIds[classItem.id] && (
+                    <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300 space-y-1.5 border-t border-border pt-2">
+                      <div className="text-xs">
+                        <span className="font-semibold text-foreground">Code:</span>
+                        <span className="text-muted-foreground ml-1.5">{classItem.code}</span>
                       </div>
-                    )}
-                  </div>
+                      <div className="text-xs">
+                        <span className="font-semibold text-foreground">Type:</span>
+                        <span className="text-muted-foreground ml-1.5">{classItem.classType}</span>
+                      </div>
+                      <div className="text-xs">
+                        <span className="font-semibold text-foreground">Capacity:</span>
+                        <span className="text-muted-foreground ml-1.5">{classItem.capacity || 'N/A'}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Action Buttons - Compact */}
-                  <div className="px-3 pb-3 space-y-1.5">
+                {/* Action Buttons */}
+                <div className="p-4 pt-0 space-y-2">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedIds(prev => ({
+                        ...prev,
+                        [classItem.id]: !prev[classItem.id]
+                      }));
+                    }}
+                    className="w-full select-none rounded-md bg-muted py-2 px-4 text-center align-middle font-sans text-[10px] font-semibold uppercase text-foreground shadow-sm transition-all hover:shadow active:opacity-90"
+                  >
+                    {expandedIds[classItem.id] ? 'Show Less' : 'Read More'}
+                  </button>
+                  
+                  {/* Show Select button only for verified classes (or non-student roles) */}
+                  {classItem.isVerified === false ? (
+                    <div className="w-full select-none rounded-md bg-amber-100 dark:bg-amber-900/30 py-2 px-4 text-center align-middle font-sans text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
+                      <Clock className="h-3 w-3 inline-block mr-1" />
+                      Pending
+                    </div>
+                  ) : (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExpandedIds(prev => ({
-                          ...prev,
-                          [classItem.id]: !prev[classItem.id]
-                        }));
+                        handleSelectClass(classItem);
                       }}
-                      className="select-none rounded-md bg-gray-100 dark:bg-gray-700 py-2 px-4 w-full text-center font-sans text-[10px] font-bold uppercase text-gray-900 dark:text-white shadow-sm transition-all hover:shadow-md"
+                      className="w-full select-none rounded-md bg-primary py-2 px-4 text-center align-middle font-sans text-[10px] font-semibold uppercase text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:shadow-md hover:shadow-primary/30 active:opacity-90"
                     >
-                      {expandedIds[classItem.id] ? 'Hide' : 'More'}
+                      Select Class
                     </button>
-                    
-                    {/* Show Select button only for verified classes (or non-student roles) */}
-                    {classItem.isVerified === false ? (
-                      <div className="select-none rounded-md bg-amber-100 dark:bg-amber-900/30 py-2 px-4 w-full text-center font-sans text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
-                        <Clock className="h-3 w-3 inline-block mr-1" />
-                        Pending
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectClass(classItem);
-                        }}
-                        className="select-none rounded-md bg-blue-500 py-2 px-4 w-full text-center font-sans text-[10px] font-bold uppercase text-white shadow-sm shadow-blue-500/20 transition-all hover:shadow-md hover:shadow-blue-500/40"
-                      >
-                        Select
-                      </button>
-                    )}
-                  </div>
-                </div>)}
-            </div>
-            
-            {/* Mobile Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 px-2">
-              <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="flex items-center gap-1">
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                Page {currentPage} of {totalPages} ({totalItems} total)
+                  )}
+                </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Select value={pageSize.toString()} onValueChange={value => handlePageSizeChange(parseInt(value, 10))}>
-                  <SelectTrigger className="w-[130px] h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 per page</SelectItem>
-                    <SelectItem value="50">50 per page</SelectItem>
-                    <SelectItem value="100">100 per page</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="flex items-center gap-1">
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Desktop View - Material Tailwind Cards */}
-          <div className="hidden md:block">
-            <div className={`grid grid-cols-1 md:grid-cols-2 ${sidebarCollapsed ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-x-6 gap-y-12 p-2 md:p-3 lg:p-4 mb-16`}>
-              {filteredClasses.map(classItem => <div key={classItem.id} className="relative flex w-full flex-col rounded-xl bg-white dark:bg-gray-800 bg-clip-border text-gray-700 dark:text-gray-300 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-                  {/* Class Image - Gradient Header with -mt-6 offset */}
-                  <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
-                    {classItem.imageUrl ? (
-                      <img 
-                        src={getImageUrl(classItem.imageUrl)} 
-                        alt={classItem.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                        <School className="w-16 h-16 text-white" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    {/* Class Name */}
-                    <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-white antialiased">
-                      {classItem.name}
-                    </h5>
-
-                    {/* Additional Details - Shown when Read More is clicked */}
-                    {expandedIds[classItem.id] && (
-                      <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Code:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.code}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Description:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.description}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Academic Year:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.academicYear}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[100px]">Type:</span>
-                            <span className="text-gray-600 dark:text-gray-400">{classItem.specialty || classItem.classType}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="p-6 pt-0 space-y-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExpandedIds(prev => ({
-                          ...prev,
-                          [classItem.id]: !prev[classItem.id]
-                        }));
-                      }}
-                      className="select-none rounded-lg bg-gray-100 dark:bg-gray-700 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 dark:text-white shadow-md transition-all hover:shadow-lg focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
-                    >
-                      {expandedIds[classItem.id] ? 'Hide Details' : 'Read More'}
-                    </button>
-                    
-                    {/* Show Select button only for verified classes (or non-student roles) */}
-                    {classItem.isVerified === false ? (
-                      <div className="select-none rounded-lg bg-amber-100 dark:bg-amber-900/30 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
-                        <Clock className="h-4 w-4 inline-block mr-2" />
-                        Pending Verification
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectClass(classItem);
-                        }}
-                        className="select-none rounded-lg bg-blue-500 py-3 px-6 w-full text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg hover:shadow-blue-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
-                      >
-                        Select Class
-                      </button>
-                    )}
-                  </div>
-                </div>)}
-            </div>
-
-            {/* Desktop Pagination using MUI TablePagination - Always show */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 px-2">
-              <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="flex items-center gap-1">
-                <ChevronLeft className="h-4 w-4" />
-                Previous
+          {/* Pagination */}
+          <div className="flex flex-col items-center gap-4 mt-6 pb-6 px-4">
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => handlePageChange(currentPage - 1)} 
+                disabled={currentPage <= 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Prev
               </Button>
-
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                Page {currentPage} of {totalPages} ({totalItems} total)
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Select value={pageSize.toString()} onValueChange={value => handlePageSizeChange(parseInt(value, 10))}>
-                  <SelectTrigger className="w-[130px] h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 per page</SelectItem>
-                    <SelectItem value="50">50 per page</SelectItem>
-                    <SelectItem value="100">100 per page</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="flex items-center gap-1">
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              
+              <span className="text-sm text-muted-foreground font-medium">
+                Page {currentPage} of {totalPages}
+              </span>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handlePageChange(currentPage + 1)} 
+                disabled={currentPage >= totalPages || isLoading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {totalItems} classes total
+              </span>
+              <Select value={pageSize.toString()} onValueChange={value => handlePageSizeChange(parseInt(value, 10))}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </>}

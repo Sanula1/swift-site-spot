@@ -542,7 +542,7 @@ const NewAttendance = () => {
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{title}</h1>
             <p className="text-muted-foreground mb-6">{getContextInfo()}</p>
-            <Button onClick={loadAttendanceData} disabled={isLoading} className="gap-2" size="lg">
+            <Button onClick={loadAttendanceData} disabled={isLoading} className="gap-2 w-full sm:w-auto" size="lg">
               {isLoading ? (
                 <><RefreshCw className="h-4 w-4 animate-spin" /> Loading Data...</>
               ) : (
@@ -563,7 +563,7 @@ const NewAttendance = () => {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         
         <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
                 <CalendarDays className="w-6 h-6 text-primary" />
@@ -915,8 +915,8 @@ const NewAttendance = () => {
                 </div>
               ) : filteredRecords.length > 0 ? (
                 <>
-                  {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto">
+                  {/* Table (sm+ full columns) */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/30">
@@ -964,11 +964,45 @@ const NewAttendance = () => {
                     </Table>
                   </div>
 
-                  {/* Mobile Cards */}
-                  <div className="md:hidden p-4 space-y-4">
-                    {filteredRecords.map((record, index) => (
-                      <AttendanceCard key={record.attendanceId || index} record={record} />
-                    ))}
+                  {/* Mobile Table (no cards) */}
+                  <div className="sm:hidden overflow-x-auto">
+                    <Table className="min-w-[560px]">
+                      <TableHeader>
+                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                          <TableHead className="font-semibold">Student</TableHead>
+                          <TableHead className="font-semibold">Date</TableHead>
+                          <TableHead className="font-semibold">Status</TableHead>
+                          <TableHead className="font-semibold">Method</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRecords.map((record, index) => (
+                          <TableRow key={record.attendanceId || index} className="hover:bg-muted/30 transition-colors">
+                            <TableCell className="py-3">
+                              <div>
+                                <p className="font-medium text-sm">{record.studentName}</p>
+                                <p className="text-xs text-muted-foreground">{record.studentId}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-3">
+                              <div>
+                                <p className="font-medium text-sm">{formatDate(record.date)}</p>
+                                <p className="text-xs text-muted-foreground">{formatTime(record.date)}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-3">
+                              <Badge className={`${getStatusColor(record.status)} gap-1.5 font-medium`}>
+                                {getStatusIcon(record.status)}
+                                {record.status.charAt(0).toUpperCase() + record.status.slice(1).replace('_', ' ')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-3">
+                              <p className="text-sm text-muted-foreground">{record.markingMethod}</p>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
 
                   {/* Pagination */}

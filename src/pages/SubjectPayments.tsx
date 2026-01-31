@@ -29,7 +29,8 @@ const SubjectPayments = () => {
     user,
     selectedInstitute,
     selectedClass,
-    selectedSubject
+    selectedSubject,
+    isViewingAsParent
   } = useAuth();
   const instituteRole = useInstituteRole();
   
@@ -497,6 +498,16 @@ const SubjectPayments = () => {
                                 <div className="flex flex-col space-y-1">
                                   {instituteRole === 'Student' && (
                                     (() => {
+                                      // Parent viewing mode - show view only badge
+                                      if (isViewingAsParent) {
+                                        return (
+                                          <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                                            <Eye className="h-3 w-3 mr-1" />
+                                            View Only
+                                          </Badge>
+                                        );
+                                      }
+                                      
                                       const submissionData = mySubmissionsMap[payment.id];
                                       const hasSubmitted = submissionData || payment.hasSubmitted || payment.mySubmissionStatus;
                                       const status = submissionData?.status || payment.mySubmissionStatus;
@@ -603,8 +614,8 @@ const SubjectPayments = () => {
         {/* Create Subject Payment Dialog */}
         {selectedInstitute && selectedClass && selectedSubject && <CreateSubjectPaymentForm open={createPaymentDialogOpen} onOpenChange={setCreatePaymentDialogOpen} instituteId={selectedInstitute.id} classId={selectedClass.id} subjectId={selectedSubject.id} onSuccess={loadSubjectPayments} />}
 
-        {/* Submit Payment Dialog for Students */}
-        {instituteRole === 'Student' && selectedPaymentForSubmission && <SubmitSubjectPaymentDialog open={submitPaymentDialogOpen} onOpenChange={setSubmitPaymentDialogOpen} payment={selectedPaymentForSubmission} onSuccess={() => {
+        {/* Submit Payment Dialog for Students - disabled for parent viewing */}
+        {instituteRole === 'Student' && !isViewingAsParent && selectedPaymentForSubmission && <SubmitSubjectPaymentDialog open={submitPaymentDialogOpen} onOpenChange={setSubmitPaymentDialogOpen} payment={selectedPaymentForSubmission} onSuccess={() => {
         setSubmitPaymentDialogOpen(false);
         setSelectedPaymentForSubmission(null);
         loadSubjectPayments();

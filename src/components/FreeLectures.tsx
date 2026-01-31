@@ -4,10 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Video, User, Calendar, ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { AlertCircle, Video, User, Calendar, ChevronDown, ChevronUp, Play, Plus, Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import VideoPreviewDialog from '@/components/VideoPreviewDialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import CreateStructuredLectureForm from '@/components/forms/CreateStructuredLectureForm';
+import UpdateStructuredLectureForm from '@/components/forms/UpdateStructuredLectureForm';
+import DeleteStructuredLectureDialog from '@/components/forms/DeleteStructuredLectureDialog';
+import { StructuredLecture } from '@/api/structuredLectures.api';
 
 interface Attachment {
   documentName: string;
@@ -20,31 +25,20 @@ interface Lecture {
   description: string;
   subjectId: string;
   grade: number;
+  lessonNumber?: number;
+  lectureNumber?: number;
   videoUrl: string | null;
+  lectureVideoUrl?: string | null;
   thumbnailUrl: string | null;
+  coverImageUrl?: string | null;
   attachments: Attachment[] | null;
+  documentUrls?: string[] | null;
   isActive: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  provider?: string;
 }
-
-// Helper function to extract lesson number from title
-const extractLessonNumber = (title: string): number | null => {
-  const patterns = [
-    /lesson\s*(\d+)/i,
-    /l(\d+)/i,
-    /පාඩම\s*(\d+)/i,
-    /(\d+)\s*පාඩම/i
-  ];
-  
-  for (const pattern of patterns) {
-    const match = title.match(pattern);
-    if (match) return parseInt(match[1], 10);
-  }
-  
-  return null;
-};
 
 const FreeLectures = () => {
   const { selectedInstitute, selectedClass, selectedSubject, selectedClassGrade } = useAuth();
@@ -59,30 +53,48 @@ const FreeLectures = () => {
     title: '' 
   });
 
+  // CRUD state
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingLecture, setEditingLecture] = useState<Lecture | null>(null);
+  const [deletingLecture, setDeletingLecture] = useState<Lecture | null>(null);
+
+  // Role-based access control
+  const instituteUserType = selectedInstitute?.instituteUserType || (selectedInstitute as any)?.userRole;
+  const isInstituteAdmin = instituteUserType === 'INSTITUTEADMIN' || instituteUserType === 'INSTITUTE_ADMIN';
+  const isTeacher = instituteUserType === 'TEACHER';
+  const canManageLectures = isInstituteAdmin || isTeacher;
+
   // Track current context to prevent unnecessary reloads
   const contextKey = `${selectedSubject?.id}-${selectedClassGrade}`;
   const [lastLoadedContext, setLastLoadedContext] = useState<string>('');
 
-  // Group lectures by topic (lecture title)
+  // Group lectures by lesson number or topic
   const lecturesByLesson = React.useMemo(() => {
     const grouped = new Map<string, Lecture[]>();
     const unassigned: Lecture[] = [];
     
     lectures.forEach(lecture => {
-      const topic = (lecture.title || '').trim() || 'Untitled Topic';
-      const existing = grouped.get(topic) || [];
-      grouped.set(topic, [...existing, lecture]);
+      const lessonKey = lecture.lessonNumber 
+        ? `Lesson ${lecture.lessonNumber}` 
+        : (lecture.title || '').trim() || 'Untitled Topic';
+      const existing = grouped.get(lessonKey) || [];
+      grouped.set(lessonKey, [...existing, lecture]);
     });
     
     return { grouped, unassigned };
   }, [lectures]);
 
-  // Get available topics (unique titles)
+  // Get available lessons
   const availableLessons = React.useMemo(() => {
-    return Array.from(lecturesByLesson.grouped.keys()).sort((a, b) => a.localeCompare(b));
+    return Array.from(lecturesByLesson.grouped.keys()).sort((a, b) => {
+      // Sort "Lesson X" numerically
+      const numA = a.match(/Lesson (\d+)/)?.[1];
+      const numB = b.match(/Lesson (\d+)/)?.[1];
+      if (numA && numB) return parseInt(numA) - parseInt(numB);
+      return a.localeCompare(b);
+    });
   }, [lecturesByLesson]);
   
-  // Calculate total lessons/topics count
   const totalLessons = availableLessons.length;
 
   // Auto-load free lectures when subject is selected
@@ -93,10 +105,9 @@ const FreeLectures = () => {
     }
   }, [contextKey]);
 
-
   const handleLoadLectures = () => {
     if (selectedSubject && (selectedClassGrade !== null && selectedClassGrade !== undefined)) {
-      fetchFreeLectures();
+      fetchFreeLectures(true);
     }
   };
 
@@ -107,8 +118,9 @@ const FreeLectures = () => {
     setError(null);
 
     try {
-      const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lms.api.suraksha.lk';
-      const endpoint = `/api/structured-lectures/subject/${selectedSubject.id}/grade/${selectedClassGrade || selectedClass?.grade || 10}`;
+      const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lmsapi.suraksha.lk';
+      const grade = selectedClassGrade || selectedClass?.grade || 10;
+      const endpoint = `/api/structured-lectures/subject/${selectedSubject.id}?grade=${grade}`;
       
       const token = localStorage.getItem('access_token');
       
@@ -175,6 +187,42 @@ const FreeLectures = () => {
     }));
   };
 
+  const handleCreateSuccess = () => {
+    setShowCreateDialog(false);
+    fetchFreeLectures(true);
+  };
+
+  const handleUpdateSuccess = () => {
+    setEditingLecture(null);
+    fetchFreeLectures(true);
+  };
+
+  const handleDeleteSuccess = () => {
+    setDeletingLecture(null);
+    fetchFreeLectures(true);
+  };
+
+  // Convert Lecture to StructuredLecture for forms
+  const toStructuredLecture = (lecture: Lecture): StructuredLecture => ({
+    id: lecture.id,
+    instituteId: selectedInstitute?.id || '',
+    classId: selectedClass?.id || '',
+    subjectId: lecture.subjectId,
+    grade: lecture.grade,
+    lessonNumber: lecture.lessonNumber || 1,
+    lectureNumber: lecture.lectureNumber || 1,
+    title: lecture.title,
+    description: lecture.description,
+    lectureVideoUrl: lecture.videoUrl || lecture.lectureVideoUrl || undefined,
+    coverImageUrl: lecture.thumbnailUrl || lecture.coverImageUrl || undefined,
+    documentUrls: lecture.documentUrls || lecture.attachments?.map(a => a.documentUrl),
+    provider: lecture.provider,
+    isActive: lecture.isActive,
+    createdBy: lecture.createdBy,
+    createdAt: lecture.createdAt,
+    updatedAt: lecture.updatedAt
+  });
+
   if (!selectedSubject || selectedClassGrade === null || selectedClassGrade === undefined) {
     return (
       <div className="p-6">
@@ -225,12 +273,36 @@ const FreeLectures = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* Header with CRUD actions */}
       <div className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold">
-            Lectures ({selectedInstitute?.name} → {selectedClass?.name} → {selectedSubject.name})
-          </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-3xl font-bold">
+              Lectures ({selectedInstitute?.name} → {selectedClass?.name} → {selectedSubject.name})
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Grade {selectedClassGrade} • {lectures.length} lectures available
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLoadLectures}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            
+            {canManageLectures && (
+              <Button onClick={() => setShowCreateDialog(true)} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Lecture
+              </Button>
+            )}
+          </div>
         </div>
         
         {/* Load Lectures Button - Only show if no data loaded */}
@@ -290,12 +362,21 @@ const FreeLectures = () => {
             <div className="text-center text-muted-foreground">
               <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>There are no free lectures for this subject!</p>
+              {canManageLectures && (
+                <Button 
+                  onClick={() => setShowCreateDialog(true)} 
+                  className="mt-4"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Lecture
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {/* Render grouped topics (lesson titles) */}
           {availableLessons.map((lessonKey) => {
             const lessonLectures = lecturesByLesson.grouped.get(lessonKey) || [];
             const activeCount = lessonLectures.filter(l => l.isActive).length;
@@ -333,9 +414,9 @@ const FreeLectures = () => {
                       {lessonLectures.map((lecture, index) => (
                         <Card key={lecture.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                           <div className="relative aspect-video bg-muted">
-                            {lecture.thumbnailUrl ? (
+                            {(lecture.thumbnailUrl || lecture.coverImageUrl) ? (
                               <img 
-                                src={lecture.thumbnailUrl} 
+                                src={lecture.thumbnailUrl || lecture.coverImageUrl || ''} 
                                 alt={lecture.title}
                                 className="w-full h-full object-cover"
                               />
@@ -345,7 +426,7 @@ const FreeLectures = () => {
                               </div>
                             )}
                             <Badge variant="outline" className="absolute top-2 left-2 bg-background/90 backdrop-blur">
-                              {index + 1}
+                              {lecture.lectureNumber || index + 1}
                             </Badge>
                             <Badge 
                               variant={lecture.isActive ? "default" : "secondary"} 
@@ -375,18 +456,16 @@ const FreeLectures = () => {
 
                             {expandedLectures[lecture.id] && (
                               <div className="space-y-2 pt-2 border-t mt-2">
-                                {/* Full description */}
                                 {lecture.description && (
                                   <p className="text-xs text-muted-foreground whitespace-pre-line">
                                     {lecture.description}
                                   </p>
                                 )}
 
-                                {/* Documents/Attachments */}
-                                {lecture.attachments && lecture.attachments.length > 0 && (
+                                {(lecture.attachments || lecture.documentUrls) && (
                                   <div className="space-y-2">
                                     <h5 className="text-sm font-semibold text-foreground">Documents</h5>
-                                    {lecture.attachments.map((attachment, idx) => (
+                                    {(lecture.attachments || []).map((attachment, idx) => (
                                       <a
                                         key={idx}
                                         href={attachment.documentUrl}
@@ -407,28 +486,67 @@ const FreeLectures = () => {
                                         </div>
                                       </a>
                                     ))}
+                                    {(lecture.documentUrls || []).map((url, idx) => (
+                                      <a
+                                        key={`doc-${idx}`}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-xs text-primary hover:underline"
+                                      >
+                                        Document {idx + 1}
+                                      </a>
+                                    ))}
                                   </div>
                                 )}
                               </div>
                             )}
 
                             <div className="flex flex-col gap-2 mt-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleLectureExpansion(lecture.id)}
-                              >
-                                {expandedLectures[lecture.id] ? 'Hide details' : 'View more'}
-                              </Button>
-                              <Button
-                                onClick={() => handleJoinLecture(lecture.videoUrl || '', lecture.title)}
-                                disabled={!lecture.isActive || !lecture.videoUrl}
-                                size="sm"
-                              >
-                                <Play className="h-4 w-4 mr-2" />
-                                Watch Lecture
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => toggleLectureExpansion(lecture.id)}
+                                >
+                                  {expandedLectures[lecture.id] ? 'Hide details' : 'View more'}
+                                </Button>
+                                <Button
+                                  onClick={() => handleJoinLecture(lecture.videoUrl || lecture.lectureVideoUrl || '', lecture.title)}
+                                  disabled={!lecture.isActive || !(lecture.videoUrl || lecture.lectureVideoUrl)}
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Watch
+                                </Button>
+                              </div>
+                              
+                              {/* Admin/Teacher Actions */}
+                              {canManageLectures && (
+                                <div className="flex gap-2 pt-2 border-t">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => setEditingLecture(lecture)}
+                                  >
+                                    <Pencil className="h-4 w-4 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 text-destructive hover:text-destructive"
+                                    onClick={() => setDeletingLecture(lecture)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </CardContent>
                         </Card>
@@ -461,9 +579,9 @@ const FreeLectures = () => {
                   {lecturesByLesson.unassigned.map((lecture, index) => (
                     <Card key={lecture.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       <div className="relative aspect-video bg-muted">
-                        {lecture.thumbnailUrl ? (
+                        {(lecture.thumbnailUrl || lecture.coverImageUrl) ? (
                           <img 
-                            src={lecture.thumbnailUrl} 
+                            src={lecture.thumbnailUrl || lecture.coverImageUrl || ''} 
                             alt={lecture.title}
                             className="w-full h-full object-cover"
                           />
@@ -501,53 +619,51 @@ const FreeLectures = () => {
                           </p>
                         )}
                         
-                        {expandedLectures[lecture.id] && (
-                          <div className="space-y-2 pt-2 border-t mt-2">
-                            {lecture.description && (
-                              <p className="text-xs text-muted-foreground whitespace-pre-line">
-                                {lecture.description}
-                              </p>
-                            )}
-                            {lecture.attachments && lecture.attachments.length > 0 && (
-                              <div className="space-y-1">
-                                {lecture.attachments.map((attachment, idx) => (
-                                  <a
-                                    key={idx}
-                                    href={attachment.documentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-xs text-primary hover:underline"
-                                  >
-                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                    </svg>
-                                    {attachment.documentName}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
+                        <div className="flex flex-col gap-2 mt-2">
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleJoinLecture(lecture.videoUrl || lecture.lectureVideoUrl || '', lecture.title)}
+                              disabled={!lecture.isActive || !(lecture.videoUrl || lecture.lectureVideoUrl)}
+                              className="flex-1"
+                              size="sm"
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              Watch Lecture
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => toggleLectureExpansion(lecture.id)}
+                            >
+                              {expandedLectures[lecture.id] ? 'Hide details' : 'View more'}
+                            </Button>
                           </div>
-                        )}
-                        
-                        <div className="flex gap-2 mt-2">
-                          <Button
-                            onClick={() => handleJoinLecture(lecture.videoUrl || '', lecture.title)}
-                            disabled={!lecture.isActive || !lecture.videoUrl}
-                            className="flex-1"
-                            size="sm"
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            Watch Lecture
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => toggleLectureExpansion(lecture.id)}
-                          >
-                            {expandedLectures[lecture.id] ? 'Hide details' : 'View more'}
-                          </Button>
+                          
+                          {/* Admin/Teacher Actions */}
+                          {canManageLectures && (
+                            <div className="flex gap-2 pt-2 border-t">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => setEditingLecture(lecture)}
+                              >
+                                <Pencil className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-destructive hover:text-destructive"
+                                onClick={() => setDeletingLecture(lecture)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -559,6 +675,7 @@ const FreeLectures = () => {
         </div>
       )}
 
+      {/* Video Preview Dialog */}
       <VideoPreviewDialog
         open={videoPreview.open}
         onOpenChange={(open) => {
@@ -567,6 +684,39 @@ const FreeLectures = () => {
         url={videoPreview.url}
         title={videoPreview.title}
       />
+
+      {/* Create Lecture Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <CreateStructuredLectureForm
+            onClose={() => setShowCreateDialog(false)}
+            onSuccess={handleCreateSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Lecture Dialog */}
+      <Dialog open={!!editingLecture} onOpenChange={(open) => !open && setEditingLecture(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {editingLecture && (
+            <UpdateStructuredLectureForm
+              lecture={toStructuredLecture(editingLecture)}
+              onClose={() => setEditingLecture(null)}
+              onSuccess={handleUpdateSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Lecture Dialog */}
+      {deletingLecture && (
+        <DeleteStructuredLectureDialog
+          lecture={toStructuredLecture(deletingLecture)}
+          open={!!deletingLecture}
+          onOpenChange={(open) => !open && setDeletingLecture(null)}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 };

@@ -494,31 +494,32 @@ const InstituteSubjects = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-2 sm:gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BookOpen className="h-6 w-6" />
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-1.5 sm:gap-2">
+            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
             Institute Subjects
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
             Manage all subjects for {selectedInstitute?.name || 'this institute'}
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {canCreate && (
-            <Button onClick={handleOpenCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Subject
+            <Button onClick={handleOpenCreate} size="sm" className="h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3">
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
+              <span className="hidden xs:inline">Add</span> Subject
             </Button>
           )}
           
           {canAssignSubjects && (
-            <Button variant="secondary" onClick={() => setIsAssignDialogOpen(true)}>
-              <Link2 className="h-4 w-4 mr-2" />
-              Assign to Class
+            <Button variant="secondary" onClick={() => setIsAssignDialogOpen(true)} size="sm" className="h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3">
+              <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
+              <span className="hidden sm:inline">Assign to Class</span>
+              <span className="sm:hidden">Assign</span>
             </Button>
           )}
           
@@ -526,9 +527,10 @@ const InstituteSubjects = () => {
             variant="outline" 
             size="sm" 
             onClick={() => setShowFilters(!showFilters)}
+            className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
           >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
+            <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
+            <span className="hidden xs:inline">Filters</span>
           </Button>
           
           <Button 
@@ -536,9 +538,10 @@ const InstituteSubjects = () => {
             size="sm" 
             onClick={() => fetchSubjects(true)} 
             disabled={isLoading}
+            className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
@@ -546,21 +549,22 @@ const InstituteSubjects = () => {
       {/* Filters */}
       {showFilters && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               <div>
-                <label className="text-sm font-medium mb-1 block">Search</label>
+                <label className="text-xs sm:text-sm font-medium mb-1 block">Search</label>
                 <Input 
                   placeholder="Search by code, name..." 
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
+                  className="h-8 sm:h-9 text-xs sm:text-sm"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-medium mb-1 block">Status</label>
+                <label className="text-xs sm:text-sm font-medium mb-1 block">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -572,9 +576,9 @@ const InstituteSubjects = () => {
               </div>
               
               <div>
-                <label className="text-sm font-medium mb-1 block">Category</label>
+                <label className="text-xs sm:text-sm font-medium mb-1 block">Category</label>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -591,35 +595,35 @@ const InstituteSubjects = () => {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{subjects.length}</div>
-            <p className="text-sm text-muted-foreground">Total Subjects</p>
+          <CardContent className="p-2.5 sm:p-4">
+            <div className="text-lg sm:text-xl font-bold">{subjects.length}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-2.5 sm:p-4">
+            <div className="text-lg sm:text-xl font-bold text-green-600">
               {subjects.filter(s => s.isActive).length}
             </div>
-            <p className="text-sm text-muted-foreground">Active</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Active</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-gray-600">
+          <CardContent className="p-2.5 sm:p-4">
+            <div className="text-lg sm:text-xl font-bold text-gray-600">
               {subjects.filter(s => !s.isActive).length}
             </div>
-            <p className="text-sm text-muted-foreground">Inactive</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Inactive</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent className="p-2.5 sm:p-4">
+            <div className="text-lg sm:text-xl font-bold text-blue-600">
               {categories.length}
             </div>
-            <p className="text-sm text-muted-foreground">Categories</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Categories</p>
           </CardContent>
         </Card>
       </div>

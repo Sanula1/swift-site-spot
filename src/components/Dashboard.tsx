@@ -46,11 +46,37 @@ const Dashboard = () => {
     selectedInstitute,
     selectedClass,
     selectedSubject,
-    selectedChild
+    selectedChild,
+    isViewingAsParent
   } = useAuth();
 
   const userRole = useInstituteRole(); // CRITICAL: Use institute-specific role
-  console.log('🎯 Dashboard - Institute Role:', userRole, 'from instituteUserType:', selectedInstitute?.userRole);
+  console.log('🎯 Dashboard - Institute Role:', userRole, 'from instituteUserType:', selectedInstitute?.userRole, 'isViewingAsParent:', isViewingAsParent);
+
+  // Parent viewing child's subject dashboard - show view-only banner
+  if (isViewingAsParent && selectedChild && selectedSubject && selectedClass && selectedInstitute) {
+    return (
+      <div className="space-y-4">
+        {/* View-only banner */}
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-blue-900 dark:text-blue-100">
+                Viewing as Parent
+              </p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                You are viewing {selectedChild.user?.firstName || (selectedChild as any).name || 'your child'}'s information. Submissions are disabled in view-only mode.
+              </p>
+            </div>
+          </div>
+        </div>
+        <SubjectDashboard />
+      </div>
+    );
+  }
 
   // Subject-level dashboard - show SubjectDashboard
   if (selectedSubject && selectedClass && selectedInstitute) {

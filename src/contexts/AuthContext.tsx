@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedClassGrade, setSelectedClassGrade] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to show loading on init
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isViewingAsParent, setIsViewingAsParentState] = useState(false); // Parent viewing child's data
 
   // Public variables for current IDs - no localStorage sync
   const [currentInstituteId, setCurrentInstituteId] = useState<string | null>(null);
@@ -320,9 +321,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentSubjectId(subject?.id || null);
   };
 
-  const setSelectedChild = (child: Child | null) => {
+  const setSelectedChild = (child: Child | null, viewAsParent = false) => {
     setSelectedChildState(child);
     setCurrentChildId(child?.id || null);
+    setIsViewingAsParentState(viewAsParent);
+    
+    // Clear dependent selections when selecting a child for parent viewing
+    if (viewAsParent && child) {
+      setSelectedInstituteState(null);
+      setSelectedClassState(null);
+      setSelectedSubjectState(null);
+      setCurrentInstituteId(null);
+      setCurrentClassId(null);
+      setCurrentSubjectId(null);
+    }
   };
 
   const setSelectedOrganization = (organization: Organization | null) => {
@@ -450,6 +462,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     currentChildId,
     currentOrganizationId,
     currentTransportId,
+    isViewingAsParent,
     login,
     logout,
     setSelectedInstitute,

@@ -256,21 +256,14 @@ const Parents = () => {
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {children.slice(0, 3).map((child: any, idx: number) => {
-                const rawImageUrl =
-                  child?.instituteUserImageUrl ||
-                  child?.profileImageUrl ||
-                  child?.imageUrl ||
-                  child?.user?.imageUrl;
-
-                return (
-                  <Avatar key={idx} className="h-8 w-8 border-2 border-background ring-2 ring-primary/20">
+              const rawImageUrl = child?.instituteUserImageUrl || child?.profileImageUrl || child?.imageUrl || child?.user?.imageUrl;
+              return <Avatar key={idx} className="h-8 w-8 border-2 border-background ring-2 ring-primary/20">
                     <AvatarImage src={getImageUrl(rawImageUrl)} alt={child.name} />
                     <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-xs font-medium">
                       {child.name?.charAt(0) || 'C'}
                     </AvatarFallback>
-                  </Avatar>
-                );
-              })}
+                  </Avatar>;
+            })}
               {children.length > 3 && <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
                   +{children.length - 3}
                 </div>}
@@ -386,12 +379,7 @@ const Parents = () => {
         </div>
       </div>
 
-      <div className="mb-4">
-        <CurrentSelection
-          institute={{ id: selectedInstitute.id, name: selectedInstitute.name }}
-          class={selectedClass ? { id: selectedClass.id, name: selectedClass.name } : undefined}
-        />
-      </div>
+      
 
       
 
@@ -536,11 +524,7 @@ const Parents = () => {
                 </TableHeader>
                 <TableBody>
                   {childrenDialog.children.map((child: any, index: number) => {
-              const rawImageUrl =
-                child?.instituteUserImageUrl ||
-                child?.profileImageUrl ||
-                child?.imageUrl ||
-                child?.user?.imageUrl;
+              const rawImageUrl = child?.instituteUserImageUrl || child?.profileImageUrl || child?.imageUrl || child?.user?.imageUrl;
               const imageSrc = rawImageUrl ? getImageUrl(rawImageUrl) : '';
               return <TableRow key={child.userId || index}>
                         <TableCell>

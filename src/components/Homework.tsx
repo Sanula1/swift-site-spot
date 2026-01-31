@@ -25,7 +25,7 @@ interface HomeworkProps {
 
 const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   const navigate = useNavigate();
-  const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
+  const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId, isViewingAsParent, selectedChild } = useAuth();
   const instituteRole = useInstituteRole();
   const { toast } = useToast();
   const { refresh, isRefreshing, canRefresh, cooldownRemaining } = useRefreshWithCooldown(10);
@@ -343,8 +343,8 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
       }
     ] : []),
     
-    // Actions for Students
-    ...(instituteRole === 'Student' ? [
+    // Actions for Students - disable submit when parent is viewing
+    ...((instituteRole === 'Student' && !isViewingAsParent) ? [
       {
         label: 'Submit',
         action: (homework: any) => handleSubmitHomework(homework),

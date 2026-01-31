@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, FileText, Eye, Calendar, Clock, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
+import { Search, Filter, FileText, Eye, Calendar, Clock, CheckCircle, XCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { homeworkSubmissionsApi, HomeworkSubmission } from '@/api/homeworkSubmissions.api';
 import { useToast } from '@/hooks/use-toast';
@@ -99,6 +99,38 @@ const StudentHomeworkSubmissions = () => {
   };
   const filteredSubmissions = submissions.filter(submission => searchTerm === '' || submission.homework?.title.toLowerCase().includes(searchTerm.toLowerCase()) || submission.homework?.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteSubmission = async (submission: HomeworkSubmission) => {
+    if (!window.confirm('Are you sure you want to delete this submission?')) {
+      return;
+    }
+    
+    setDeletingId(submission.id);
+    try {
+      await homeworkSubmissionsApi.deleteMySubmission(submission.id, {
+        userId: user?.id,
+        instituteId: selectedInstitute?.id?.toString(),
+        classId: selectedClass?.id?.toString(),
+        subjectId: selectedSubject?.id?.toString()
+      });
+      toast({
+        title: "Success",
+        description: "Submission deleted successfully"
+      });
+      fetchSubmissions();
+    } catch (error: any) {
+      console.error('Error deleting submission:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete submission",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   // Define columns for MUI table
   const columns = [{
     id: 'title',
@@ -149,7 +181,13 @@ const StudentHomeworkSubmissions = () => {
       </Popover>
     ) : <span className="text-muted-foreground">-</span>
   }];
-  const customActions = [...(filteredSubmissions.some(s => s.teacherCorrectionFileUrl) ? [{
+  const customActions = [{
+    label: 'Delete',
+    action: handleDeleteSubmission,
+    icon: <Trash2 className="h-4 w-4" />,
+    variant: 'destructive' as const,
+    disabled: (row: HomeworkSubmission) => deletingId === row.id
+  }, ...(filteredSubmissions.some(s => s.teacherCorrectionFileUrl) ? [{
     label: 'View Correction',
     action: (row: HomeworkSubmission) => {
       if (row.teacherCorrectionFileUrl) {
@@ -157,7 +195,7 @@ const StudentHomeworkSubmissions = () => {
       }
     },
     icon: <Eye className="h-4 w-4" />,
-    variant: 'destructive' as const
+    variant: 'default' as const
   }] : []), ...(filteredSubmissions.some(s => s.fileUrl) ? [{
     label: 'View My Submission',
     action: (row: HomeworkSubmission) => {

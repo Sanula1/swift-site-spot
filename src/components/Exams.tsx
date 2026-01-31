@@ -351,7 +351,12 @@ const Exams = ({
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Click the button below to load exams data
           </p>
-          <Button onClick={() => handleLoadData(false)} disabled={isLoading || !shouldShowLoadButton()} className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            onClick={() => handleLoadData(false)}
+            disabled={isLoading || !shouldShowLoadButton()}
+            size="lg"
+            className="w-full sm:w-auto gap-2"
+          >
             {isLoading ? <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 Loading Data...
@@ -366,7 +371,7 @@ const Exams = ({
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 {getTitle()}
               </h1>
-              {lastRefresh && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {lastRefresh && <p className="text-sm text-muted-foreground mt-2">
                   Last refreshed: {lastRefresh.toLocaleTimeString()}
                 </p>}
             </div>

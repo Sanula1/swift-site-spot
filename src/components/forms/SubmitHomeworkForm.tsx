@@ -225,195 +225,168 @@ const SubmitHomeworkForm = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Homework Info */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="py-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <FileText className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg">{homework.title}</h3>
-              <p className="text-muted-foreground text-sm mt-1">{homework.description}</p>
-              {homework.endDate && (
-                <Badge variant="outline" className="mt-2">
-                  Due: {new Date(homework.endDate).toLocaleDateString()}
-                </Badge>
-              )}
-            </div>
+    <div className="space-y-3 w-full">
+      {/* Compact Homework Info */}
+      <div className="flex items-start gap-2 p-2 sm:p-3 rounded-lg bg-muted/50 border">
+        <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <h3 className="font-medium text-xs sm:text-sm truncate">{homework.title}</h3>
+          <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1 mt-0.5">{homework.description}</p>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {homework.endDate && (
+              <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                Due: {new Date(homework.endDate).toLocaleDateString()}
+              </Badge>
+            )}
+            {homework.referenceLink && (
+              <Button 
+                type="button"
+                size="sm" 
+                variant="ghost" 
+                onClick={() => window.open(homework.referenceLink, '_blank')}
+                className="h-4 px-1 text-[10px] text-primary hover:text-primary"
+              >
+                <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
+                Ref
+              </Button>
+            )}
           </div>
-          {homework.referenceLink && (
-            <Button 
-              type="button"
-              size="sm" 
-              variant="outline" 
-              onClick={() => window.open(homework.referenceLink, '_blank')}
-              className="mt-3"
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        {/* Upload Method - Compact Tabs */}
+        <Tabs 
+          value={uploadMethod} 
+          onValueChange={(v) => setUploadMethod(v as 'upload' | 'google-drive')}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2 h-8">
+            <TabsTrigger 
+              value="upload" 
+              className="flex items-center gap-1 text-[10px] sm:text-xs h-6"
             >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              View Reference Material
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+              <HardDrive className="h-3 w-3" />
+              <span>Upload</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="google-drive"
+              className="flex items-center gap-1 text-[10px] sm:text-xs h-6"
+            >
+              <Cloud className="h-3 w-3" />
+              <span>Drive</span>
+            </TabsTrigger>
+          </TabsList>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Submission Date */}
-        <div className="space-y-2">
-          <Label htmlFor="submissionDate">Submission Date *</Label>
-          <Input 
-            id="submissionDate" 
-            type="date" 
-            {...register('submissionDate')} 
-            className="w-full" 
-          />
-          {errors.submissionDate && (
-            <p className="text-sm text-destructive">{errors.submissionDate.message}</p>
-          )}
-        </div>
-
-        {/* Upload Method Tabs */}
-        <div className="space-y-4">
-          <Label>Upload Method</Label>
-          <Tabs 
-            value={uploadMethod} 
-            onValueChange={(v) => setUploadMethod(v as 'upload' | 'google-drive')}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-              <TabsTrigger 
-                value="upload" 
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                <HardDrive className="h-4 w-4" />
-                <span className="hidden sm:inline">Traditional</span> Upload
-              </TabsTrigger>
-              <TabsTrigger 
-                value="google-drive"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                <Cloud className="h-4 w-4" />
-                Google Drive
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Traditional Upload */}
-            <TabsContent value="upload" className="mt-4">
-              {!selectedFile ? (
-                <div>
-                  <input
-                    type="file"
-                    id="file-upload"
-                    onChange={handleFileSelect}
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.zip"
-                    className="hidden"
-                    disabled={isUploading || isSubmitting}
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className={cn(
-                      "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg transition-all cursor-pointer",
-                      isUploading || isSubmitting
-                        ? "border-muted bg-muted/50 cursor-not-allowed"
-                        : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
-                    )}
-                  >
-                    <Upload className={cn(
-                      "h-8 w-8 mb-2",
-                      isUploading ? "animate-spin text-primary" : "text-muted-foreground"
-                    )} />
-                    <p className="text-sm text-muted-foreground">
-                      {isUploading ? 'Uploading file...' : 'Click to upload your homework file'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PDF, DOC, DOCX, TXT, JPG, PNG, ZIP (max 10MB)
-                    </p>
-                  </label>
+          {/* Traditional Upload - Compact */}
+          <TabsContent value="upload" className="mt-2">
+            {!selectedFile ? (
+              <div>
+                <input
+                  type="file"
+                  id="file-upload"
+                  onChange={handleFileSelect}
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.zip"
+                  className="hidden"
+                  disabled={isUploading || isSubmitting}
+                />
+                <label
+                  htmlFor="file-upload"
+                  className={cn(
+                    "flex flex-col items-center justify-center w-full py-4 sm:py-5 border-2 border-dashed rounded-lg transition-all cursor-pointer",
+                    isUploading || isSubmitting
+                      ? "border-muted bg-muted/50 cursor-not-allowed"
+                      : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5 active:scale-[0.99]"
+                  )}
+                >
+                  <Upload className={cn(
+                    "h-5 w-5 mb-1",
+                    isUploading ? "animate-spin text-primary" : "text-muted-foreground"
+                  )} />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                    {isUploading ? 'Uploading...' : 'Tap to select file'}
+                  </p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-0.5">
+                    PDF, DOC, JPG, PNG (max 10MB)
+                  </p>
+                </label>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-accent/50 border border-primary/20">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-[10px] sm:text-xs truncate">{selectedFile.name}</p>
+                  <p className="text-[9px] text-muted-foreground">
+                    {formatFileSize(selectedFile.size)}
+                  </p>
                 </div>
-              ) : (
-                <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
-                          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{selectedFile.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(selectedFile.size)} • Ready to submit
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={removeFile}
-                        disabled={isSubmitting}
-                        className="h-8 w-8 p-0 hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeFile}
+                  disabled={isSubmitting}
+                  className="h-6 w-6 p-0 hover:text-destructive shrink-0"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </TabsContent>
 
-            {/* Google Drive Upload */}
-            <TabsContent value="google-drive" className="mt-4">
-              <GoogleDriveUploader
-                onFileSelected={handleGoogleDriveFileSelected}
-                onClear={clearGoogleDriveFile}
-                selectedFile={googleDriveFile}
-                disabled={isSubmitting}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+          {/* Google Drive Upload */}
+          <TabsContent value="google-drive" className="mt-2">
+            <GoogleDriveUploader
+              onFileSelected={handleGoogleDriveFileSelected}
+              onClear={clearGoogleDriveFile}
+              selectedFile={googleDriveFile}
+              disabled={isSubmitting}
+            />
+          </TabsContent>
+        </Tabs>
 
-        {/* Remarks */}
-        <div className="space-y-2">
-          <Label htmlFor="remarks">Additional Notes (Optional)</Label>
+        {/* Remarks - Compact */}
+        <div className="space-y-1">
+          <Label htmlFor="remarks" className="text-[10px] sm:text-xs">Notes (Optional)</Label>
           <Textarea
             id="remarks"
-            placeholder="Any additional notes or comments about your submission..."
+            placeholder="Any comments..."
             {...register('remarks')}
-            rows={3}
+            rows={2}
+            className="text-xs sm:text-sm resize-none min-h-[50px]"
           />
         </div>
 
-        {/* Submit Buttons */}
-        <div className="flex gap-3 pt-4">
+        {/* Hidden submission date - auto-filled */}
+        <input type="hidden" {...register('submissionDate')} />
+
+        {/* Submit Buttons - Compact */}
+        <div className="flex gap-2 pt-1">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={isSubmitting}
-            className="flex-1"
+            className="flex-1 h-8 text-xs"
           >
             Cancel
           </Button>
           <Button
             type="submit"
+            size="sm"
             disabled={isSubmitting || !hasFileSelected}
-            className="flex-1"
+            className="flex-1 h-8 text-xs"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {uploadMessage || 'Submitting...'}
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                <span>{uploadMessage || 'Submitting...'}</span>
               </>
             ) : (
               <>
-                {uploadMethod === 'google-drive' ? (
-                  <Cloud className="h-4 w-4 mr-2" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
-                Submit Homework
+                <Upload className="h-3 w-3 mr-1" />
+                <span>Submit</span>
               </>
             )}
           </Button>

@@ -53,6 +53,7 @@ const MyChildren = () => {
   };
 
   const handleSelectChild = (child: ChildData) => {
+    // Set child with viewAsParent = true to enable view-only mode
     setSelectedChild({
       id: child.id,
       name: child.name,
@@ -61,8 +62,10 @@ const MyChildren = () => {
         lastName: child.name.split(' ').slice(1).join(' ') || '',
         phoneNumber: child.phoneNumber
       }
-    } as any);
-    navigate(`/child/${child.id}/attendance`);
+    } as any, true); // viewAsParent = true
+    
+    // Navigate to child's institute selection page
+    navigate(`/child/${child.id}/select-institute`);
   };
 
   const getInitials = (name: string) => {

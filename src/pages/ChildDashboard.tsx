@@ -1,12 +1,11 @@
 import { useParams, Outlet, useLocation, NavLink } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  GraduationCap, 
-  Calendar, 
-  Bus
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PageContainer from '@/components/layout/PageContainer';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sidebar,
   SidebarContent,
@@ -23,19 +22,20 @@ import {
 const ChildDashboard = () => {
   const { childId } = useParams();
   const location = useLocation();
+  const { selectedChild } = useAuth();
 
   const navigationItems = [
     {
-      title: 'Transport Attendance',
-      path: `/child/${childId}/attendance`,
-      icon: Bus,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50 dark:bg-orange-950/30',
-      description: 'Check transport attendance records'
+      title: 'Select Institute',
+      path: `/child/${childId}/select-institute`,
+      icon: Building2,
+      description: 'Choose an institute to continue'
     },
   ];
 
   const isDashboard = location.pathname === `/child/${childId}/dashboard`;
+  const isSelectInstitute = location.pathname === `/child/${childId}/select-institute`;
+  const headerTitle = isSelectInstitute ? 'Select Institute' : 'Student Dashboard';
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -49,7 +49,21 @@ const ChildDashboard = () => {
         <Sidebar className="border-r">
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel>Student Information</SidebarGroupLabel>
+              <SidebarGroupLabel>Current Selection</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <div className="px-2 py-1 text-sm">
+                  <div className="text-muted-foreground">Child</div>
+                  <div className="font-medium whitespace-normal break-words leading-snug">
+                    {selectedChild?.user?.nameWithInitials ||
+                      [selectedChild?.user?.firstName, selectedChild?.user?.lastName].filter(Boolean).join(' ') ||
+                      `#${childId}`}
+                  </div>
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Select Institute</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navigationItems.map((item) => {
@@ -75,7 +89,7 @@ const ChildDashboard = () => {
           <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center px-4">
               <SidebarTrigger />
-              <h1 className="text-lg font-semibold ml-4">Student Dashboard</h1>
+              <h1 className="text-lg font-semibold ml-4">{headerTitle}</h1>
             </div>
           </div>
           
@@ -98,11 +112,8 @@ const ChildDashboard = () => {
                       >
                         <CardContent className="pt-6">
                           <div className="space-y-4">
-                            <div className={cn(
-                              "w-12 h-12 rounded-lg flex items-center justify-center",
-                              item.bgColor
-                            )}>
-                              <Icon className={cn("h-6 w-6", item.color)} />
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-muted">
+                              <Icon className="h-6 w-6 text-foreground" />
                             </div>
                             <div>
                               <h3 className="font-semibold text-lg">{item.title}</h3>

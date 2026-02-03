@@ -322,8 +322,11 @@ const SubjectSelector = () => {
     
     // Auto-navigate to dashboard after selection.
     // IMPORTANT: navigate directly using IDs to avoid stale selection state causing URL to miss /subject/:id.
-    if (currentInstituteId && currentClassId) {
-      navigate(`/institute/${currentInstituteId}/class/${currentClassId}/subject/${subject.id}/dashboard`);
+    const instituteId = currentInstituteId || selectedInstitute?.id;
+    const classId = currentClassId || selectedClass?.id;
+
+    if (instituteId && classId) {
+      navigate(`/institute/${instituteId}/class/${classId}/subject/${subject.id}/dashboard`);
     } else {
       navigateToPage('dashboard');
     }

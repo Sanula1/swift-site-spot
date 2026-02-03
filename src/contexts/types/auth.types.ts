@@ -120,6 +120,8 @@ export interface Organization {
 export interface LoginCredentials {
   identifier: string;  // Email, Phone, System ID, or Birth Certificate
   password?: string;
+  /** When true, backend should issue long-lived refresh token (e.g. 30 days) */
+  rememberMe?: boolean;
 }
 
 export interface AuthContextType {

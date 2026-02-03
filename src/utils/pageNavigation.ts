@@ -52,6 +52,18 @@ export const useContextUrlSync = (currentPage: string) => {
     // Derive effective page from URL if needed
     const derivedPage = extractPageFromUrl(location.pathname);
     const effectivePage = (!currentPage || currentPage.includes('/')) ? derivedPage : currentPage;
+
+    // 🚫 Selection step routes are navigated explicitly by selector components.
+    // Auto-syncing here causes page "ping-pong" (select -> auto redirect -> select...).
+    // So we skip auto URL sync on these selection pages.
+    if (
+      effectivePage.startsWith('select-') ||
+      location.pathname.includes('/select-institute') ||
+      location.pathname.includes('/select-class') ||
+      location.pathname.includes('/select-subject')
+    ) {
+      return;
+    }
     
     // Build context-aware URL
     const contextUrl = buildSidebarUrl(effectivePage, context);

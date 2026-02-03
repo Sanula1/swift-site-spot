@@ -475,7 +475,14 @@ const ClassSelector = () => {
 
     if (shouldNavigateToSubject) {
       console.log(`${effectiveRole} detected - auto-navigating to select subject`);
-      navigateToPage('select-subject');
+      // IMPORTANT: navigate directly using IDs to avoid using stale selection state
+      // (stale state caused /institute/:id/select-subject or /select-subject and then auto-clearing).
+      const instituteId = currentInstituteId || selectedInstitute?.id;
+      if (instituteId) {
+        navigate(`/institute/${instituteId}/class/${classData.id}/select-subject`);
+      } else {
+        navigate('/select-institute');
+      }
     }
 
     // Explicitly log that no further API calls should happen

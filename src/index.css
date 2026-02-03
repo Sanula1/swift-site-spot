@@ -469,8 +469,21 @@ body.scanner-active .ion-page {
   background: transparent !important;
 }
 
+/* Hide everything except the scanner overlay when scanner is active */
 body.scanner-active > *:not(.barcode-scanner-modal) {
-  visibility: hidden;
+  display: none !important;
+}
+
+/* Ensure scanner overlay is always visible */
+body.scanner-active .barcode-scanner-modal {
+  display: block !important;
+  visibility: visible !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
 }
 
 /* QR Scanner Animations */
@@ -479,7 +492,7 @@ body.scanner-active > *:not(.barcode-scanner-modal) {
     top: 0%;
   }
   50% {
-    top: 100%;
+    top: calc(100% - 4px);
   }
   100% {
     top: 0%;
@@ -488,4 +501,22 @@ body.scanner-active > *:not(.barcode-scanner-modal) {
 
 .animate-scan-line {
   animation: scan-line 2s ease-in-out infinite;
+}
+
+/* Mobile notification safe area adjustments */
+.notification-toast-mobile {
+  top: env(safe-area-inset-top, 16px) !important;
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
+  right: max(env(safe-area-inset-right, 0px), 16px);
+}
+
+/* Capacitor platform-specific adjustments */
+.capacitor-ios .barcode-scanner-modal {
+  padding-top: env(safe-area-inset-top, 44px);
+  padding-bottom: env(safe-area-inset-bottom, 34px);
+}
+
+.capacitor-android .barcode-scanner-modal {
+  padding-top: 24px;
+  padding-bottom: 24px;
 }

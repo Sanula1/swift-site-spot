@@ -81,17 +81,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   // Get menu items based on current selection state
   const getMenuItems = () => {
-    // Special handling for child selection (Parent viewing child's data)
-    if (selectedChild) {
-      return [
-        {
-          id: 'child-attendance',
-          label: 'Transport Attendance',
-          icon: Truck,
-          permission: 'view-dashboard',
-          alwaysShow: true
-        }
-      ];
+    // Parent viewing child's data:
+    // - Before selecting an institute, we show only the "Child Sections" (Select Institute) entry.
+    // - After selecting institute/class/subject, the normal Student menu should be shown (derived from instituteUserType).
+    if (selectedChild && !selectedInstitute) {
+      return [];
     }
 
     // Special handling for organization selection
@@ -1863,9 +1857,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         {/* Navigation */}
         <ScrollArea className="flex-1 px-2 sm:px-3 py-3 sm:py-4">
           <div className="space-y-2">
-            {selectedChild ? (
-              <SidebarSection title="Select Institute" items={childItemsDisplay} />
-            ) : currentPage === 'transport-attendance' ? (
+            {currentPage === 'transport-attendance' ? (
               /* Show ONLY attendance section for transport attendance page */
               <SidebarSection title="Attendance" items={[
                 {

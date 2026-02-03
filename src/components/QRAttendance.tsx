@@ -17,6 +17,7 @@ import { buildAttendanceAddress } from '@/utils/attendanceAddress';
 import { AttendanceStatus, ALL_ATTENDANCE_STATUSES, ATTENDANCE_STATUS_CONFIG } from '@/types/attendance.types';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
+import MobileScannerOverlay from './MobileScannerOverlay';
 
 interface AttendanceAlert {
   id: string;
@@ -48,6 +49,7 @@ const QRAttendance = () => {
   const [isManualProcessing, setIsManualProcessing] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [lastMarkedStudent, setLastMarkedStudent] = useState<{ name: string; status: AttendanceStatus } | null>(null);
+  const [isMobileScanning, setIsMobileScanning] = useState(false); // Track mobile scanner overlay
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -301,20 +303,36 @@ const QRAttendance = () => {
         const status = await BarcodeScanner.checkPermission({ force: true });
         
         if (status.granted) {
+          // Show mobile scanner overlay first
+          setIsMobileScanning(true);
+          setIsScanning(true);
+          
           // Hide background to show camera
           document.body.classList.add('scanner-active');
           await BarcodeScanner.hideBackground();
           
-          // Start scanning
-          const result = await BarcodeScanner.startScan();
+          // Start continuous scanning loop
+          const scanLoop = async () => {
+            try {
+              const result = await BarcodeScanner.startScan();
+              
+              if (result.hasContent) {
+                console.log('🎯 QR/Barcode detected:', result.content);
+                handleMarkAttendanceByCard(result.content.trim());
+                
+                // Brief pause to show success, then continue scanning
+                setTimeout(() => {
+                  if (isMobileScanning) {
+                    scanLoop();
+                  }
+                }, 1500);
+              }
+            } catch (error) {
+              console.error('Scan error:', error);
+            }
+          };
           
-          if (result.hasContent) {
-            console.log('🎯 QR/Barcode detected:', result.content);
-            handleMarkAttendanceByCard(result.content.trim());
-            
-            // Continue scanning for next code
-            startCamera();
-          }
+          scanLoop();
         } else {
           setCameraError('Camera permission denied. Please enable camera access in settings.');
           console.log('❌ Camera permission denied');
@@ -415,6 +433,7 @@ const QRAttendance = () => {
         await BarcodeScanner.stopScan();
         await BarcodeScanner.showBackground();
         document.body.classList.remove('scanner-active');
+        setIsMobileScanning(false);
         console.log('✅ Capacitor BarcodeScanner stopped');
       } else {
         // Web: Stop media stream
@@ -737,8 +756,22 @@ const QRAttendance = () => {
 
   return (
       <div className="min-h-screen bg-background">
+      {/* Mobile Scanner Overlay - Capacitor Native */}
+      {Capacitor.isNativePlatform() && (
+        <MobileScannerOverlay
+          isActive={isMobileScanning}
+          onClose={stopCamera}
+          scanMethod={selectedMethod}
+          status={status}
+          onStatusChange={setStatus}
+          markedCount={markedCount}
+          lastMarkedStudent={lastMarkedStudent}
+          showSuccessAnimation={showSuccessAnimation}
+        />
+      )}
+      
       {/* Attendance Alerts */}
-      <div className="fixed top-4 left-4 z-50 space-y-2 max-w-sm">
+      <div className="fixed top-4 left-4 z-50 space-y-2 max-w-sm pt-safe-top">
         {attendanceAlerts.map((alert) => (
           <Alert 
             key={alert.id}

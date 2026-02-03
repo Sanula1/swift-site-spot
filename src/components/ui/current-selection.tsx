@@ -41,8 +41,12 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
   const {
     setSelectedClass,
     setSelectedSubject,
-    setSelectedInstitute
+    setSelectedInstitute,
+    selectedChild
   } = useAuth();
+
+  const isChildRoute = location.pathname.startsWith('/child/');
+  const childId = (selectedChild as any)?.id as string | undefined;
 
   // Check if institute type is tuition_institute
   const isTuitionInstitute = (institute as any)?.type === 'tuition_institute';
@@ -71,21 +75,33 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
     // If we have subject selected, go back to subject selection (clear subject)
     if (currentStep === 'subject' && selectedClass && institute) {
       setSelectedSubject(null);
-      navigate(`/institute/${institute.id}/class/${selectedClass.id}/select-subject`);
+      if (isChildRoute && childId) {
+        navigate(`/child/${childId}/select-subject`);
+      } else {
+        navigate(`/institute/${institute.id}/class/${selectedClass.id}/select-subject`);
+      }
       return;
     }
 
     // If we have class selected, go back to class selection (clear class)
     if (currentStep === 'class' && institute) {
       setSelectedClass(null);
-      navigate(`/institute/${institute.id}/select-class`);
+      if (isChildRoute && childId) {
+        navigate(`/child/${childId}/select-class`);
+      } else {
+        navigate(`/institute/${institute.id}/select-class`);
+      }
       return;
     }
 
     // If we have institute selected, go back to institute selection (clear institute)
     if (currentStep === 'institute') {
       setSelectedInstitute(null);
-      navigate('/select-institute');
+      if (isChildRoute && childId) {
+        navigate(`/child/${childId}/select-institute`);
+      } else {
+        navigate('/select-institute');
+      }
       return;
     }
 
@@ -118,6 +134,83 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
     if (currentStep === 'institute') return 'Go to institute selection';
     return 'Go back';
   };
-  return;
+  return (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Back Button */}
+          {showNavigation && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleContextBack}
+              className="h-7 px-2 text-xs gap-1"
+            >
+              <ChevronLeft className="h-3 w-3" />
+              {getBackLabel()}
+            </Button>
+          )}
+
+          <Separator orientation="vertical" className="h-4 hidden sm:block" />
+
+          {/* Context Badges */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {institute && (
+              <Badge variant="secondary" className="gap-1 text-xs h-6">
+                <Building className="h-3 w-3" />
+                <span className="truncate max-w-[120px] sm:max-w-[180px]">{institute.name}</span>
+              </Badge>
+            )}
+
+            {selectedChild && (
+              <Badge variant="secondary" className="gap-1 text-xs h-6">
+                <Users className="h-3 w-3" />
+                <span className="truncate max-w-[120px] sm:max-w-[180px]">
+                  {(selectedChild as any).name ||
+                    selectedChild?.user?.nameWithInitials ||
+                    [selectedChild?.user?.firstName, selectedChild?.user?.lastName].filter(Boolean).join(' ') ||
+                    `#${selectedChild.id}`}
+                </span>
+              </Badge>
+            )}
+            
+            {selectedClass && (
+              <Badge variant="secondary" className="gap-1 text-xs h-6">
+                <BookOpen className="h-3 w-3" />
+                <span className="truncate max-w-[100px] sm:max-w-[150px]">{selectedClass.name}</span>
+              </Badge>
+            )}
+            
+            {subject && (
+              <Badge variant="secondary" className="gap-1 text-xs h-6">
+                <BookOpen className="h-3 w-3" />
+                <span className="truncate max-w-[100px] sm:max-w-[150px]">{subject.name}</span>
+              </Badge>
+            )}
+            
+            {transport && (
+              <Badge variant="secondary" className="gap-1 text-xs h-6">
+                <Truck className="h-3 w-3" />
+                <span className="truncate max-w-[120px]">{transport.vehicleModel}</span>
+              </Badge>
+            )}
+          </div>
+
+          {/* Verify Students Button (for InstituteAdmin/Teacher) */}
+          {canVerifyStudents && institute && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleVerifyStudentsClick}
+              className="h-7 px-2 text-xs gap-1 ml-auto"
+            >
+              <UserCheck className="h-3 w-3" />
+              <span className="hidden sm:inline">Verify Students</span>
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 export default CurrentSelection;

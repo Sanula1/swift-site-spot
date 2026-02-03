@@ -15,6 +15,7 @@ import { mapUserData } from './utils/user.utils';
 import { Institute as ApiInstitute } from '@/api/institute.api';
 import { cachedApiClient } from '@/api/cachedClient';
 import { apiCache } from '@/utils/apiCache';
+import { useAuthAutoRefresh } from '@/hooks/useAuthAutoRefresh';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -43,6 +44,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true); // Start with true to show loading on init
   const [isInitialized, setIsInitialized] = useState(false);
   const [isViewingAsParent, setIsViewingAsParentState] = useState(false); // Parent viewing child's data
+
+  // ✅ Keep session alive (web + mobile) by refreshing access token before expiry.
+  useAuthAutoRefresh(isInitialized && !!user);
 
   // Public variables for current IDs - no localStorage sync
   const [currentInstituteId, setCurrentInstituteId] = useState<string | null>(null);
@@ -152,12 +156,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       const data = await loginUser(credentials);
       console.log('Login response received:', data);
-
-      // Ensure token is properly stored
-      if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
-        console.log('Access token stored successfully');
-      }
 
       // Map user data WITHOUT fetching institutes (lazy load later)
       console.log('✅ User logged in successfully');

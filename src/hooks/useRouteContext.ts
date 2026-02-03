@@ -6,9 +6,9 @@ import { toast } from 'sonner';
 
 /**
  * Hook to sync URL params with AuthContext
- * Loads institute/class/subject data based on URL and validates access
+ * Loads institute/class/subject/child data based on URL and validates access
  * 
- * CRITICAL FIX: Now fetches institute data from API when navigating directly via URL
+ * CRITICAL: Handles direct URL navigation correctly for all context types
  */
 export const useRouteContext = () => {
   const params = useParams();
@@ -16,6 +16,15 @@ export const useRouteContext = () => {
   const location = useLocation();
   const [isValidating, setIsValidating] = useState(true);
   const fetchInProgressRef = useRef<{ [key: string]: boolean }>({});
+  // Prevent redirect loops: routing-driven clearing should react to ROUTE changes,
+  // not transient selection state changes during clicks.
+  const latestSelectionRef = useRef({
+    selectedInstitute: null as any,
+    selectedClass: null as any,
+    selectedSubject: null as any,
+    selectedChild: null as any,
+    isViewingAsParent: false
+  });
   
   const { 
     selectedInstitute,
@@ -27,9 +36,114 @@ export const useRouteContext = () => {
     setSelectedInstitute,
     setSelectedClass,
     setSelectedSubject,
+    setSelectedChild,
     user,
-    loadUserInstitutes
+    loadUserInstitutes,
+    isViewingAsParent
   } = useAuth();
+
+  // Keep latest selections in a ref so the route sync effect can avoid depending
+  // on selection state (which was causing auto-navigation / flicker loops).
+  useEffect(() => {
+    latestSelectionRef.current = {
+      selectedInstitute,
+      selectedClass,
+      selectedSubject,
+      selectedChild,
+      isViewingAsParent
+    };
+  }, [selectedInstitute, selectedClass, selectedSubject, selectedChild, isViewingAsParent]);
+
+  /**
+   * Keep AuthContext selection in sync with route changes (especially browser/hardware back).
+   *
+   * IMPORTANT:
+   * - Institute context SHOULD follow /institute/... URLs
+   * - Parent-viewing-child flow uses /child/:childId/* URLs (institute/class/subject selection is NOT encoded)
+   *   so we clear selection based on the child step routes.
+   */
+  useEffect(() => {
+    const {
+      selectedInstitute: latestInstitute,
+      selectedClass: latestClass,
+      selectedSubject: latestSubject,
+      selectedChild: latestChild,
+      isViewingAsParent: latestIsViewingAsParent
+    } = latestSelectionRef.current;
+
+    const path = location.pathname;
+    const isChildRoute = path.startsWith('/child/');
+    const isInstituteRoute = path.startsWith('/institute/');
+
+    // 1) Leaving child routes => clear selectedChild (prevents stale "Child" + stale institute role)
+    if (!isChildRoute && latestIsViewingAsParent && latestChild) {
+      setSelectedChild(null, false);
+    }
+
+    // 2) Child flow step routes must control what selections are allowed
+    if (isChildRoute) {
+      // /child/:id/select-institute => clear institute + deeper
+      if (path.includes('/select-institute')) {
+        if (latestInstitute) setSelectedInstitute(null);
+        if (latestClass) setSelectedClass(null);
+        if (latestSubject) setSelectedSubject(null);
+        return;
+      }
+
+      // /child/:id/select-class => clear class + subject (keep institute)
+      if (path.includes('/select-class')) {
+        if (latestClass) setSelectedClass(null);
+        if (latestSubject) setSelectedSubject(null);
+        return;
+      }
+
+      // /child/:id/select-subject => clear subject (keep institute + class)
+      if (path.includes('/select-subject')) {
+        if (latestSubject) setSelectedSubject(null);
+        return;
+      }
+
+      return;
+    }
+
+    // 3) Non-child routes: Institute context must follow the URL params
+    if (!isInstituteRoute) {
+      // When leaving /institute/... routes (e.g. to /dashboard), clear stale selections.
+      if (latestInstitute) {
+        setSelectedInstitute(null); // also clears class/subject
+      } else {
+        // Safety: if institute already null but class/subject linger, clear them.
+        if (latestClass) setSelectedClass(null);
+        if (latestSubject) setSelectedSubject(null);
+      }
+      return;
+    }
+
+    // 4) On /institute/... routes: selection step routes control what is allowed.
+    // IMPORTANT: this runs on ROUTE changes (not selection changes) to avoid click-trigger loops.
+    if (path.includes('/select-class')) {
+      if (latestClass) setSelectedClass(null);
+      if (latestSubject) setSelectedSubject(null);
+      return;
+    }
+
+    if (path.includes('/select-subject')) {
+      if (latestSubject) setSelectedSubject(null);
+      return;
+    }
+
+    // 5) Non-selection institute routes: if URL doesn't have class/subject, clear them
+    if (!params.classId && latestClass) setSelectedClass(null);
+    if (!params.subjectId && latestSubject) setSelectedSubject(null);
+  }, [
+    location.pathname,
+    params.classId,
+    params.subjectId,
+    setSelectedChild,
+    setSelectedInstitute,
+    setSelectedClass,
+    setSelectedSubject
+  ]);
 
   useEffect(() => {
     if (!user) {
@@ -42,6 +156,7 @@ export const useRouteContext = () => {
       const urlInstituteId = params.instituteId;
       const urlClassId = params.classId;
       const urlSubjectId = params.subjectId;
+      const urlChildId = params.childId;
 
       // ✅ Parents page is class-scoped only: if URL includes subject, strip it.
       if (location.pathname.includes('/parents') && urlSubjectId) {
@@ -49,6 +164,33 @@ export const useRouteContext = () => {
         if (newPath !== location.pathname) {
           navigate(newPath + location.search, { replace: true });
           return;
+        }
+      }
+
+      // STEP 0: Child selection from URL (for Parent viewing child)
+      if (urlChildId && (!selectedChild || selectedChild.id?.toString() !== urlChildId)) {
+        const fetchKey = `child_${urlChildId}`;
+        if (!fetchInProgressRef.current[fetchKey]) {
+          fetchInProgressRef.current[fetchKey] = true;
+        console.log('👶 Setting child context from URL:', urlChildId);
+          
+          // Try to load child data from user's children
+          try {
+            const response = await cachedApiClient.get('/parents/children');
+            const children = response?.data || response || [];
+            const child = children.find((c: any) => c.id?.toString() === urlChildId || c.userId?.toString() === urlChildId);
+            
+            if (child) {
+              console.log('✅ Found child data:', child);
+              setSelectedChild(child, true); // Enable viewAsParent mode
+            } else {
+              console.log('⚠️ Child not found in parent\'s children list');
+            }
+          } catch (error) {
+            console.error('Error loading child data:', error);
+          } finally {
+            fetchInProgressRef.current[fetchKey] = false;
+          }
         }
       }
 
@@ -187,6 +329,7 @@ export const useRouteContext = () => {
     params.instituteId,
     params.classId,
     params.subjectId,
+    params.childId,
     user?.id,
     user?.institutes?.length
   ]);

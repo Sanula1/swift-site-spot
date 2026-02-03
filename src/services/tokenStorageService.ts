@@ -353,9 +353,11 @@ export const tokenStorageService = {
    */
   getAccessTokenSync(): string | null {
     if (isNativePlatform()) {
-      // On mobile, we can't access Preferences synchronously
-      // This should only be used after async initialization
-      console.warn('⚠️ getAccessTokenSync called on mobile - use async getAccessToken() instead');
+      // On mobile we cannot read Preferences sync, but we CAN return the in-memory cache.
+      // AuthContext initialization (getAccessTokenAsync) and loginUser() both populate this.
+      const cached = tokenCache?.accessToken;
+      if (cached) return cached;
+      console.warn('⚠️ getAccessTokenSync called on mobile before token cache is ready');
       return null;
     }
     return localStorage.getItem(KEYS.ACCESS_TOKEN);
@@ -389,11 +391,9 @@ export const getAuthHeadersSync = (): Record<string, string> => {
     'Content-Type': 'application/json',
   };
 
-  if (!isNativePlatform()) {
-    const token = localStorage.getItem(KEYS.ACCESS_TOKEN);
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+  const token = tokenStorageService.getAccessTokenSync();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   return headers;

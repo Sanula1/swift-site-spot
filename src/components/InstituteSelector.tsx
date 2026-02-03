@@ -245,10 +245,11 @@ const InstituteSelector = ({
       return;
     }
 
-    // After selecting an institute, go directly to class selection for non-parent roles
-    if (userRole && userRole !== 'Parent') {
-      navigateToPage('select-class');
-    }
+    // After selecting an institute, always go to institute-scoped class selection.
+    // IMPORTANT: don't use navigateToPage here because it depends on selectedInstitute state
+    // which may not be updated yet (causes route to become /select-class and selection to be cleared).
+    navigate(`/institute/${selectedInstitute.id}/select-class`);
+    return;
   };
   return <div className="space-y-2 sm:space-y-4 px-1 sm:px-3 md:px-0">
       {/* Show Current Child Selection for Parent flow */}

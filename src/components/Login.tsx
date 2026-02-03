@@ -121,6 +121,7 @@ interface LoginProps {
   loginFunction: (credentials: {
     identifier: string;
     password: string;
+    rememberMe?: boolean;
   }) => Promise<void>;
 }
 type LoginStep = 'login' | 'first-login-email' | 'first-login-otp' | 'first-login-password' | 'forgot-password' | 'reset-password';
@@ -130,6 +131,7 @@ const Login = ({
 }: LoginProps) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [baseUrl, setBaseUrl] = useState(() => {
     const stored = getBaseUrl();
     return stored || 'https://your-backend-url.com';
@@ -537,7 +539,8 @@ const Login = ({
         // Use the passed login function from AuthContext
         await loginFunction({
           identifier,
-          password
+          password,
+          rememberMe
         });
         toast({
           title: "Success",
@@ -678,7 +681,13 @@ const Login = ({
                 {/* Remember me and Forgot Password */}
                 {useApiLogin && <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="remember" className="rounded border-border w-4 h-4" />
+                    <input
+                      type="checkbox"
+                      id="remember"
+                      className="rounded border-border w-4 h-4"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
                     <label htmlFor="remember" className="text-xs md:text-sm text-foreground cursor-pointer">
                       Remember me
                     </label>

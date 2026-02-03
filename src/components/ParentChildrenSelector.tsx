@@ -12,6 +12,7 @@ import { enhancedCachedClient } from '@/api/enhancedCachedClient';
 import { CACHE_TTL } from '@/config/cacheTTL';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { getImageUrl } from '@/utils/imageUrlHelper';
+import { useNavigate } from 'react-router-dom';
 
 interface Child {
   id: string;
@@ -32,6 +33,7 @@ interface ParentData {
 const ParentChildrenSelector = () => {
   const { user, setSelectedChild } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [parentData, setParentData] = useState<ParentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,16 +88,11 @@ const ParentChildrenSelector = () => {
 
   const handleChildSelect = (child: Child) => {
     console.log('Selected child:', child);
-    const childForAuth = {
-      id: child.id,
-      name: child.name,
-      relationship: child.relationship
-    };
-    setSelectedChild(childForAuth as any);
-    
-    // Navigate to child dashboard with actual child ID
-    window.history.pushState({}, '', `/child/${child.id}/dashboard`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    // CRITICAL: set viewAsParent = true so AppContent renders the SAME system UI in view-only mode
+    setSelectedChild(child as any, true);
+
+    // CRITICAL: use React Router navigation (keeps history/back button correct)
+    navigate(`/child/${child.id}/select-institute`);
     
     toast({
       title: "Child Selected",

@@ -320,8 +320,13 @@ const SubjectSelector = () => {
       return;
     }
     
-    // Auto-navigate to dashboard after selection
-    navigateToPage('dashboard');
+    // Auto-navigate to dashboard after selection.
+    // IMPORTANT: navigate directly using IDs to avoid stale selection state causing URL to miss /subject/:id.
+    if (currentInstituteId && currentClassId) {
+      navigate(`/institute/${currentInstituteId}/class/${currentClassId}/subject/${subject.id}/dashboard`);
+    } else {
+      navigateToPage('dashboard');
+    }
   };
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {

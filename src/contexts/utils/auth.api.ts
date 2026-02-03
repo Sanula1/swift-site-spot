@@ -124,6 +124,10 @@ export const loginUser = async (credentials: LoginCredentials): Promise<ApiRespo
     body: JSON.stringify({
       identifier: credentials.identifier,
       password: credentials.password,
+      // Backend should use this to set a persistent refresh token (SSO) when enabled.
+      // We send both keys for backward/variant compatibility.
+      rememberMe: !!credentials.rememberMe,
+      remember_me: !!credentials.rememberMe,
       ...(isMobile && { deviceId: await tokenStorageService.getDeviceId() })
     })
   });
@@ -304,6 +308,14 @@ export const validateToken = async (): Promise<ApiUserResponse> => {
   
   const token = await tokenStorageService.getAccessToken();
   const cachedUserData = await tokenStorageService.getUserData();
+
+  // If we have an expiry timestamp and the token is expired/near-expiry, refresh first.
+  // (Prevents “works for a few hours then logs out” when the app is idle.)
+  const expiry = await tokenStorageService.getTokenExpiry();
+  if (token && expiry && Date.now() >= (expiry - 60_000)) {
+    console.log(`${platform} Access token expired/near-expiry, refreshing...`);
+    return await refreshAccessToken();
+  }
 
   // If no access token, try to refresh
   if (!token) {

@@ -1,112 +1,99 @@
-
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useAppNavigation = () => {
-  const { currentChildId, selectedChild } = useAuth();
+  const { currentChildId, selectedChild, selectedInstitute, selectedClass, selectedSubject } = useAuth();
+  const navigate = useNavigate();
 
-  // Router-agnostic navigation that works even before Router is ready
+  // CRITICAL: Use React Router's navigate for proper history management
   const navigateToPage = useCallback((page: string) => {
     console.log('Navigating to page:', page);
     
-    const routeMap: Record<string, string> = {
-      'dashboard': '/',
-      'institutes': '/institutes',
-      'institute-users': '/institutes/users', 
-      'institute-classes': '/institutes/classes',
-      'organizations': '/organizations',
-      'profile': '/profile',
-      'users': '/users',
-      'students': '/students',
-      'teachers': '/teachers',
-      'parents': '/parents',
-      'classes': '/classes',
-      'subjects': '/subjects',
-      'grades': '/grades',
-      'grading': '/grading',
-      'attendance': '/attendance',
-      'my-attendance': '/my-attendance',
-      'daily-attendance': '/daily-attendance',
-      
-      'attendance-markers': '/attendance-markers',
-      'qr-attendance': '/qr-attendance',
-      'institute-mark-attendance': '/institute-mark-attendance',
-      'lectures': '/lectures',
-      'live-lectures': '/live-lectures',
-      'homework': '/homework',
-      'homework-submissions': '/homework-submissions',
-      'exams': '/exams',
-      'results': '/results',
-      'select-institute': '/select-institute',
-      'select-class': '/select-class',
-      'select-subject': '/select-subject',
-      'parent-children': '/parent-children',
-      'teacher-students': '/teacher-students',
-      'teacher-homework': '/teacher-homework',
-      'teacher-exams': '/teacher-exams',
-      'teacher-lectures': '/teacher-lectures',
-      'institute-lectures': '/institute-lectures',
-      'settings': '/settings',
-      'appearance': '/appearance',
-      'institute-details': '/institute-details',
-      'gallery': '/gallery',
-      'institute-payments': '/institute-payments',
-      'subject-payments': '/subject-payments',
-      'subject-pay-submission': '/subject-pay-submission',
-      'unverified-students': '/unverified-students',
-      'verify-image': '/verify-image',
-      'enroll-class': '/enroll-class',
-      'enroll-subject': '/enroll-subject',
-      'free-lectures': '/free-lectures',
-      'institute-profile': '/institute-profile',
-      'sms': '/sms',
-      'sms-history': '/sms-history',
-      'system-payment': '/payments',
-      'payments': '/payments',
-      'transport': '/transport',
-      'transport-attendance': '/transport/:transportId/attendance',
-      'my-children': '/my-children',
-      // Child routes (support both legacy and new keys)
-      'child-dashboard': '/child/:childId/dashboard',
-      'child-select-institute': '/child/:childId/select-institute',
-      'child-select-class': '/child/:childId/select-class',
-      'child-select-subject': '/child/:childId/select-subject',
-      'child-homework': '/child/:childId/homework',
-      'child-lectures': '/child/:childId/lectures',
-      'child-exams': '/child/:childId/exams',
-      'child-results-page': '/child/:childId/results',
-      'child-attendance-page': '/child/:childId/attendance',
-      'child-transport': '/child/:childId/transport',
-      // Legacy sidebar keys
-      'child-results': '/child/:childId/results',
-      'child-attendance': '/child/:childId/attendance'
-    };
+    // Build context-aware URL
+    let route = '';
     
-    let route = routeMap[page] || `/${page}`;
-
-    // Replace dynamic params
-    if (route.includes(':childId')) {
+    // Pages that are always global (no context prefix)
+    const globalPages = ['my-children', 'transport', 'profile', 'settings', 'appearance', 'id-cards', 'card-demo', 'payments', 'system-payment'];
+    
+    if (globalPages.includes(page)) {
+      const routeMap: Record<string, string> = {
+        'my-children': '/my-children',
+        'transport': '/transport',
+        'profile': '/profile',
+        'settings': '/settings',
+        'appearance': '/appearance',
+        'id-cards': '/id-cards',
+        'card-demo': '/card-demo',
+        'payments': '/payments',
+        'system-payment': '/payments',
+      };
+      route = routeMap[page] || `/${page}`;
+    } else if (page.startsWith('child-') || page === 'child-dashboard') {
+      // Child-related pages
       const cid = (currentChildId ?? selectedChild?.id) as string | undefined;
-      route = cid ? route.replace(':childId', String(cid)) : '/my-children';
+      if (!cid) {
+        route = '/my-children';
+      } else {
+        const childPageMap: Record<string, string> = {
+          'child-dashboard': `/child/${cid}/dashboard`,
+          'child-select-institute': `/child/${cid}/select-institute`,
+          'child-select-class': `/child/${cid}/select-class`,
+          'child-select-subject': `/child/${cid}/select-subject`,
+          'child-homework': `/child/${cid}/homework`,
+          'child-lectures': `/child/${cid}/lectures`,
+          'child-exams': `/child/${cid}/exams`,
+          'child-results': `/child/${cid}/results`,
+          'child-attendance': `/child/${cid}/attendance`,
+          'child-transport': `/child/${cid}/transport`,
+        };
+        route = childPageMap[page] || `/child/${cid}/${page.replace('child-', '')}`;
+      }
+    } else if (selectedInstitute) {
+      // Institute context pages
+      const instId = selectedInstitute.id;
+      
+      if (page === 'select-class') {
+        route = `/institute/${instId}/select-class`;
+      } else if (page === 'select-subject' && selectedClass) {
+        route = `/institute/${instId}/class/${selectedClass.id}/select-subject`;
+      } else if (page === 'select-institute') {
+        route = '/select-institute';
+      } else if (selectedClass && selectedSubject) {
+        // Full context: institute + class + subject
+        route = `/institute/${instId}/class/${selectedClass.id}/subject/${selectedSubject.id}/${page === 'dashboard' ? 'dashboard' : page}`;
+      } else if (selectedClass) {
+        // Institute + class context
+        route = `/institute/${instId}/class/${selectedClass.id}/${page === 'dashboard' ? 'dashboard' : page}`;
+      } else {
+        // Just institute context
+        route = `/institute/${instId}/${page === 'dashboard' ? 'dashboard' : page}`;
+      }
+    } else {
+      // No context - use simple routes
+      const simpleRouteMap: Record<string, string> = {
+        'dashboard': '/dashboard',
+        'select-institute': '/select-institute',
+        'institutes': '/institutes',
+        'organizations': '/organizations',
+      };
+      route = simpleRouteMap[page] || `/${page}`;
     }
 
-    try {
-      // Prefer history API without reload
-      window.history.pushState({}, '', route);
-      // Notify listeners that rely on pathname
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    } catch (e) {
-      // Fallback
-      window.location.assign(route);
-    }
-  }, [currentChildId, selectedChild?.id]);
+    // Use React Router navigate for proper history stack
+    navigate(route);
+  }, [currentChildId, selectedChild?.id, selectedInstitute, selectedClass, selectedSubject, navigate]);
 
   const getPageFromPath = useCallback((pathname: string): string => {
     if (pathname === '/') return 'dashboard';
-    if (pathname === '/institutes/users') return 'institute-users';
+    if (pathname === '/institutes/users') return 'institute-user';
     if (pathname === '/institutes/classes') return 'institute-classes';
     if (pathname === '/subject-pay-submission') return 'subject-pay-submission';
-    return pathname.replace(/^\//, '');
+    
+    // Extract page from context URLs
+    const parts = pathname.split('/').filter(Boolean);
+    // Return last meaningful segment
+    return parts[parts.length - 1] || 'dashboard';
   }, []);
 
   return {

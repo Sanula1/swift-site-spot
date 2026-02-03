@@ -28,9 +28,9 @@ interface CurrentSelectionProps {
   showNavigation?: boolean;
 }
 const CurrentSelection: React.FC<CurrentSelectionProps> = ({
-  institute,
-  class: selectedClass,
-  subject,
+  institute: instituteProp,
+  class: classProp,
+  subject: subjectProp,
   transport,
   onBack,
   showNavigation = true
@@ -42,8 +42,16 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
     setSelectedClass,
     setSelectedSubject,
     setSelectedInstitute,
-    selectedChild
+    selectedChild,
+    selectedInstitute: contextInstitute,
+    selectedClass: contextClass,
+    selectedSubject: contextSubject
   } = useAuth();
+
+  // Use props if provided, otherwise fall back to context values
+  const institute = instituteProp || contextInstitute;
+  const selectedClass = classProp || contextClass;
+  const subject = subjectProp || contextSubject;
 
   const isChildRoute = location.pathname.startsWith('/child/');
   const childId = (selectedChild as any)?.id as string | undefined;

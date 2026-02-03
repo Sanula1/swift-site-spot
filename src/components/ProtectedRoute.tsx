@@ -220,11 +220,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Fast-path: if auth is initialized and there's no user, redirect immediately.
   // This prevents showing previously visited protected pages after logout.
   if (isInitialized && !isLoading && !user) {
+    const fullPath = location.pathname + location.search + location.hash;
     return (
       <Navigate
         to={redirectTo}
         state={{
-          from: location.pathname,
+          from: fullPath,
           error: 'User not authenticated'
         }}
         replace
@@ -247,13 +248,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Redirect if validation failed
   if (validationError) {
     console.log('🔄 Redirecting to:', redirectTo, 'Reason:', validationError);
+    const fullPath = location.pathname + location.search + location.hash;
 
     // Preserve the intended destination for redirect after login
     return (
       <Navigate
         to={redirectTo}
         state={{
-          from: location.pathname,
+          from: fullPath,
           error: validationError
         }}
         replace

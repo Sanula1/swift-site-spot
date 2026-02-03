@@ -187,9 +187,21 @@ const AppContent = ({ initialPage }: AppContentProps) => {
   
   // Check if we're loading context from URL (direct navigation)
   const isLoadingContextFromUrl = urlInstituteId && !selectedInstitute && isValidating;
+
+  // If we were redirected to login, React Router stores the original destination in location.state.from
+  const intendedPath = (location.state as any)?.from as string | undefined;
   
   // Auto-navigate to Select Institute page after login (only if not loading from URL)
   React.useEffect(() => {
+    // ✅ If user was redirected to login from a deep link, go back there immediately after login.
+    // This is what enables: open /institute/.../subject/... while logged out → login → land on that page.
+    if (user && !hasNavigatedAfterLogin && intendedPath && intendedPath !== '/' && intendedPath !== location.pathname) {
+      console.log('🔁 Post-login redirect to intended route:', intendedPath);
+      setHasNavigatedAfterLogin(true);
+      navigate(intendedPath, { replace: true, state: {} });
+      return;
+    }
+
     // Don't auto-navigate if we have an institute ID in URL (direct navigation)
     if (urlInstituteId) {
       console.log('🔗 Direct URL navigation detected, waiting for context to load...');
@@ -201,7 +213,7 @@ const AppContent = ({ initialPage }: AppContentProps) => {
       setHasNavigatedAfterLogin(true);
       navigate('/select-institute');
     }
-  }, [user, hasNavigatedAfterLogin, selectedInstitute, location.pathname, navigate, urlInstituteId]);
+  }, [user, hasNavigatedAfterLogin, intendedPath, selectedInstitute, location.pathname, navigate, urlInstituteId]);
   
   // Reset the flag when user logs out and navigate to root
   React.useEffect(() => {

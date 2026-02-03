@@ -152,10 +152,11 @@ export const useRouteGuard = (config: RouteGuardConfig = {}): boolean => {
     // Check authentication
     if (config.requireAuth && !user) {
       console.warn('❌ Unauthorized access attempt - no user');
+      const fullPath = location.pathname + location.search + location.hash;
       if (config.onUnauthorized) {
         config.onUnauthorized();
       } else {
-        navigate('/', { state: { from: location.pathname }, replace: true });
+        navigate('/', { state: { from: fullPath }, replace: true });
       }
       return;
     }
@@ -179,21 +180,24 @@ export const useRouteGuard = (config: RouteGuardConfig = {}): boolean => {
     // Check institute requirement
     if (config.requireInstitute && !selectedInstitute) {
       console.warn('❌ Access denied - institute not selected');
-      navigate('/select-institute', { state: { from: location.pathname }, replace: true });
+      const fullPath = location.pathname + location.search + location.hash;
+      navigate('/select-institute', { state: { from: fullPath }, replace: true });
       return;
     }
     
     // Check class requirement
     if (config.requireClass && !selectedClass) {
       console.warn('❌ Access denied - class not selected');
-      navigate('/select-class', { state: { from: location.pathname }, replace: true });
+      const fullPath = location.pathname + location.search + location.hash;
+      navigate('/select-class', { state: { from: fullPath }, replace: true });
       return;
     }
     
     // Check subject requirement
     if (config.requireSubject && !selectedSubject) {
       console.warn('❌ Access denied - subject not selected');
-      navigate('/select-subject', { state: { from: location.pathname }, replace: true });
+      const fullPath = location.pathname + location.search + location.hash;
+      navigate('/select-subject', { state: { from: fullPath }, replace: true });
       return;
     }
     
